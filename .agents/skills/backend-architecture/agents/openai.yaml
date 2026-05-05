@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend Architecture"
+  short_description: "Guia arquitectonica del backend"
+  default_prompt: "Use $backend-architecture to implement backend changes following the project architecture."

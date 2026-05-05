@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Architecture"
+  short_description: "Guia arquitectonica del frontend"
+  default_prompt: "Use $frontend-architecture to implement frontend changes following the project architecture."
