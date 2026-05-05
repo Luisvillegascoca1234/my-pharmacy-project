@@ -1,0 +1,16 @@
+{
+  "name": "pharmacy-pos",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm dev:services && pnpm dev:apps",
+    "dev:services": "docker compose up -d postgres",
+    "dev:apps": "concurrently -n backend,frontend -c blue,green \"pnpm --filter @pharmacy-pos/backend dev\" \"pnpm --filter @pharmacy-pos/frontend dev\"",
+    "typecheck": "pnpm --recursive typecheck",
+    "build": "pnpm --recursive build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
