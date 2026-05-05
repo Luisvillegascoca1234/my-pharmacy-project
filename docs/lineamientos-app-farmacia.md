@@ -551,7 +551,7 @@ El objetivo es que frontend y backend usen contratos comunes para:
 
 La recomendacion es definir schemas con Zod y derivar tipos TypeScript desde ellos. Esto evita duplicar validaciones y reduce inconsistencias entre formularios, API y reglas de negocio.
 
-El detalle de estructura de carpetas del monorepo queda fuera de este documento y se definira en otra sesion.
+La estructura tecnica del backend queda definida en `docs/lineamientos-arquitectura-backend.md`, usando arquitectura por capas adaptada a Express, TypeScript, Prisma y PostgreSQL.
 
 ## 22. Esquema conceptual principal
 
@@ -649,7 +649,6 @@ Queda fuera del alcance conceptual inicial:
 - Historial clinico.
 - Integracion QR completa.
 - Venta de productos de micromercado.
-- Estructura detallada de carpetas.
 - Diseno visual del frontend.
 - Implementacion tecnica de endpoints.
 

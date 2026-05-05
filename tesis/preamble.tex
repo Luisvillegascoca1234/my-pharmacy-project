@@ -1,0 +1,63 @@
+\usepackage[spanish, es-tabla]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{csquotes}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage[
+  backend=biber,
+  style=apa,
+  sorting=nyt
+]{biblatex}
+
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc, fit}
+\pgfplotsset{compat=1.18}
+
+\geometry{
+  left=3cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  pdfauthor={Luis Enrique Villegas Coca},
+  pdftitle={Monografía}
+}
+
+\addbibresource{references.bib}
+
+\renewcommand{\contentsname}{Índice de contenido}
+\renewcommand{\listfigurename}{Índice de figuras}
+\renewcommand{\listtablename}{Índice de tablas}
+\renewcommand{\bibname}{Bibliografía}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\Large}
+  {CAPÍTULO \Roman{chapter}}
+  {0.5\baselineskip}
+  {\MakeUppercase}
+
+\titlespacing*{\chapter}{0pt}{0pt}{1.2\baselineskip}
