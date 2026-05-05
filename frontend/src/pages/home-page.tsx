@@ -26,15 +26,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useHealthStatus } from "../modules/health";
 
 const stackItems = [
-  { name: "API", detail: "Express service", state: "Ready", icon: Server },
-  { name: "Database", detail: "PostgreSQL storage", state: "Ready", icon: Database },
-  { name: "Contracts", detail: "Zod shared schemas", state: "Ready", icon: ShieldCheck }
+  { name: "API", detail: "Servicio Express", state: "Lista", icon: Server },
+  { name: "Base de datos", detail: "Almacenamiento PostgreSQL", state: "Lista", icon: Database },
+  { name: "Contratos", detail: "Esquemas compartidos de Zod", state: "Listos", icon: ShieldCheck }
 ];
 
 const activityRows = [
-  { event: "Frontend shell", owner: "UI", status: "Updated" },
-  { event: "Component registry", owner: "shadcn/ui", status: "Installed" },
-  { event: "Health endpoint", owner: "Backend", status: "Monitored" }
+  { event: "Estructura de interfaz", owner: "Interfaz", status: "Actualizada" },
+  { event: "Registro de componentes", owner: "shadcn/ui", status: "Instalado" },
+  { event: "Ruta de salud", owner: "Servidor", status: "Monitoreada" }
 ];
 
 export function HomePage() {
@@ -47,24 +47,24 @@ export function HomePage() {
       <Card>
         <CardHeader className="gap-3 sm:grid-cols-[1fr_auto]">
           <div className="space-y-3">
-            <Badge variant="secondary">Foundation dashboard</Badge>
-            <CardTitle className="text-2xl sm:text-3xl">Pharmacy POS workspace</CardTitle>
+            <Badge variant="secondary">Panel base</Badge>
+            <CardTitle className="text-2xl sm:text-3xl">Espacio de trabajo del punto de venta</CardTitle>
             <CardDescription className="max-w-2xl">
-              A shadcn/ui control surface for the current frontend, backend, database, and shared contracts.
+              Superficie de control con shadcn/ui para la interfaz, el servidor, la base de datos y los contratos compartidos.
             </CardDescription>
           </div>
           <CardAction className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button aria-label="Refresh status" size="icon" variant="outline">
+                <Button aria-label="Actualizar estado" size="icon" variant="outline">
                   <RefreshCw aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Refresh status</TooltipContent>
+              <TooltipContent>Actualizar estado</TooltipContent>
             </Tooltip>
             <Button>
               <PackageCheck aria-hidden="true" />
-              Components ready
+              Componentes listos
             </Button>
           </CardAction>
         </CardHeader>
@@ -83,7 +83,7 @@ export function HomePage() {
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">
                   <Badge variant="outline">{item.state}</Badge>
-                  <Switch checked disabled aria-label={`${item.name} readiness`} />
+                  <Switch checked disabled aria-label={`Preparación de ${item.name}`} />
                 </CardContent>
               </Card>
             );
@@ -94,26 +94,26 @@ export function HomePage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>
-            <CardTitle>Operational overview</CardTitle>
-            <CardDescription>Installed UI components powering the main workspace.</CardDescription>
+            <CardTitle>Resumen operativo</CardTitle>
+            <CardDescription>Componentes de interfaz instalados para el espacio principal.</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="status">
               <TabsList>
                 <TabsTrigger value="status">
                   <Activity aria-hidden="true" />
-                  Status
+                  Estado
                 </TabsTrigger>
                 <TabsTrigger value="activity">
                   <Layers3 aria-hidden="true" />
-                  Activity
+                  Actividad
                 </TabsTrigger>
               </TabsList>
               <TabsContent className="space-y-4" value="status">
                 <HealthAlert status={health.status} />
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Workspace readiness</span>
+                    <span className="text-muted-foreground">Preparación del espacio</span>
                     <Badge variant={isOnline ? "default" : "secondary"}>{readiness}%</Badge>
                   </div>
                   <Progress value={readiness} />
@@ -129,9 +129,9 @@ export function HomePage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Responsable</TableHead>
+                      <TableHead>Estado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -153,19 +153,19 @@ export function HomePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Backend health</CardTitle>
-            <CardDescription>Live response from the health endpoint.</CardDescription>
+            <CardTitle>Salud del servidor</CardTitle>
+            <CardDescription>Respuesta en vivo de la ruta de salud.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <AvatarGroup>
               <Avatar>
-                <AvatarFallback>FE</AvatarFallback>
+                <AvatarFallback>UI</AvatarFallback>
               </Avatar>
               <Avatar>
                 <AvatarFallback>API</AvatarFallback>
               </Avatar>
               <Avatar>
-                <AvatarFallback>DB</AvatarFallback>
+                <AvatarFallback>BD</AvatarFallback>
               </Avatar>
               <AvatarGroupCount>3</AvatarGroupCount>
             </AvatarGroup>
@@ -194,8 +194,8 @@ function HealthAlert({ status }: HealthAlertProps) {
     return (
       <Alert>
         <CheckCircle2 aria-hidden="true" />
-        <AlertTitle>Backend online</AlertTitle>
-        <AlertDescription>The frontend is receiving a valid service response.</AlertDescription>
+        <AlertTitle>Servidor en línea</AlertTitle>
+        <AlertDescription>La interfaz está recibiendo una respuesta válida del servicio.</AlertDescription>
       </Alert>
     );
   }
@@ -204,8 +204,8 @@ function HealthAlert({ status }: HealthAlertProps) {
     return (
       <Alert variant="destructive">
         <AlertCircle aria-hidden="true" />
-        <AlertTitle>Backend unavailable</AlertTitle>
-        <AlertDescription>Start the API service and check the configured base URL.</AlertDescription>
+        <AlertTitle>Servidor no disponible</AlertTitle>
+        <AlertDescription>Inicia el servicio API y revisa la URL base configurada.</AlertDescription>
       </Alert>
     );
   }
@@ -213,8 +213,8 @@ function HealthAlert({ status }: HealthAlertProps) {
   return (
     <Alert>
       <Clock3 aria-hidden="true" />
-      <AlertTitle>Checking backend</AlertTitle>
-      <AlertDescription>Waiting for the health endpoint response.</AlertDescription>
+      <AlertTitle>Revisando servidor</AlertTitle>
+      <AlertDescription>Esperando la respuesta de la ruta de salud.</AlertDescription>
     </Alert>
   );
 }
@@ -230,20 +230,30 @@ function HealthDetails({ status, error, version, timestamp }: HealthDetailsProps
   return (
     <Accordion defaultValue="service" type="single" collapsible>
       <AccordionItem value="service">
-        <AccordionTrigger>Service state</AccordionTrigger>
+        <AccordionTrigger>Estado del servicio</AccordionTrigger>
         <AccordionContent>
           <div className="space-y-3">
-            <Badge variant={status === "error" ? "destructive" : "secondary"}>{status}</Badge>
-            <p className="text-sm text-muted-foreground">{error ?? `Version ${version ?? "pending"}`}</p>
+            <Badge variant={status === "error" ? "destructive" : "secondary"}>{getHealthStatusLabel(status)}</Badge>
+            <p className="text-sm text-muted-foreground">{error ?? `Versión ${version ?? "pendiente"}`}</p>
           </div>
         </AccordionContent>
       </AccordionItem>
       <AccordionItem value="timestamp">
-        <AccordionTrigger>Last response</AccordionTrigger>
+        <AccordionTrigger>Última respuesta</AccordionTrigger>
         <AccordionContent>
-          <p className="text-sm text-muted-foreground">{timestamp ?? "No timestamp received yet."}</p>
+          <p className="text-sm text-muted-foreground">{timestamp ?? "Aún no se recibió una marca de tiempo."}</p>
         </AccordionContent>
       </AccordionItem>
     </Accordion>
   );
+}
+
+function getHealthStatusLabel(status: HealthStatus) {
+  const labels: Record<HealthStatus, string> = {
+    error: "Error",
+    loading: "Cargando",
+    success: "Correcto"
+  };
+
+  return labels[status];
 }

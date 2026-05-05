@@ -1,26 +1,29 @@
 import type { ReactNode } from "react";
+import type { AuthenticatedUser } from "@pharmacy-pos/shared";
 import { Bell, PillBottle, Search } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserMenu } from "@/modules/auth";
 
 type AppShellProps = {
   children: ReactNode;
+  user: AuthenticatedUser;
+  onLogout: () => void;
 };
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, user, onLogout }: AppShellProps) {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
-          <Button aria-label="Pharmacy POS home" size="icon-lg">
+          <Button aria-label="Inicio del punto de venta" size="icon-lg">
             <PillBottle aria-hidden="true" size={22} />
           </Button>
           <div>
-            <p className="text-sm font-medium text-muted">Pharmacy POS</p>
-            <h1 className="text-lg font-semibold text-foreground">Development Console</h1>
+            <p className="text-sm font-medium text-muted">Punto de venta</p>
+            <h1 className="text-lg font-semibold text-foreground">Consola de desarrollo</h1>
           </div>
           <Badge className="ml-2 hidden sm:inline-flex" variant="outline">
             shadcn/ui
@@ -29,23 +32,21 @@ export function AppShell({ children }: AppShellProps) {
           <div className="ml-auto flex items-center gap-2 sm:ml-0">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button aria-label="Search workspace" size="icon" variant="outline">
+                <Button aria-label="Buscar en el espacio de trabajo" size="icon" variant="outline">
                   <Search aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Search workspace</TooltipContent>
+              <TooltipContent>Buscar en el espacio de trabajo</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button aria-label="Notifications" size="icon" variant="outline">
+                <Button aria-label="Notificaciones" size="icon" variant="outline">
                   <Bell aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Notifications</TooltipContent>
+              <TooltipContent>Notificaciones</TooltipContent>
             </Tooltip>
-            <Avatar>
-              <AvatarFallback>POS</AvatarFallback>
-            </Avatar>
+            <UserMenu user={user} onLogout={onLogout} />
           </div>
         </div>
       </header>

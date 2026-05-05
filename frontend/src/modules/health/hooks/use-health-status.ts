@@ -45,7 +45,7 @@ export function useHealthStatus(): HealthState {
         setState({
           status: "error",
           data: null,
-          error: error instanceof Error ? error.message : "Unable to reach backend"
+          error: error instanceof Error ? getHealthErrorMessage(error.message) : "No se pudo conectar con el servidor"
         });
       });
 
@@ -55,4 +55,12 @@ export function useHealthStatus(): HealthState {
   }, []);
 
   return state;
+}
+
+function getHealthErrorMessage(message: string) {
+  if (!message.trim() || message.toLowerCase().includes("failed to fetch")) {
+    return "No se pudo conectar con el servidor";
+  }
+
+  return message;
 }
