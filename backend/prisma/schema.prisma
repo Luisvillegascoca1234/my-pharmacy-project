@@ -12,6 +12,19 @@ enum UserStatus {
   inactive
 }
 
+enum ProductStatus {
+  active
+  inactive
+}
+
+enum ProductType {
+  medicine
+  otc
+  medical_supply
+  hygiene_disinfection
+  related_misc
+}
+
 model User {
   id           String      @id @default(cuid())
   email        String      @unique
@@ -67,4 +80,72 @@ model AuditLog {
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime @default(now())
+}
+
+model ProductCategory {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  status      ProductStatus @default(active)
+  products    Product[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Unit {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  abbreviation    String        @unique
+  description     String?
+  status          ProductStatus @default(active)
+  baseProducts    Product[]     @relation("ProductBaseUnit")
+  productUnits    ProductUnit[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Product {
+  id                    String          @id @default(cuid())
+  internalCode          String          @unique
+  barcode               String?         @unique
+  commercialName        String
+  genericName           String?
+  description           String?
+  type                  ProductType
+  categoryId            String
+  category              ProductCategory @relation(fields: [categoryId], references: [id])
+  baseUnitId            String
+  baseUnit              Unit            @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
+  laboratoryName        String?
+  sanitaryRegistration  String?
+  isMedicine            Boolean         @default(false)
+  isOverTheCounter      Boolean         @default(false)
+  requiresPrescription  Boolean         @default(false)
+  isInventoryTracked    Boolean         @default(true)
+  requiresBatch         Boolean         @default(true)
+  requiresExpiration    Boolean         @default(true)
+  minimumStock          Decimal         @default(0) @db.Decimal(12, 4)
+  salePrice             Decimal         @db.Decimal(12, 2)
+  status                ProductStatus   @default(active)
+  units                 ProductUnit[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([categoryId])
+  @@index([baseUnitId])
+  @@index([commercialName])
+}
+
+model ProductUnit {
+  id               String   @id @default(cuid())
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unitId           String
+  unit             Unit     @relation(fields: [unitId], references: [id])
+  conversionFactor Decimal  @db.Decimal(12, 4)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([productId, unitId])
+  @@index([unitId])
 }

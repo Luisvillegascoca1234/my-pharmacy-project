@@ -21,6 +21,10 @@ export const openApiDocument = {
     {
       name: "Health",
       description: "Service health checks"
+    },
+    {
+      name: "Catalogs",
+      description: "Product categories, units, products, and product unit conversions"
     }
   ],
   paths: {
@@ -50,14 +54,7 @@ export const openApiDocument = {
             }
           },
           "400": {
-            description: "Invalid request payload",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ApiError"
-                }
-              }
-            }
+            $ref: "#/components/responses/BadRequest"
           },
           "401": {
             description: "Invalid credentials",
@@ -82,14 +79,7 @@ export const openApiDocument = {
             description: "Logged out"
           },
           "401": {
-            description: "Authentication is required",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ApiError"
-                }
-              }
-            }
+            $ref: "#/components/responses/Unauthorized"
           }
         }
       }
@@ -111,14 +101,7 @@ export const openApiDocument = {
             }
           },
           "401": {
-            description: "Authentication is required",
-            content: {
-              "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ApiError"
-                }
-              }
-            }
+            $ref: "#/components/responses/Unauthorized"
           }
         }
       }
@@ -139,14 +122,386 @@ export const openApiDocument = {
             }
           },
           "500": {
-            description: "Unexpected server error",
+            $ref: "#/components/responses/UnexpectedError"
+          }
+        }
+      }
+    },
+    "/product-categories": {
+      get: {
+        tags: ["Catalogs"],
+        summary: "List product categories",
+        description: "Available to superadmin, admin, and seller users.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Product categories ordered by name",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/ProductCategory"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Catalogs"],
+        summary: "Create a product category",
+        description: "Available to superadmin and admin users. Duplicate names return PRODUCT_CATEGORY_NAME_IN_USE.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateProductCategoryRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Product category created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProductCategory"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            description: "Product category name is already in use",
             content: {
               "application/json": {
                 schema: {
                   $ref: "#/components/schemas/ApiError"
+                },
+                example: {
+                  message: "Product category name is already in use.",
+                  code: "PRODUCT_CATEGORY_NAME_IN_USE"
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/units": {
+      get: {
+        tags: ["Catalogs"],
+        summary: "List units",
+        description: "Available to superadmin, admin, and seller users.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Units ordered by name",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/Unit"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Catalogs"],
+        summary: "Create a unit",
+        description: "Available to superadmin and admin users. Duplicate names or abbreviations return UNIT_NAME_IN_USE or UNIT_ABBREVIATION_IN_USE.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateUnitRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Unit created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Unit"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            description: "Unit name or abbreviation is already in use",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ApiError"
+                },
+                examples: {
+                  unitNameInUse: {
+                    value: {
+                      message: "Unit name is already in use.",
+                      code: "UNIT_NAME_IN_USE"
+                    }
+                  },
+                  unitAbbreviationInUse: {
+                    value: {
+                      message: "Unit abbreviation is already in use.",
+                      code: "UNIT_ABBREVIATION_IN_USE"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products": {
+      get: {
+        tags: ["Catalogs"],
+        summary: "List products",
+        description: "Available to superadmin, admin, and seller users.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "search",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string"
+            },
+            description: "Search by commercial name, generic name, internal code, or barcode"
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Products ordered by commercial name",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Catalogs"],
+        summary: "Create a product",
+        description: "Available to superadmin and admin users. Creates a PRODUCT_CREATED audit log.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateProductRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Product created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            $ref: "#/components/responses/ProductCodeConflict"
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      get: {
+        tags: ["Catalogs"],
+        summary: "Get a product",
+        description: "Available to superadmin, admin, and seller users.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            $ref: "#/components/parameters/ProductId"
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Product detail with category, base unit, and conversions",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/ProductNotFound"
+          }
+        }
+      },
+      patch: {
+        tags: ["Catalogs"],
+        summary: "Update a product",
+        description: "Available to superadmin and admin users. Creates a PRODUCT_UPDATED audit log.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            $ref: "#/components/parameters/ProductId"
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateProductRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Product updated",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/ProductNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/ProductCodeConflict"
+          }
+        }
+      }
+    },
+    "/products/{id}/units": {
+      put: {
+        tags: ["Catalogs"],
+        summary: "Replace product unit conversions",
+        description: "Available to superadmin and admin users. The base unit is required and is normalized to a conversion factor of 1. Creates a PRODUCT_UNITS_UPDATED audit log.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            $ref: "#/components/parameters/ProductId"
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateProductUnitsRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Product unit conversions replaced",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/ProductNotFound"
           }
         }
       }
@@ -158,6 +513,105 @@ export const openApiDocument = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT"
+      }
+    },
+    parameters: {
+      ProductId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Product identifier"
+      }
+    },
+    responses: {
+      BadRequest: {
+        description: "Invalid request payload or business rule violation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      Unauthorized: {
+        description: "Authentication is required",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Authentication is required.",
+              code: "AUTHENTICATION_REQUIRED"
+            }
+          }
+        }
+      },
+      Forbidden: {
+        description: "The authenticated user does not have permission",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "You do not have permission to perform this action.",
+              code: "FORBIDDEN"
+            }
+          }
+        }
+      },
+      ProductNotFound: {
+        description: "Product was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Product was not found.",
+              code: "PRODUCT_NOT_FOUND"
+            }
+          }
+        }
+      },
+      ProductCodeConflict: {
+        description: "Product internal code or barcode is already in use",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              internalCodeInUse: {
+                value: {
+                  message: "Product internal code is already in use.",
+                  code: "PRODUCT_INTERNAL_CODE_IN_USE"
+                }
+              },
+              barcodeInUse: {
+                value: {
+                  message: "Product barcode is already in use.",
+                  code: "PRODUCT_BARCODE_IN_USE"
+                }
+              }
+            }
+          }
+        }
+      },
+      UnexpectedError: {
+        description: "Unexpected server error",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            }
+          }
+        }
       }
     },
     schemas: {
@@ -251,6 +705,388 @@ export const openApiDocument = {
           timestamp: {
             type: "string",
             format: "date-time"
+          }
+        }
+      },
+      ProductStatus: {
+        type: "string",
+        enum: ["active", "inactive"]
+      },
+      ProductType: {
+        type: "string",
+        enum: ["medicine", "otc", "medical_supply", "hygiene_disinfection", "related_misc"]
+      },
+      ProductCategory: {
+        type: "object",
+        required: ["id", "name", "status", "createdAt", "updatedAt"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          name: {
+            type: "string",
+            example: "Medicamentos"
+          },
+          description: {
+            type: "string",
+            example: "Productos farmaceuticos con control sanitario"
+          },
+          status: {
+            $ref: "#/components/schemas/ProductStatus"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      CreateProductCategoryRequest: {
+        type: "object",
+        required: ["name"],
+        properties: {
+          name: {
+            type: "string",
+            minLength: 2,
+            maxLength: 120,
+            example: "Medicamentos"
+          },
+          description: {
+            type: "string",
+            nullable: true,
+            example: "Productos farmaceuticos con control sanitario"
+          }
+        }
+      },
+      Unit: {
+        type: "object",
+        required: ["id", "name", "abbreviation", "status", "createdAt", "updatedAt"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          name: {
+            type: "string",
+            example: "Tableta"
+          },
+          abbreviation: {
+            type: "string",
+            example: "tab"
+          },
+          description: {
+            type: "string",
+            example: "Unidad base para tabletas"
+          },
+          status: {
+            $ref: "#/components/schemas/ProductStatus"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      CreateUnitRequest: {
+        type: "object",
+        required: ["name", "abbreviation"],
+        properties: {
+          name: {
+            type: "string",
+            minLength: 2,
+            maxLength: 80,
+            example: "Caja"
+          },
+          abbreviation: {
+            type: "string",
+            minLength: 1,
+            maxLength: 16,
+            example: "cj"
+          },
+          description: {
+            type: "string",
+            nullable: true,
+            example: "Presentacion comercial"
+          }
+        }
+      },
+      ProductUnit: {
+        type: "object",
+        required: ["id", "productId", "unitId", "unit", "conversionFactor", "createdAt", "updatedAt"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          productId: {
+            type: "string"
+          },
+          unitId: {
+            type: "string"
+          },
+          unit: {
+            $ref: "#/components/schemas/Unit"
+          },
+          conversionFactor: {
+            type: "number",
+            minimum: 0.0001,
+            example: 10
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      Product: {
+        type: "object",
+        required: [
+          "id",
+          "internalCode",
+          "commercialName",
+          "type",
+          "categoryId",
+          "category",
+          "baseUnitId",
+          "baseUnit",
+          "isMedicine",
+          "isOverTheCounter",
+          "requiresPrescription",
+          "isInventoryTracked",
+          "requiresBatch",
+          "requiresExpiration",
+          "minimumStock",
+          "salePrice",
+          "status",
+          "units",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          internalCode: {
+            type: "string",
+            example: "MED-001"
+          },
+          barcode: {
+            type: "string",
+            example: "7790000000012"
+          },
+          commercialName: {
+            type: "string",
+            example: "Paracetamol 500 mg"
+          },
+          genericName: {
+            type: "string",
+            example: "Paracetamol"
+          },
+          description: {
+            type: "string"
+          },
+          type: {
+            $ref: "#/components/schemas/ProductType"
+          },
+          categoryId: {
+            type: "string"
+          },
+          category: {
+            $ref: "#/components/schemas/ProductCategory"
+          },
+          baseUnitId: {
+            type: "string"
+          },
+          baseUnit: {
+            $ref: "#/components/schemas/Unit"
+          },
+          laboratoryName: {
+            type: "string",
+            example: "Laboratorio local"
+          },
+          sanitaryRegistration: {
+            type: "string",
+            example: "RS-12345"
+          },
+          isMedicine: {
+            type: "boolean"
+          },
+          isOverTheCounter: {
+            type: "boolean"
+          },
+          requiresPrescription: {
+            type: "boolean"
+          },
+          isInventoryTracked: {
+            type: "boolean"
+          },
+          requiresBatch: {
+            type: "boolean"
+          },
+          requiresExpiration: {
+            type: "boolean"
+          },
+          minimumStock: {
+            type: "number",
+            minimum: 0,
+            example: 20
+          },
+          salePrice: {
+            type: "number",
+            minimum: 0,
+            example: 1.5
+          },
+          status: {
+            $ref: "#/components/schemas/ProductStatus"
+          },
+          units: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/ProductUnit"
+            }
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      CreateProductRequest: {
+        type: "object",
+        required: ["internalCode", "commercialName", "type", "categoryId", "baseUnitId", "salePrice"],
+        properties: {
+          internalCode: {
+            type: "string",
+            minLength: 2,
+            maxLength: 40,
+            example: "MED-001"
+          },
+          barcode: {
+            type: "string",
+            nullable: true,
+            example: "7790000000012"
+          },
+          commercialName: {
+            type: "string",
+            minLength: 2,
+            maxLength: 160,
+            example: "Paracetamol 500 mg"
+          },
+          genericName: {
+            type: "string",
+            nullable: true,
+            example: "Paracetamol"
+          },
+          description: {
+            type: "string",
+            nullable: true
+          },
+          type: {
+            $ref: "#/components/schemas/ProductType"
+          },
+          categoryId: {
+            type: "string"
+          },
+          baseUnitId: {
+            type: "string"
+          },
+          laboratoryName: {
+            type: "string",
+            nullable: true
+          },
+          sanitaryRegistration: {
+            type: "string",
+            nullable: true
+          },
+          isMedicine: {
+            type: "boolean",
+            default: false
+          },
+          isOverTheCounter: {
+            type: "boolean",
+            default: false
+          },
+          requiresPrescription: {
+            type: "boolean",
+            default: false
+          },
+          isInventoryTracked: {
+            type: "boolean",
+            default: true
+          },
+          requiresBatch: {
+            type: "boolean",
+            default: true
+          },
+          requiresExpiration: {
+            type: "boolean",
+            default: true
+          },
+          minimumStock: {
+            type: "number",
+            minimum: 0,
+            default: 0
+          },
+          salePrice: {
+            type: "number",
+            minimum: 0,
+            example: 1.5
+          }
+        }
+      },
+      UpdateProductRequest: {
+        allOf: [
+          {
+            $ref: "#/components/schemas/CreateProductRequest"
+          },
+          {
+            type: "object",
+            properties: {
+              status: {
+                $ref: "#/components/schemas/ProductStatus"
+              }
+            }
+          }
+        ],
+        description: "All fields are optional for PATCH requests."
+      },
+      UpsertProductUnitRequest: {
+        type: "object",
+        required: ["unitId", "conversionFactor"],
+        properties: {
+          unitId: {
+            type: "string"
+          },
+          conversionFactor: {
+            type: "number",
+            minimum: 0.0001,
+            example: 10
+          }
+        }
+      },
+      UpdateProductUnitsRequest: {
+        type: "object",
+        required: ["units"],
+        properties: {
+          units: {
+            type: "array",
+            minItems: 1,
+            items: {
+              $ref: "#/components/schemas/UpsertProductUnitRequest"
+            }
           }
         }
       },

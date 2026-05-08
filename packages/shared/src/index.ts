@@ -6,3 +6,31 @@ export { AuthenticatedUserSchema, AuthSessionSchema, LoginRequestSchema } from "
 export type { AuthenticatedUser, AuthSession, LoginRequest } from "./schemas/auth.schema.js";
 export { HealthStatusSchema } from "./schemas/health-status.schema.js";
 export type { HealthStatus } from "./schemas/health-status.schema.js";
+export {
+  CreateProductCategorySchema,
+  CreateProductSchema,
+  CreateUnitSchema,
+  ProductCategorySchema,
+  ProductSchema,
+  ProductStatusSchema,
+  ProductTypeSchema,
+  ProductUnitSchema,
+  UnitSchema,
+  UpdateProductSchema,
+  UpdateProductUnitsSchema,
+  UpsertProductUnitSchema
+} from "./schemas/product-catalog.schema.js";
+export type {
+  CreateProduct,
+  CreateProductCategory,
+  CreateUnit,
+  Product,
+  ProductCategory,
+  ProductStatus,
+  ProductType,
+  ProductUnit,
+  Unit,
+  UpdateProduct,
+  UpdateProductUnits,
+  UpsertProductUnit
+} from "./schemas/product-catalog.schema.js";

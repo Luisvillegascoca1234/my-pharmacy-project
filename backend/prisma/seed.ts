@@ -18,6 +18,16 @@ const basePermissions = [
     key: "users.manage",
     module: "users",
     description: "Manage system users"
+  },
+  {
+    key: "catalogs.read",
+    module: "catalogs",
+    description: "Read product catalogs, units, and products"
+  },
+  {
+    key: "catalogs.manage",
+    module: "catalogs",
+    description: "Manage product catalogs, units, and products"
   }
 ];
 
@@ -48,27 +58,21 @@ async function main() {
   );
 
   const superadminRole = roles.find((role) => role.name === "superadmin");
+  const adminRole = roles.find((role) => role.name === "admin");
+  const sellerRole = roles.find((role) => role.name === "seller");
 
-  if (!superadminRole) {
-    throw new Error("Superadmin role was not created.");
+  if (!superadminRole || !adminRole || !sellerRole) {
+    throw new Error("Base roles were not created.");
   }
 
-  await Promise.all(
-    permissions.map((permission) =>
-      prisma.rolePermission.upsert({
-        where: {
-          roleId_permissionId: {
-            roleId: superadminRole.id,
-            permissionId: permission.id
-          }
-        },
-        update: {},
-        create: {
-          roleId: superadminRole.id,
-          permissionId: permission.id
-        }
-      })
-    )
+  await assignPermissions(superadminRole.id, permissions.map((permission) => permission.id));
+  await assignPermissions(
+    adminRole.id,
+    permissions.filter((permission) => ["catalogs.read", "catalogs.manage"].includes(permission.key)).map((permission) => permission.id)
+  );
+  await assignPermissions(
+    sellerRole.id,
+    permissions.filter((permission) => permission.key === "catalogs.read").map((permission) => permission.id)
   );
 
   const passwordHash = await bcrypt.hash("admin", 12);
@@ -93,6 +97,26 @@ async function main() {
   });
 
   console.log("Seed completed. Superadmin: admin@admin.com / admin");
+}
+
+function assignPermissions(roleId: string, permissionIds: string[]) {
+  return Promise.all(
+    permissionIds.map((permissionId) =>
+      prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId,
+            permissionId
+          }
+        },
+        update: {},
+        create: {
+          roleId,
+          permissionId
+        }
+      })
+    )
+  );
 }
 
 function toDisplayName(value: string) {
