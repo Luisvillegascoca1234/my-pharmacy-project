@@ -1,36 +1,44 @@
-import { useEffect } from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AuthGuard, AuthTokenSync } from "@/components/auth";
 import { AppShell } from "./layouts/app-shell";
 import { TooltipProvider } from "./components/ui/tooltip";
-import { LoginPage, useAuthStore } from "./modules/auth";
-import { Spinner } from "./components/ui/spinner";
+import { LoginPage } from "./pages/login";
+import { selectAuthUser, useAuthStore } from "./modules/auth";
 import { AppRoutes } from "./routes/app-routes";
+import { LogoutPage } from "./pages/logout";
 
 export function App() {
-  const user = useAuthStore((state) => state.user);
-  const status = useAuthStore((state) => state.status);
-  const logout = useAuthStore((state) => state.logout);
-  const restoreSession = useAuthStore((state) => state.restoreSession);
-
-  useEffect(() => {
-    void restoreSession();
-  }, [restoreSession]);
-
   return (
     <TooltipProvider>
       <BrowserRouter>
-        {status === "loading" || status === "idle" ? (
-          <main className="flex min-h-screen items-center justify-center bg-background">
-            <Spinner />
-          </main>
-        ) : user ? (
-          <AppShell user={user} onLogout={() => void logout()}>
-            <AppRoutes user={user} />
-          </AppShell>
-        ) : (
-          <LoginPage />
-        )}
+        <AuthTokenSync />
+        <Routes>
+          <Route element={<LoginPage />} path="/login" />
+          <Route element={<LogoutPage />} path="/logout" />
+          <Route
+            element={
+              <AuthGuard>
+                <AuthenticatedApp />
+              </AuthGuard>
+            }
+            path="/*"
+          />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
+  );
+}
+
+function AuthenticatedApp() {
+  const user = useAuthStore(selectAuthUser);
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <AppShell user={user}>
+      <AppRoutes user={user} />
+    </AppShell>
   );
 }

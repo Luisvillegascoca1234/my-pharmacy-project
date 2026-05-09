@@ -1,33 +1,31 @@
 import {
-  AuthenticatedUserSchema,
-  AuthSessionSchema,
   type AuthenticatedUser,
   type AuthSession,
   type LoginRequest
 } from "@pharmacy-pos/shared";
-import { apiRequest } from "@/api/client";
+import { axiosApi } from "@/api";
 
-export async function login(credentials: LoginRequest): Promise<AuthSession> {
-  const payload = await apiRequest<AuthSession>("/auth/login", {
-    method: "POST",
-    body: credentials
-  });
+export const authApi = {
+  async login(credentials: LoginRequest): Promise<AuthSession> {
+    const response = await axiosApi.post<AuthSession>("/auth/login", credentials, {
+      skipAuth: true,
+      skipUnauthorizedRedirect: true
+    });
 
-  return AuthSessionSchema.parse(payload);
-}
+    return response.data;
+  },
 
-export async function getCurrentUser(token: string, signal?: AbortSignal): Promise<AuthenticatedUser> {
-  const payload = await apiRequest<AuthenticatedUser>("/auth/me", {
-    token,
-    signal
-  });
+  async getCurrentUser(signal?: AbortSignal): Promise<AuthenticatedUser> {
+    const response = await axiosApi.get<AuthenticatedUser>("/auth/me", {
+      signal
+    });
 
-  return AuthenticatedUserSchema.parse(payload);
-}
+    return response.data;
+  },
 
-export async function logout(token: string): Promise<void> {
-  await apiRequest<void>("/auth/logout", {
-    method: "POST",
-    token
-  });
-}
+  async logout(): Promise<void> {
+    await axiosApi.post<void>("/auth/logout", undefined, {
+      skipUnauthorizedRedirect: true
+    });
+  }
+};

@@ -4,8 +4,9 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "pnpm dev:services && pnpm dev:apps",
-    "dev:services": "docker compose up -d postgres",
+    "dev": "pnpm dev:services && pnpm dev:prepare && pnpm dev:apps",
+    "dev:services": "docker compose up -d postgres && powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/wait-for-postgres.ps1",
+    "dev:prepare": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev-prepare.ps1",
     "dev:apps": "concurrently -n backend,frontend -c blue,green \"pnpm --filter @pharmacy-pos/backend dev\" \"pnpm --filter @pharmacy-pos/frontend dev\"",
     "typecheck": "pnpm --recursive typecheck",
     "build": "pnpm --recursive build"

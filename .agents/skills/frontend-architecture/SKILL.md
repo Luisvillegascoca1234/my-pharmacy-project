@@ -11,13 +11,19 @@ Before changing frontend code, read `references/lineamientos-arquitectura-fronte
 
 Apply the referenced guidelines as the architectural source of truth:
 
-- Organize Vite React code by responsibility: pages, routes, layouts, modules, app components, UI primitives, shared contracts, API clients, and technical clients.
+- Organize Vite React code by responsibility: pages, routes, layouts, app components, UI primitives, shared contracts, API clients, technical clients, and portable data modules.
 - Keep pages focused on route composition and presentation state.
-- Keep feature behavior inside `src/modules/<feature>` behind a small public `index.ts`.
+- Keep feature data behavior inside `src/modules/<feature>` behind a small public `index.ts`.
+- Treat `src/modules` as a portable data layer that could be packaged for another UI such as React Native.
+- Never put React components, JSX/TSX, DOM/browser UI APIs, Tailwind/CSS, icons, layouts, routes, page copy, labels, placeholders, or other visual concerns inside `src/modules`.
+- Keep UI tied to a feature in `src/pages` or `src/components`, consuming only public module hooks/facades/selectors.
 - Prefer the flow `page -> module hook/facade -> store/api`.
-- Keep API clients transport-only, and put coordination, mapping, normalization, and user-facing errors in facades, hooks, schemas, or utils.
+- Keep API clients transport-only: build endpoints, pass params/payloads, and return `response.data`.
+- Put coordination, mapping, normalization, and data-oriented errors in facades, hooks, schemas, or utils; keep final visible copy in UI or i18n.
+- Keep module stores split into `State`, `Actions`, `Selectors`, and `Store`; stores coordinate data only and must not navigate, show toasts, open modals, or import UI.
 - Use stable Zustand selectors and avoid reading whole stores or returning fresh fallback objects from selectors.
-- Use semantic constants, UI tokens, i18n keys, and shared schemas instead of hardcoded values.
+- Use semantic data constants in modules; UI labels, display mappings, tokens, i18n keys, and styling decisions belong outside `src/modules`.
+- When reviewing or editing `src/modules`, reject or remove `components/`, `.tsx`, UI imports, router imports, DOM globals, and visual copy.
 - Validate risky frontend changes with lint, typecheck, tests, or visual/browser checks depending on the touched surface.
 
 When implementation details conflict with existing code, prefer the smallest change that moves the touched area toward these guidelines without unrelated refactors.

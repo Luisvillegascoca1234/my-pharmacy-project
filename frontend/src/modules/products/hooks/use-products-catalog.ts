@@ -1,60 +1,29 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CreateProduct, Product, ProductCategory, UpdateProduct, UpdateProductUnits } from "@pharmacy-pos/shared";
-import { useAuthStore } from "@/modules/auth";
-import { listUnits } from "@/modules/units/api/units-api";
-import type { Unit } from "@pharmacy-pos/shared";
-import {
-  createProduct,
-  listProductCategories,
-  listProducts,
-  updateProduct,
-  updateProductUnits
-} from "../api/products-api";
-
-type CatalogStatus = "idle" | "loading" | "success" | "error";
+import { useCallback, useEffect, useMemo } from "react";
+import type { CreateProduct, UpdateProductUnits } from "@pharmacy-pos/shared";
+import { useShallow } from "zustand/react/shallow";
+import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
+import { selectProductsCatalogActions, selectProductsCatalogState } from "../store/ProductsCatalogSelectors";
+import { useProductsCatalogStore } from "../store/ProductsCatalogStore";
 
 export function useProductsCatalog() {
-  const token = useAuthStore((state) => state.token);
-  const user = useAuthStore((state) => state.user);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<CatalogStatus>("idle");
-  const [error, setError] = useState<string | null>(null);
+  const token = useAuthStore(selectAuthToken);
+  const user = useAuthStore(selectAuthUser);
+  const { categories, error, products, search, status, units } = useProductsCatalogStore(useShallow(selectProductsCatalogState));
+  const { loadCatalog: loadCatalogFromStore, reset, saveProduct: saveProductToStore, saveProductUnits: saveProductUnitsToStore, setSearch } =
+    useProductsCatalogStore(useShallow(selectProductsCatalogActions));
 
   const canManage = user?.role.name === "superadmin" || user?.role.name === "admin";
 
   const loadCatalog = useCallback(
     async (signal?: AbortSignal) => {
       if (!token) {
+        reset();
         return;
       }
 
-      setStatus("loading");
-      setError(null);
-
-      try {
-        const [nextProducts, nextCategories, nextUnits] = await Promise.all([
-          listProducts(token, search, signal),
-          listProductCategories(token, signal),
-          listUnits(token, signal)
-        ]);
-
-        setProducts(nextProducts);
-        setCategories(nextCategories);
-        setUnits(nextUnits);
-        setStatus("success");
-      } catch (nextError) {
-        if (nextError instanceof DOMException && nextError.name === "AbortError") {
-          return;
-        }
-
-        setError(nextError instanceof Error ? nextError.message : "No se pudo cargar el catálogo.");
-        setStatus("error");
-      }
+      await loadCatalogFromStore(search, signal);
     },
-    [search, token]
+    [loadCatalogFromStore, reset, search, token]
   );
 
   useEffect(() => {
@@ -71,15 +40,9 @@ export function useProductsCatalog() {
         return;
       }
 
-      if (productId) {
-        await updateProduct(token, productId, input as UpdateProduct);
-      } else {
-        await createProduct(token, input);
-      }
-
-      await loadCatalog();
+      await saveProductToStore(input, productId);
     },
-    [loadCatalog, token]
+    [saveProductToStore, token]
   );
 
   const saveProductUnits = useCallback(
@@ -88,10 +51,9 @@ export function useProductsCatalog() {
         return;
       }
 
-      await updateProductUnits(token, productId, input);
-      await loadCatalog();
+      await saveProductUnitsToStore(productId, input);
     },
-    [loadCatalog, token]
+    [saveProductUnitsToStore, token]
   );
 
   return useMemo(
@@ -108,6 +70,6 @@ export function useProductsCatalog() {
       saveProduct,
       saveProductUnits
     }),
-    [canManage, categories, error, loadCatalog, products, saveProduct, saveProductUnits, search, status, units]
+    [canManage, categories, error, loadCatalog, products, saveProduct, saveProductUnits, search, setSearch, status, units]
   );
 }

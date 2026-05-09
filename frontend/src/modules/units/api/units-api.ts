@@ -1,21 +1,18 @@
-import { CreateUnitSchema, UnitSchema, type CreateUnit, type Unit } from "@pharmacy-pos/shared";
-import { apiRequest } from "@/api/client";
+import type { CreateUnit, Unit } from "@pharmacy-pos/shared";
+import { axiosApi } from "@/api";
 
-export async function listUnits(token: string, signal?: AbortSignal): Promise<Unit[]> {
-  const payload = await apiRequest<Unit[]>("/units", {
-    token,
-    signal
-  });
+export const unitsApi = {
+  async listUnits(signal?: AbortSignal): Promise<Unit[]> {
+    const response = await axiosApi.get<Unit[]>("/units", {
+      signal
+    });
 
-  return UnitSchema.array().parse(payload);
-}
+    return response.data;
+  },
 
-export async function createUnit(token: string, input: CreateUnit): Promise<Unit> {
-  const payload = await apiRequest<Unit>("/units", {
-    method: "POST",
-    token,
-    body: CreateUnitSchema.parse(input)
-  });
+  async createUnit(input: CreateUnit): Promise<Unit> {
+    const response = await axiosApi.post<Unit>("/units", input);
 
-  return UnitSchema.parse(payload);
-}
+    return response.data;
+  }
+};

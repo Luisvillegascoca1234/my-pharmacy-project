@@ -1,8 +1,12 @@
-import { HealthStatusSchema, type HealthStatus } from "@pharmacy-pos/shared";
-import { apiGet } from "../../../api/client";
+import type { HealthStatus } from "@pharmacy-pos/shared";
+import { axiosApi } from "@/api";
 
-export async function getHealthStatus(signal?: AbortSignal): Promise<HealthStatus> {
-  const payload = await apiGet<HealthStatus>("/health", signal);
+export const healthApi = {
+  async getHealthStatus(signal?: AbortSignal): Promise<HealthStatus> {
+    const response = await axiosApi.get<HealthStatus>("/health", {
+      signal
+    });
 
-  return HealthStatusSchema.parse(payload);
-}
+    return response.data;
+  }
+};

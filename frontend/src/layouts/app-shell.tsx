@@ -13,16 +13,15 @@ import { AppSidebar } from "./app-sidebar";
 type AppShellProps = {
   children: ReactNode;
   user: AuthenticatedUser;
-  onLogout: () => void;
 };
 
-export function AppShell({ children, user, onLogout }: AppShellProps) {
+export function AppShell({ children, user }: AppShellProps) {
   const location = useLocation();
   const title = getRouteTitle(location.pathname);
 
   return (
     <SidebarProvider>
-      <AppSidebar user={user} onLogout={onLogout} />
+      <AppSidebar user={user} />
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
           <SidebarTrigger aria-label="Alternar navegación" />

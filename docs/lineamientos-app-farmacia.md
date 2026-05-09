@@ -551,7 +551,7 @@ El objetivo es que frontend y backend usen contratos comunes para:
 
 La recomendacion es definir schemas con Zod y derivar tipos TypeScript desde ellos. Esto evita duplicar validaciones y reduce inconsistencias entre formularios, API y reglas de negocio.
 
-La estructura tecnica del backend queda definida en `docs/lineamientos-arquitectura-backend.md`, usando arquitectura por capas adaptada a Express, TypeScript, Prisma y PostgreSQL.
+La estructura tecnica del backend queda definida en `.agents/skills/backend-architecture/references/lineamientos-arquitectura-backend.md`, usando arquitectura por capas adaptada a Express, TypeScript, Prisma y PostgreSQL.
 
 ## 22. Esquema conceptual principal
 

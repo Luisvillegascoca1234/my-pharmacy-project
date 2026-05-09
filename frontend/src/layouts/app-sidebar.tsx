@@ -1,6 +1,6 @@
 import type { AuthenticatedUser } from "@pharmacy-pos/shared";
 import { ChevronDown, LogOut, PillBottle, UserCircle } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -28,11 +28,11 @@ import { getVisibleNavigationGroups } from "@/routes/navigation";
 
 type AppSidebarProps = {
   user: AuthenticatedUser;
-  onLogout: () => void;
 };
 
-export function AppSidebar({ user, onLogout }: AppSidebarProps) {
+export function AppSidebar({ user }: AppSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const groups = getVisibleNavigationGroups(user.role.name);
 
   return (
@@ -119,7 +119,7 @@ export function AppSidebar({ user, onLogout }: AppSidebarProps) {
                   <UserCircle aria-hidden="true" />
                   Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onLogout} variant="destructive">
+                <DropdownMenuItem onSelect={() => navigate("/logout", { replace: true })} variant="destructive">
                   <LogOut aria-hidden="true" />
                   Cerrar sesión
                 </DropdownMenuItem>

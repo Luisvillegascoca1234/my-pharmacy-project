@@ -1,46 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CreateProductCategory, CreateUnit, ProductCategory, Unit } from "@pharmacy-pos/shared";
-import { useAuthStore } from "@/modules/auth";
-import { createProductCategory, listProductCategories } from "@/modules/products/api/products-api";
-import { createUnit, listUnits } from "../api/units-api";
-
-type CatalogStatus = "idle" | "loading" | "success" | "error";
+import { useCallback, useEffect, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
+import { selectUnitsCatalogActions, selectUnitsCatalogState } from "../store/UnitsCatalogSelectors";
+import { useUnitsCatalogStore } from "../store/UnitsCatalogStore";
 
 export function useUnitsCatalog() {
-  const token = useAuthStore((state) => state.token);
-  const user = useAuthStore((state) => state.user);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
-  const [status, setStatus] = useState<CatalogStatus>("idle");
-  const [error, setError] = useState<string | null>(null);
+  const token = useAuthStore(selectAuthToken);
+  const user = useAuthStore(selectAuthUser);
+  const { categories, error, status, units } = useUnitsCatalogStore(useShallow(selectUnitsCatalogState));
+  const { loadCatalog: loadCatalogFromStore, reset, saveCategory, saveUnit } = useUnitsCatalogStore(useShallow(selectUnitsCatalogActions));
 
   const canManage = user?.role.name === "superadmin" || user?.role.name === "admin";
 
   const loadCatalog = useCallback(
     async (signal?: AbortSignal) => {
       if (!token) {
+        reset();
         return;
       }
 
-      setStatus("loading");
-      setError(null);
-
-      try {
-        const [nextUnits, nextCategories] = await Promise.all([listUnits(token, signal), listProductCategories(token, signal)]);
-
-        setUnits(nextUnits);
-        setCategories(nextCategories);
-        setStatus("success");
-      } catch (nextError) {
-        if (nextError instanceof DOMException && nextError.name === "AbortError") {
-          return;
-        }
-
-        setError(nextError instanceof Error ? nextError.message : "No se pudieron cargar los catálogos.");
-        setStatus("error");
-      }
+      await loadCatalogFromStore(signal);
     },
-    [token]
+    [loadCatalogFromStore, reset, token]
   );
 
   useEffect(() => {
@@ -50,30 +31,6 @@ export function useUnitsCatalog() {
 
     return () => controller.abort();
   }, [loadCatalog]);
-
-  const saveUnit = useCallback(
-    async (input: CreateUnit) => {
-      if (!token) {
-        return;
-      }
-
-      await createUnit(token, input);
-      await loadCatalog();
-    },
-    [loadCatalog, token]
-  );
-
-  const saveCategory = useCallback(
-    async (input: CreateProductCategory) => {
-      if (!token) {
-        return;
-      }
-
-      await createProductCategory(token, input);
-      await loadCatalog();
-    },
-    [loadCatalog, token]
-  );
 
   return useMemo(
     () => ({

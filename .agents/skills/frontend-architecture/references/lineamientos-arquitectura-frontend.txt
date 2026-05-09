@@ -5,9 +5,9 @@ Este documento define lineamientos de arquitectura para una aplicación React nu
 ## Principios
 
 - El código debe estar organizado por responsabilidad, no por conveniencia de import.
-- Las páginas componen flujos; los módulos encapsulan comportamiento; los componentes renderizan UI.
+- Las páginas componen flujos; los módulos encapsulan datos y comportamiento portable; los componentes renderizan UI.
 - Las APIs de bajo nivel no deben filtrarse hacia páginas o componentes de presentación.
-- Los módulos deben ser profundos internamente y pequeños hacia afuera.
+- Los módulos deben ser profundos internamente, pequeños hacia afuera y reutilizables fuera de la app web.
 - El código compartido debe ser realmente reutilizable y no contener lógica específica de pantallas.
 - Los valores semánticos deben tener nombre: evita magic numbers, magic strings y colores crudos.
 - El estado global debe leerse con selectores estables, no con objetos completos.
@@ -39,7 +39,7 @@ Responsabilidades:
 - `src/pages`: pantallas asociadas a rutas.
 - `src/routes`: definición de rutas, guards y route-level composition.
 - `src/layouts`: shells persistentes, navegación y regiones comunes.
-- `src/modules`: features con comportamiento, estado, APIs y hooks propios.
+- `src/modules`: capa portable de datos por feature: contratos, APIs, facades, hooks de datos, stores, schemas y utils. Debe poder empaquetarse para otra UI, incluso React Native.
 - `src/components`: componentes reutilizables dentro de la app.
 - `src/ui`: primitivas visuales, tokens, utilidades de UI y wrappers genéricos.
 - `src/shared`: DTOs, entidades, enums, constantes y utilidades puras compartidas por más de una feature.
@@ -50,19 +50,19 @@ Reglas:
 
 - No pongas lógica de pantalla dentro de `src/ui`.
 - No pongas componentes React dentro de `src/shared`.
+- No pongas componentes React, JSX, estilos, rutas, layouts, iconos, copy de pantalla ni dependencias DOM dentro de `src/modules`.
 - No dupliques primitivas genéricas en `src/components` si pertenecen al sistema de UI.
 - No muevas código a `src/shared` hasta que exista reutilización real.
 
 ## Módulos De Feature
 
-Cada feature debe vivir en `src/modules/<feature>` y exponer una interfaz pública pequeña desde `index.ts`.
+Cada feature debe vivir en `src/modules/<feature>` y exponer una interfaz pública pequeña desde `index.ts`. Un módulo es una capa de datos portable: debe ser consumible por una app web, una app React Native u otra interfaz sin arrastrar UI web.
 
 Forma recomendada:
 
 ```txt
 src/modules/<feature>/
   api/
-  components/
   constants/
   facades/
   hooks/
@@ -76,10 +76,9 @@ src/modules/<feature>/
 Responsabilidades:
 
 - `api/`: clientes HTTP, WebSocket, SignalR, adapters o integraciones externas. Solo transporte.
-- `components/`: componentes específicos de la feature que no son reutilizables a nivel app.
-- `constants/`: límites, claves, rutas, duraciones, nombres de eventos y valores semánticos.
+- `constants/`: límites, claves de dominio, nombres de eventos y valores semánticos de datos. No copy visible ni labels de UI.
 - `facades/`: operaciones de aplicación que coordinan API, store, normalización o persistencia.
-- `hooks/`: hooks consumidos por páginas, layouts o componentes app-level.
+- `hooks/`: hooks de datos consumidos por páginas, layouts o componentes app-level. Pueden usar React/Zustand, pero no DOM, router ni componentes.
 - `schemas/`: validación, coerción y normalización con Zod u otra librería.
 - `store/`: estado, acciones, selectores e implementación del store.
 - `types/`: tipos propios de la feature que no pertenecen a `src/shared`.
@@ -92,6 +91,11 @@ Reglas:
 - Evita imports profundos hacia `modules/<feature>/api`, `store` o `utils` desde páginas.
 - Mantén `api/` libre de modelos de UI, localStorage, env readers, error mapping y normalización local.
 - Si una pantalla necesita una operación compleja, crea un hook o facade de módulo.
+- No crees carpetas `components/`, `pages/`, `layouts/`, `routes/`, `styles/` ni archivos `.tsx` dentro de `src/modules`.
+- No importes desde `src/components`, `src/ui`, `src/pages`, `src/layouts`, `react-router`, librerías de iconos, CSS/Tailwind o APIs DOM dentro de `src/modules`.
+- No pongas textos visibles de producto, labels, placeholders, tooltips ni mensajes de layout en `src/modules`; ese copy vive en `pages`, `components` o i18n.
+- No uses storage de navegador directamente en `src/modules`. Si un store necesita persistencia, usa una clave/contrato portable y configura el adapter desde una capa app-level o `src/clients`.
+- El barrel `index.ts` de un módulo solo debe exportar hooks de datos, facades, stores reset/selectors públicos, tipos, schemas y constantes de dominio. Nunca exporta componentes.
 
 Flujo preferido:
 
@@ -134,8 +138,14 @@ Reglas:
 Usa estos límites:
 
 - `src/components`: UI reutilizable dentro de la app, pero no genérica para el sistema de UI.
-- `src/modules/<feature>/components`: UI acoplada a una feature.
+- `src/pages/<feature>` o `src/pages/<feature>-page.tsx`: UI acoplada a una pantalla o feature específica.
 - `src/ui`: primitivas genéricas, tokenizadas, accesibles y reutilizables.
+
+Reglas:
+
+- Si renderiza JSX, usa clases CSS/Tailwind, importa iconos, lee router params o muestra copy, no pertenece a `src/modules`.
+- Una pantalla puede importar hooks/facades desde `src/modules/<feature>` y convertir esos datos en UI local.
+- Un componente reutilizable puede importar hooks de módulo solo cuando representa una pieza app-level, pero no debe importar internals profundos del módulo.
 
 ## API Y Clientes
 
@@ -153,9 +163,11 @@ src/modules/orders/api/
 Reglas:
 
 - Autenticación, locale, session headers y manejo base de errores van en el cliente global.
-- Los clientes de feature solo construyen endpoints y devuelven `response.data`.
+- Los clientes de feature solo construyen endpoints, pasan `params`/payloads y devuelven `response.data`.
 - Request builders, mappers, error messages de producto y normalización van en `utils`, `schemas` o `facades`.
 - No llames APIs de feature directamente desde páginas si la operación pertenece al comportamiento del módulo.
+- Los clientes `api/` no parsean formularios, no conocen copy de usuario, no actualizan stores y no deciden navegación.
+- Los errores técnicos se transforman en el cliente base; los mensajes de experiencia de usuario se deciden en hooks/facades app-level o UI.
 
 Ejemplo:
 
@@ -171,7 +183,7 @@ export const ordersApi = {
 
 ## Facades Y Hooks De Aplicación
 
-Usa facades cuando una operación coordina varias piezas.
+Usa facades cuando una operación coordina varias piezas. Las facades son la frontera de casos de uso del módulo: pueden llamar APIs, stores, schemas, mappers y clientes técnicos, pero no renderizan UI ni importan componentes.
 
 Buen uso de facade:
 
@@ -181,7 +193,7 @@ Buen uso de facade:
 - resolver una acción de detalle desde URL;
 - centralizar una mutación con optimistic update o versionado.
 
-Usa hooks cuando la feature necesita una interfaz React.
+Usa hooks cuando la feature necesita una interfaz React de datos. El hook puede seleccionar estado, exponer acciones estables, disparar cargas y adaptar errores a un contrato de datos; no debe leer router params, renderizar JSX ni contener copy visual.
 
 ```ts
 export function useOrderDetailShell() {
@@ -197,7 +209,7 @@ export function useOrderDetailShell() {
 
 ## Zustand Store Pattern
 
-Los stores deben separar estado, acciones, selectores e implementación.
+Los stores deben separar estado, acciones, selectores e implementación. El store es parte de `src/modules`, por lo tanto debe ser portable y no depender de UI web.
 
 ```txt
 store/
@@ -216,6 +228,10 @@ Reglas:
 - Lee desde el store mediante selectores, no mediante el objeto completo.
 - Usa `useShallow(...)` cuando un selector devuelva objetos o arrays.
 - No devuelvas fallback arrays u objetos frescos desde selectores; define constantes de módulo.
+- Las acciones públicas del store orquestan flujos de datos y delegan transporte a facades o APIs; no deben navegar, mostrar toasts, abrir modales ni renderizar UI.
+- Las acciones destructivas deben ser conservadoras; evita optimistic updates en deletes salvo que exista recuperación clara.
+- Los stores no importan componentes, `react-router`, CSS, iconos ni helpers de UI.
+- Si usas persistencia, aísla nombres de claves y adapters para no acoplar el store a `window.localStorage`.
 
 Ejemplo:
 
@@ -258,6 +274,8 @@ Centraliza:
 - nombres de query params;
 - duración de toasts.
 
+Dentro de `src/modules`, estas constantes deben ser de dominio/datos. Labels de tablas, copy de botones, placeholders, tooltips, textos de empty states y variantes visuales viven fuera de `modules`, en `pages`, `components` o i18n.
+
 Ejemplo:
 
 ```ts
@@ -268,7 +286,7 @@ export const ORDER_ID_SEARCH_PARAM = 'order'
 
 ## Diseño, Tokens Y Colores
 
-No hardcodees colores en páginas, componentes o módulos.
+No hardcodees colores en páginas o componentes. Los módulos no deben contener UI ni estilos.
 
 Evita:
 
@@ -292,11 +310,11 @@ Reglas:
 
 ## Theming
 
-Los tokens base viven en el sistema de UI. Los presets propios de la app viven en un módulo de tema.
+Los tokens base viven en el sistema de UI. Los presets propios de la app viven fuera de `src/modules` si contienen UI, CSS variables o detalles de plataforma.
 
 ```txt
 src/ui/globals.css
-src/modules/theme/
+src/clients/theme/
   hooks/
   presets/
   store/
@@ -310,6 +328,7 @@ Reglas:
 - Soporta `light`, `dark` y `system` si existe selección de tema.
 - Persiste preferencias sin sobrescribir configuraciones previas del usuario.
 - La inicialización de tema debe bloquear pantallas solo el mínimo necesario para evitar parpadeos.
+- No crees módulos de tema dentro de `src/modules` cuando dependan de DOM, CSS variables, `matchMedia`, `document` o storage web.
 
 ## i18n
 
@@ -341,14 +360,15 @@ src/i18n/
 Reglas:
 
 - Usa schemas para validación y normalización.
-- Mantén schemas cerca del módulo que los consume.
+- Mantén schemas de datos cerca del módulo que los consume.
+- Mantén schemas puramente visuales o de formularios complejos junto a la página si solo sirven a una pantalla.
 - Evita `watch()` de React Hook Form cuando `useWatch({ control, name })` resuelve el caso.
 - Mantén field components reutilizables libres de copy específica de una feature.
 - Las páginas no deben construir payloads complejos inline; usa mappers o facades.
 
 ## UI App-Level
 
-Comportamientos globales de UI deben vivir en un módulo de UI.
+Comportamientos globales de UI deben vivir fuera de `src/modules`, por ejemplo en `src/components`, `src/ui`, `src/layouts`, `src/clients` o una carpeta app-level dedicada.
 
 Ejemplos:
 
@@ -368,7 +388,7 @@ Reglas:
 
 Reglas:
 
-- Las rutas declaran composición; la lógica de hidratación de URL vive en hooks de módulo.
+- Las rutas declaran composición; la lógica de hidratación de URL vive en páginas o hooks app-level fuera de `src/modules`.
 - Si una pantalla usa query params para abrir una entidad o tab, el refresh del navegador debe restaurar el estado.
 - Los route params y search params deben tener constantes semánticas.
 - Los errores esperados de acceso o entidad inexistente deben resolverse con navegación clara.
@@ -381,6 +401,7 @@ Reglas:
 - Usa una interfaz de logging propia: `Logger.error`, `Logger.warn`, `Logger.info`, `Logger.debug`.
 - Centraliza traducción de errores técnicos a mensajes de usuario.
 - Los clientes base pueden capturar errores técnicos; las facades o hooks deciden experiencia de usuario.
+- Las facades y stores pueden exponer códigos/estados de error; la traducción final a copy visible pertenece a UI o i18n.
 
 ## Dependencias De UI
 
@@ -412,6 +433,10 @@ Validación recomendada:
 Evita:
 
 - páginas que importan `featureApi` directamente;
+- componentes, JSX, CSS, Tailwind, iconos o router dentro de `src/modules`;
+- labels de pantalla, placeholders o copy de producto dentro de `src/modules`;
+- stores que navegan, muestran toasts o abren modales;
+- facades que retornan modelos de UI o dependen de componentes;
 - stores leídos completos en muchos componentes;
 - selectores que crean arrays u objetos nuevos como fallback;
 - componentes que mezclan fetch, layout, validación y copy;
@@ -431,16 +456,18 @@ Evita:
 - Crear facade si la operación coordina más que un request simple.
 - Crear store separado en state, actions, selectors e implementación si hay estado compartido.
 - Crear hooks de módulo para consumo desde páginas.
-- Crear componentes internos solo si están acoplados a la feature.
+- Crear componentes o pantallas fuera de `src/modules`, en `src/pages` o `src/components`.
 - Exportar solo la interfaz pública desde el barrel.
+- Verificar que `src/modules/<feature>` no contenga `.tsx`, `components/`, imports de UI, imports de router ni copy visual.
 - Escribir pruebas para selectors, hooks o facades de mayor riesgo.
 
 ## Regla De Decisión Rápida
 
 - Si es una pantalla: `pages`.
-- Si es comportamiento de dominio o feature: `modules/<feature>`.
+- Si es comportamiento de dominio, datos o feature portable: `modules/<feature>`.
 - Si es UI reutilizable dentro de una app: `src/components`.
 - Si es UI genérica y tokenizada: `src/ui`.
 - Si es contrato o utilidad pura compartida entre features: `src/shared`.
 - Si es transporte externo: `modules/<feature>/api` o `src/api` para cliente base.
-- Si es coordinación de flujo: `facades` o `hooks`, no la página.
+- Si es coordinación de datos: `facades` o hooks de módulo.
+- Si es coordinación de UI, rutas, layout, URL o copy visible: `pages`, `components` o hooks app-level fuera de `modules`.

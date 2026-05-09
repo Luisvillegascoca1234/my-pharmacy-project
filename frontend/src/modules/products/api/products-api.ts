@@ -1,10 +1,4 @@
 import {
-  CreateProductCategorySchema,
-  CreateProductSchema,
-  ProductCategorySchema,
-  ProductSchema,
-  UpdateProductSchema,
-  UpdateProductUnitsSchema,
   type CreateProduct,
   type CreateProductCategory,
   type Product,
@@ -12,63 +6,47 @@ import {
   type UpdateProduct,
   type UpdateProductUnits
 } from "@pharmacy-pos/shared";
-import { apiRequest } from "@/api/client";
+import { axiosApi } from "@/api";
 
-export async function listProductCategories(token: string, signal?: AbortSignal): Promise<ProductCategory[]> {
-  const payload = await apiRequest<ProductCategory[]>("/product-categories", {
-    token,
-    signal
-  });
+export const productsApi = {
+  async listProductCategories(signal?: AbortSignal): Promise<ProductCategory[]> {
+    const response = await axiosApi.get<ProductCategory[]>("/product-categories", {
+      signal
+    });
 
-  return ProductCategorySchema.array().parse(payload);
-}
+    return response.data;
+  },
 
-export async function createProductCategory(token: string, input: CreateProductCategory): Promise<ProductCategory> {
-  const payload = await apiRequest<ProductCategory>("/product-categories", {
-    method: "POST",
-    token,
-    body: CreateProductCategorySchema.parse(input)
-  });
+  async createProductCategory(input: CreateProductCategory): Promise<ProductCategory> {
+    const response = await axiosApi.post<ProductCategory>("/product-categories", input);
 
-  return ProductCategorySchema.parse(payload);
-}
+    return response.data;
+  },
 
-export async function listProducts(token: string, search?: string, signal?: AbortSignal): Promise<Product[]> {
-  const params = search ? `?search=${encodeURIComponent(search)}` : "";
-  const payload = await apiRequest<Product[]>(`/products${params}`, {
-    token,
-    signal
-  });
+  async listProducts(search?: string, signal?: AbortSignal): Promise<Product[]> {
+    const response = await axiosApi.get<Product[]>("/products", {
+      params: search ? { search } : undefined,
+      signal
+    });
 
-  return ProductSchema.array().parse(payload);
-}
+    return response.data;
+  },
 
-export async function createProduct(token: string, input: CreateProduct): Promise<Product> {
-  const payload = await apiRequest<Product>("/products", {
-    method: "POST",
-    token,
-    body: CreateProductSchema.parse(input)
-  });
+  async createProduct(input: CreateProduct): Promise<Product> {
+    const response = await axiosApi.post<Product>("/products", input);
 
-  return ProductSchema.parse(payload);
-}
+    return response.data;
+  },
 
-export async function updateProduct(token: string, productId: string, input: UpdateProduct): Promise<Product> {
-  const payload = await apiRequest<Product>(`/products/${productId}`, {
-    method: "PATCH",
-    token,
-    body: UpdateProductSchema.parse(input)
-  });
+  async updateProduct(productId: string, input: UpdateProduct): Promise<Product> {
+    const response = await axiosApi.patch<Product>(`/products/${productId}`, input);
 
-  return ProductSchema.parse(payload);
-}
+    return response.data;
+  },
 
-export async function updateProductUnits(token: string, productId: string, input: UpdateProductUnits): Promise<Product> {
-  const payload = await apiRequest<Product>(`/products/${productId}/units`, {
-    method: "PUT",
-    token,
-    body: UpdateProductUnitsSchema.parse(input)
-  });
+  async updateProductUnits(productId: string, input: UpdateProductUnits): Promise<Product> {
+    const response = await axiosApi.put<Product>(`/products/${productId}/units`, input);
 
-  return ProductSchema.parse(payload);
-}
+    return response.data;
+  }
+};
