@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ThemeSelector } from "@/components/theme-selector";
 import { getRouteTitle } from "@/routes/app-routes";
 import { AppSidebar } from "./app-sidebar";
 
@@ -34,6 +35,7 @@ export function AppShell({ children, user }: AppShellProps) {
             {user.role.displayName}
           </Badge>
           <div className="ml-auto flex items-center gap-2">
+            <ThemeSelector />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button aria-label="Buscar en el sistema" size="icon" variant="outline">
