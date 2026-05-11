@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UserStatusSchema } from "./user.schema.js";
 
 export const LoginRequestSchema = z.object({
   email: z.string().email(),
@@ -11,7 +12,7 @@ export const AuthenticatedUserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   fullName: z.string(),
-  status: z.enum(["active", "inactive"]),
+  status: UserStatusSchema,
   role: z.object({
     id: z.string(),
     name: z.string(),

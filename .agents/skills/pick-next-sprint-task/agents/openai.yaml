@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pick Next Sprint Task"
+  short_description: "Pick the next unlocked sprint task"
+  default_prompt: "Use $pick-next-sprint-task to select the next available ticket from docs/prd/<feature-slug>/sprints, preferring the category implied by my prompt when its dependencies are unlocked."

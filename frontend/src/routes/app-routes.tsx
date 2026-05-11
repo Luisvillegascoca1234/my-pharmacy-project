@@ -4,6 +4,7 @@ import { DashboardPage } from "@/pages/dashboard-page";
 import { ModulePage } from "@/pages/module-page";
 import { ProductsPage } from "@/pages/products-page";
 import { UnitsPage } from "@/pages/units-page";
+import { UsersPage } from "@/pages/users-page";
 import { getVisibleNavigationItems, navigationItems } from "./navigation";
 
 type AppRoutesProps = {
@@ -26,6 +27,8 @@ export function AppRoutes({ user }: AppRoutesProps) {
               <ProductsPage />
             ) : item.key === "units" ? (
               <UnitsPage />
+            ) : item.key === "users" ? (
+              <UsersPage />
             ) : (
               <ModulePage description={item.description} icon={item.icon} title={item.label} />
             )

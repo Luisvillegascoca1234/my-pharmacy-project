@@ -1,0 +1,4 @@
+interface:
+  display_name: "To PRD"
+  short_description: "Draft a PRD and epic plan"
+  default_prompt: "Use $to-prd to turn the current conversation context, usually after $grill-me discovery, into docs/prd/<feature-slug>/PRD.md, docs/prd/<feature-slug>/epic.md, and an issue-ready summary."

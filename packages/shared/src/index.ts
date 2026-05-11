@@ -7,6 +7,26 @@ export type { AuthenticatedUser, AuthSession, LoginRequest } from "./schemas/aut
 export { HealthStatusSchema } from "./schemas/health-status.schema.js";
 export type { HealthStatus } from "./schemas/health-status.schema.js";
 export {
+  CreateUserSchema,
+  ResetUserPasswordSchema,
+  UpdateUserSchema,
+  UpdateUserStatusSchema,
+  UserRoleSchema,
+  UserSchema,
+  UsersQuerySchema,
+  UserStatusSchema
+} from "./schemas/user.schema.js";
+export type {
+  CreateUser,
+  ResetUserPassword,
+  UpdateUser,
+  UpdateUserStatus,
+  User,
+  UserRole,
+  UsersQuery,
+  UserStatus
+} from "./schemas/user.schema.js";
+export {
   CreateProductCategorySchema,
   CreateProductSchema,
   CreateUnitSchema,

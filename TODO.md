@@ -39,3 +39,8 @@
 - [ ] Ventas POS.
 - [ ] Imagenes de producto.
 - [ ] Importacion masiva.
+
+## Pendientes para SIAT
+
+- [ ] Definir `documentNumber` de compras cuando se implemente SIAT.
+- [ ] Validar si el documento del proveedor debe ser obligatorio y unico por proveedor.

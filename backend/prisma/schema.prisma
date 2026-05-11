@@ -10,6 +10,7 @@ datasource db {
 enum UserStatus {
   active
   inactive
+  blocked
 }
 
 enum ProductStatus {

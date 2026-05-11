@@ -1,9 +1,11 @@
 import { resetHealthStatusStore } from "@/modules/health";
 import { resetProductsCatalogStore } from "@/modules/products";
 import { resetUnitsCatalogStore } from "@/modules/units";
+import { resetUsersAdminStore } from "@/modules/users";
 
 export function resetSessionScopedState(): void {
   resetProductsCatalogStore();
   resetUnitsCatalogStore();
   resetHealthStatusStore();
+  resetUsersAdminStore();
 }

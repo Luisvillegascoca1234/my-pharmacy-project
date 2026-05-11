@@ -25,6 +25,14 @@ export const openApiDocument = {
     {
       name: "Catalogs",
       description: "Product categories, units, products, and product unit conversions"
+    },
+    {
+      name: "Roles",
+      description: "Role selection for administrative user management"
+    },
+    {
+      name: "Users",
+      description: "Superadmin user management and current user profile"
     }
   ],
   paths: {
@@ -102,6 +110,317 @@ export const openApiDocument = {
           },
           "401": {
             $ref: "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/roles": {
+      get: {
+        tags: ["Roles"],
+        summary: "List roles available for user assignment",
+        description: "Available to superadmin users.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Roles ordered by display name",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/UserRole"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      get: {
+        tags: ["Users"],
+        summary: "Get the authenticated user from the users module",
+        description: "Returns the current authenticated user without passwordHash.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Current safe user profile",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/users": {
+      get: {
+        tags: ["Users"],
+        summary: "List users",
+        description: "Available to superadmin users. Supports basic search and role/status filters.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "search",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string"
+            }
+          },
+          {
+            name: "roleId",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string"
+            }
+          },
+          {
+            name: "status",
+            in: "query",
+            required: false,
+            schema: {
+              $ref: "#/components/schemas/UserStatus"
+            }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Users ordered by full name",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Users"],
+        summary: "Create a user",
+        description: "Available to superadmin users. Duplicate emails return USER_EMAIL_IN_USE and creation writes USER_CREATED audit.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "User created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            description: "User email is already in use",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ApiError"
+                },
+                example: {
+                  message: "User email is already in use.",
+                  code: "USER_EMAIL_IN_USE"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      get: {
+        tags: ["Users"],
+        summary: "Get a user",
+        description: "Available to superadmin users.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/UserId" }],
+        responses: {
+          "200": {
+            description: "Safe user detail",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/UserNotFound"
+          }
+        }
+      },
+      patch: {
+        tags: ["Users"],
+        summary: "Update a user",
+        description: "Available to superadmin users. Role changes write USER_ROLE_CHANGED audit and cannot remove the last active superadmin.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/UserId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "User updated",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/UserNotFound"
+          },
+          "409": {
+            description: "User email is already in use"
+          }
+        }
+      }
+    },
+    "/users/{id}/status": {
+      patch: {
+        tags: ["Users"],
+        summary: "Update user status",
+        description: "Available to superadmin users. Cannot deactivate or block the last active superadmin.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/UserId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateUserStatusRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "User status updated",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/UserNotFound"
+          }
+        }
+      }
+    },
+    "/users/{id}/reset-password": {
+      post: {
+        tags: ["Users"],
+        summary: "Reset user password",
+        description: "Available to superadmin users. The superadmin defines the new password and USER_PASSWORD_RESET audit is written.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/UserId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ResetUserPasswordRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "204": {
+            description: "Password reset"
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/UserNotFound"
           }
         }
       }
@@ -524,6 +843,15 @@ export const openApiDocument = {
           type: "string"
         },
         description: "Product identifier"
+      },
+      UserId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "User identifier"
       }
     },
     responses: {
@@ -575,6 +903,20 @@ export const openApiDocument = {
             example: {
               message: "Product was not found.",
               code: "PRODUCT_NOT_FOUND"
+            }
+          }
+        }
+      },
+      UserNotFound: {
+        description: "User was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "User was not found.",
+              code: "USER_NOT_FOUND"
             }
           }
         }
@@ -649,6 +991,138 @@ export const openApiDocument = {
           }
         }
       },
+      UserStatus: {
+        type: "string",
+        enum: ["active", "inactive", "blocked"]
+      },
+      UserRole: {
+        type: "object",
+        required: ["id", "name", "displayName"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          name: {
+            type: "string",
+            example: "admin"
+          },
+          displayName: {
+            type: "string",
+            example: "Admin"
+          }
+        }
+      },
+      User: {
+        type: "object",
+        required: ["id", "email", "fullName", "roleId", "role", "permissions", "status", "createdAt", "updatedAt"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          email: {
+            type: "string",
+            format: "email"
+          },
+          fullName: {
+            type: "string"
+          },
+          roleId: {
+            type: "string"
+          },
+          role: {
+            $ref: "#/components/schemas/UserRole"
+          },
+          permissions: {
+            type: "array",
+            items: {
+              type: "string"
+            }
+          },
+          status: {
+            $ref: "#/components/schemas/UserStatus"
+          },
+          lastLoginAt: {
+            type: "string",
+            format: "date-time"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      CreateUserRequest: {
+        type: "object",
+        required: ["email", "fullName", "roleId", "password"],
+        properties: {
+          email: {
+            type: "string",
+            format: "email"
+          },
+          fullName: {
+            type: "string",
+            minLength: 2,
+            maxLength: 160
+          },
+          roleId: {
+            type: "string"
+          },
+          password: {
+            type: "string",
+            format: "password",
+            minLength: 6,
+            maxLength: 128
+          }
+        }
+      },
+      UpdateUserRequest: {
+        type: "object",
+        properties: {
+          email: {
+            type: "string",
+            format: "email"
+          },
+          fullName: {
+            type: "string",
+            minLength: 2,
+            maxLength: 160
+          },
+          roleId: {
+            type: "string"
+          }
+        }
+      },
+      UpdateUserStatusRequest: {
+        type: "object",
+        required: ["status"],
+        properties: {
+          status: {
+            $ref: "#/components/schemas/UserStatus"
+          }
+        }
+      },
+      ResetUserPasswordRequest: {
+        type: "object",
+        required: ["password", "confirmPassword"],
+        properties: {
+          password: {
+            type: "string",
+            format: "password",
+            minLength: 6,
+            maxLength: 128
+          },
+          confirmPassword: {
+            type: "string",
+            format: "password",
+            minLength: 6,
+            maxLength: 128
+          }
+        }
+      },
       AuthenticatedUser: {
         type: "object",
         required: ["id", "email", "fullName", "status", "role", "permissions"],
@@ -665,7 +1139,7 @@ export const openApiDocument = {
           },
           status: {
             type: "string",
-            enum: ["active", "inactive"]
+            enum: ["active", "inactive", "blocked"]
           },
           role: {
             $ref: "#/components/schemas/AuthRole"
