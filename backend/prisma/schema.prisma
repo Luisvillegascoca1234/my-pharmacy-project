@@ -26,18 +26,43 @@ enum ProductType {
   related_misc
 }
 
+enum SupplierStatus {
+  active
+  inactive
+}
+
+enum PurchaseStatus {
+  draft
+  received
+  cancelled
+}
+
+enum InventoryBatchStatus {
+  active
+  depleted
+  cancelled
+}
+
+enum InventoryMovementType {
+  purchase_received
+  purchase_cancelled
+}
+
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String
-  fullName     String
-  roleId       String
-  role         Role        @relation(fields: [roleId], references: [id])
-  status       UserStatus  @default(active)
-  lastLoginAt  DateTime?
-  auditLogs    AuditLog[]  @relation("AuditActor")
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  fullName           String
+  roleId             String
+  role               Role                @relation(fields: [roleId], references: [id])
+  status             UserStatus          @default(active)
+  lastLoginAt        DateTime?
+  auditLogs          AuditLog[]          @relation("AuditActor")
+  createdPurchases   Purchase[]          @relation("PurchaseCreatedBy")
+  receivedPurchases  Purchase[]          @relation("PurchaseReceivedBy")
+  inventoryMovements InventoryMovement[] @relation("InventoryMovementActor")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 model Role {
@@ -94,43 +119,47 @@ model ProductCategory {
 }
 
 model Unit {
-  id              String        @id @default(cuid())
-  name            String        @unique
-  abbreviation    String        @unique
-  description     String?
-  status          ProductStatus @default(active)
-  baseProducts    Product[]     @relation("ProductBaseUnit")
-  productUnits    ProductUnit[]
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String         @id @default(cuid())
+  name          String         @unique
+  abbreviation  String         @unique
+  description   String?
+  status        ProductStatus  @default(active)
+  baseProducts  Product[]      @relation("ProductBaseUnit")
+  productUnits  ProductUnit[]
+  purchaseItems PurchaseItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Product {
-  id                    String          @id @default(cuid())
-  internalCode          String          @unique
-  barcode               String?         @unique
-  commercialName        String
-  genericName           String?
-  description           String?
-  type                  ProductType
-  categoryId            String
-  category              ProductCategory @relation(fields: [categoryId], references: [id])
-  baseUnitId            String
-  baseUnit              Unit            @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
-  laboratoryName        String?
-  sanitaryRegistration  String?
-  isMedicine            Boolean         @default(false)
-  isOverTheCounter      Boolean         @default(false)
-  requiresPrescription  Boolean         @default(false)
-  isInventoryTracked    Boolean         @default(true)
-  requiresBatch         Boolean         @default(true)
-  requiresExpiration    Boolean         @default(true)
-  minimumStock          Decimal         @default(0) @db.Decimal(12, 4)
-  salePrice             Decimal         @db.Decimal(12, 2)
-  status                ProductStatus   @default(active)
-  units                 ProductUnit[]
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  id                   String              @id @default(cuid())
+  internalCode         String              @unique
+  barcode              String?             @unique
+  commercialName       String
+  genericName          String?
+  description          String?
+  type                 ProductType
+  categoryId           String
+  category             ProductCategory     @relation(fields: [categoryId], references: [id])
+  baseUnitId           String
+  baseUnit             Unit                @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
+  laboratoryName       String?
+  sanitaryRegistration String?
+  isMedicine           Boolean             @default(false)
+  isOverTheCounter     Boolean             @default(false)
+  requiresPrescription Boolean             @default(false)
+  isInventoryTracked   Boolean             @default(true)
+  requiresBatch        Boolean             @default(true)
+  requiresExpiration   Boolean             @default(true)
+  minimumStock         Decimal             @default(0) @db.Decimal(12, 4)
+  salePrice            Decimal             @db.Decimal(12, 2)
+  status               ProductStatus       @default(active)
+  units                ProductUnit[]
+  purchaseItems        PurchaseItem[]
+  inventoryBatches     InventoryBatch[]
+  inventoryMovements   InventoryMovement[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -149,4 +178,137 @@ model ProductUnit {
 
   @@unique([productId, unitId])
   @@index([unitId])
+}
+
+model Supplier {
+  id           String         @id @default(cuid())
+  businessName String
+  nit          String?        @unique
+  phone        String?
+  address      String?
+  contactName  String?
+  status       SupplierStatus @default(active)
+  purchases    Purchase[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([businessName])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Purchase {
+  id               String         @id @default(cuid())
+  supplierId       String
+  supplier         Supplier       @relation(fields: [supplierId], references: [id])
+  purchaseDate     DateTime       @db.Date
+  status           PurchaseStatus @default(draft)
+  totalAmount      Decimal        @default(0) @db.Decimal(12, 2)
+  createdByUserId  String
+  createdByUser    User           @relation("PurchaseCreatedBy", fields: [createdByUserId], references: [id])
+  receivedByUserId String?
+  receivedByUser   User?          @relation("PurchaseReceivedBy", fields: [receivedByUserId], references: [id])
+  receivedAt       DateTime?
+  cancelledAt      DateTime?
+  notes            String?
+  receiveNotes     String?
+  cancelReason     String?
+  items            PurchaseItem[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([supplierId])
+  @@index([purchaseDate])
+  @@index([status])
+  @@index([createdByUserId])
+  @@index([receivedByUserId])
+  @@index([supplierId, purchaseDate])
+  @@index([status, purchaseDate])
+}
+
+model PurchaseItem {
+  id                 String              @id @default(cuid())
+  purchaseId         String
+  purchase           Purchase            @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product             @relation(fields: [productId], references: [id])
+  unitId             String
+  unit               Unit                @relation(fields: [unitId], references: [id])
+  quantity           Decimal             @db.Decimal(12, 4)
+  unitCost           Decimal             @db.Decimal(12, 2)
+  conversionFactor   Decimal             @db.Decimal(12, 4)
+  baseQuantity       Decimal             @db.Decimal(12, 4)
+  baseUnitCost       Decimal             @db.Decimal(12, 4)
+  lineTotal          Decimal             @db.Decimal(12, 2)
+  isInventoryTracked Boolean             @default(true)
+  batchNumber        String?
+  expirationDate     DateTime?           @db.Date
+  inventoryBatch     InventoryBatch?
+  inventoryMovements InventoryMovement[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([purchaseId])
+  @@index([productId])
+  @@index([unitId])
+  @@index([batchNumber])
+  @@index([expirationDate])
+  @@index([productId, batchNumber])
+  @@index([productId, expirationDate])
+}
+
+model InventoryBatch {
+  id                String               @id @default(cuid())
+  purchaseItemId    String               @unique
+  purchaseItem      PurchaseItem         @relation(fields: [purchaseItemId], references: [id])
+  productId         String
+  product           Product              @relation(fields: [productId], references: [id])
+  originalQuantity  Decimal              @db.Decimal(12, 4)
+  availableQuantity Decimal              @db.Decimal(12, 4)
+  baseUnitCost      Decimal              @db.Decimal(12, 4)
+  batchNumber       String?
+  expirationDate    DateTime?            @db.Date
+  status            InventoryBatchStatus @default(active)
+  movements         InventoryMovement[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([productId])
+  @@index([batchNumber])
+  @@index([expirationDate])
+  @@index([status])
+  @@index([productId, status])
+  @@index([productId, batchNumber])
+  @@index([productId, expirationDate])
+  @@index([status, expirationDate])
+}
+
+model InventoryMovement {
+  id              String                @id @default(cuid())
+  batchId         String
+  batch           InventoryBatch        @relation(fields: [batchId], references: [id])
+  productId       String
+  product         Product               @relation(fields: [productId], references: [id])
+  type            InventoryMovementType
+  quantityBase    Decimal               @db.Decimal(12, 4)
+  unitCostBase    Decimal               @db.Decimal(12, 4)
+  referenceType   String
+  referenceId     String
+  referenceItemId String?
+  referenceItem   PurchaseItem?         @relation(fields: [referenceItemId], references: [id])
+  actorUserId     String?
+  actorUser       User?                 @relation("InventoryMovementActor", fields: [actorUserId], references: [id])
+  reason          String?
+  createdAt       DateTime              @default(now())
+
+  @@index([batchId])
+  @@index([productId])
+  @@index([type])
+  @@index([referenceType, referenceId])
+  @@index([referenceItemId])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@index([productId, createdAt])
+  @@index([productId, type])
+  @@index([batchId, createdAt])
 }

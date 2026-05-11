@@ -1,6 +1,6 @@
 # Ticket 06 - Update Thesis With Sprint Evidence
 
-- Status: TODO
+- Status: DONE
 - Category: INFRA
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 05
@@ -33,3 +33,10 @@ If the thesis document is missing context needed to explain this sprint, reconst
 - la implementacion se describe a nivel arquitectonico y de flujo de datos, sin copiar fragmentos extensos de codigo
 - las limitaciones del Sprint 01 quedan claras y no se confunden con el cierre del epic
 - cualquier supuesto academico no resuelto queda documentado como pendiente, no como hecho
+
+## Execution Notes
+
+- Se actualizo `tesis/chapters/03-case-study.tex` con evidencia academica del Sprint 01 en las secciones de requerimientos, analisis y diseno, desarrollo y pruebas.
+- La tesis describe contratos compartidos Zod, paginacion, modelos Prisma, migracion, relaciones, indices, capas internas de inventario y movimientos a nivel arquitectonico.
+- Se dejo explicito que el Sprint 01 no implementa endpoints, services transaccionales, repositories, OpenAPI completo, stores Zustand ni pantallas de proveedores/compras.
+- La validacion documentada se apoyo en la evidencia ya registrada por el ticket 05: `prisma:generate` correcto, typecheck de `@pharmacy-pos/shared` correcto y typecheck backend bloqueado por deuda previa de autenticacion no relacionada.

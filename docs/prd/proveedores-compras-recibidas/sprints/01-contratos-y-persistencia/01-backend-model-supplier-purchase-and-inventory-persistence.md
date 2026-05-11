@@ -1,6 +1,6 @@
 # Ticket 01 - Model Supplier Purchase And Inventory Persistence
 
-- Status: TODO
+- Status: DONE
 - Category: BACKEND
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 02

@@ -2,19 +2,39 @@
 
 \section{Ingeniería de requerimientos}
 
-En esta sección se identifican los actores, necesidades, requerimientos funcionales, requerimientos no funcionales y restricciones del caso de estudio.
+El caso de estudio corresponde al desarrollo incremental de un sistema de punto de venta para farmacia. En la etapa analizada, el problema técnico se concentra en preparar el registro confiable de proveedores y compras recibidas, de modo que una operación comercial futura pueda convertirse en inventario por lote, movimientos trazables y evidencia administrativa.
+
+Los actores funcionales previstos para este flujo son el administrador y el superadministrador, quienes podrán gestionar proveedores y compras, y el vendedor, que no debe operar estos módulos administrativos. La necesidad principal no se limita a registrar datos de una factura o nota de compra: el sistema debe conservar la relación entre proveedor, productos, unidades comerciales, cantidades normalizadas, costos, lote, vencimiento, usuario responsable y estado de la operación. Esta relación es necesaria para que el inventario no nazca de ajustes manuales aislados, sino de una compra recibida y auditada.
+
+El primer corte de implementación del flujo, documentado como Sprint 01 de proveedores y compras recibidas, no entrega todavía la operación completa al usuario final. Su alcance se limita a contratos compartidos, modelo relacional, migración de base de datos y guardrails técnicos. Esta delimitación es relevante para la tesis porque evidencia una estrategia de construcción por capas: antes de implementar endpoints, servicios transaccionales o pantallas, se estabilizan las estructuras de datos y los contratos que sostendrán el flujo.
 
 \section{Análisis y diseño}
 
-El análisis y diseño debe incluir la arquitectura de software propuesta, los componentes principales, los criterios técnicos utilizados y los diagramas necesarios para explicar la solución.
+El diseño mantiene la separación entre contratos compartidos, backend modular y persistencia relacional. En el paquete \texttt{@pharmacy-pos/shared} se definieron esquemas Zod para proveedores, compras, ítems de compra, recepción, anulación y paginación. Estos contratos describen las fronteras de datos esperadas por cliente y servidor, incluyendo paginación \textit{1-based}, tamaño máximo de página, estados de proveedor, estados de compra, fechas puras para \texttt{purchaseDate} y \texttt{expirationDate}, montos con dos decimales y cantidades o factores de conversión con cuatro decimales.
+
+Desde el punto de vista del modelo de datos, la persistencia agrega las entidades \texttt{Supplier}, \texttt{Purchase}, \texttt{PurchaseItem}, \texttt{InventoryBatch} e \texttt{InventoryMovement}. El proveedor conserva razón social, NIT opcional, datos de contacto, estado y relación histórica con compras. La compra registra proveedor, fecha comercial, estado \texttt{draft}, \texttt{received} o \texttt{cancelled}, total, usuario creador, usuario receptor, fechas de recepción o anulación, notas, observaciones de recepción y motivo de anulación. Los ítems guardan producto, unidad comercial, cantidad, costo unitario, lote, vencimiento y capturas de cálculo como \texttt{conversionFactor}, \texttt{baseQuantity}, \texttt{baseUnitCost} y \texttt{lineTotal}.
+
+La decisión de diseño más relevante para inventario es modelar \texttt{InventoryBatch} como una capa interna de inventario originada por un ítem de compra recibido, no como un lote físico único consolidado. Esta estructura permite representar costos distintos para un mismo producto, número de lote y vencimiento, una situación posible cuando varía el costo de reposición. La vista operativa futura podrá agrupar por producto, lote y vencimiento, mientras que la persistencia conserva capas separadas para análisis de costo y trazabilidad.
+
+La trazabilidad se refuerza mediante \texttt{InventoryMovement}. Cada movimiento conserva la capa afectada, el producto, el tipo de movimiento, la cantidad base firmada, el costo unitario base, la referencia de origen, el ítem de referencia, el usuario actor y el motivo. Aunque las reglas que crearán estos movimientos todavía no están implementadas, el diseño de persistencia ya prepara los datos necesarios para recepción y anulación transaccional en sprints posteriores.
 
 \section{Desarrollo}
 
-Aquí se describe el proceso de construcción, las tecnologías empleadas, la organización del proyecto y las decisiones relevantes tomadas durante la implementación.
+El Sprint 01 se desarrolló como base técnica del flujo de proveedores y compras recibidas. La implementación incorporó contratos compartidos en \texttt{packages/shared/src/schemas}, actualizó las exportaciones públicas de \texttt{packages/shared/src/index.ts} y extendió \texttt{backend/prisma/schema.prisma} con los modelos y enumeraciones requeridos. También se generó la migración \texttt{20260511161000\_add\_supplier\_purchase\_inventory\_persistence}, que crea tablas, índices y claves foráneas para los nuevos componentes del dominio.
+
+La migración mantiene la integridad referencial con usuarios, productos y unidades. Por ejemplo, una compra referencia al proveedor y a los usuarios involucrados; un ítem referencia la compra, el producto y la unidad; una capa de inventario referencia el ítem que la origina; y un movimiento referencia la capa, el producto y opcionalmente el usuario actor. Además, se añadieron índices para búsquedas y filtros de proveedores, listados de compras por estado y fecha, consultas por producto, lote, vencimiento, estado de capa y referencias de movimientos.
+
+La unicidad del NIT se trató como una restricción de persistencia compatible con PostgreSQL y Prisma: el campo puede ser nulo para admitir proveedores sin NIT, pero rechaza duplicados cuando el valor existe. Esta decisión responde al contexto operativo donde algunos proveedores pueden no proporcionar información fiscal completa, sin sacrificar control sobre registros duplicados cuando el dato está disponible.
+
+El desarrollo documentado no incluye todavía controllers, routes, services, repositories, endpoints HTTP, OpenAPI completo, stores Zustand ni pantallas para proveedores o compras. Tampoco ejecuta aún las reglas de recepción, anulación, creación de capas o creación de movimientos. El resultado del sprint debe interpretarse como fundamento arquitectónico y persistente para esas capacidades, no como cierre funcional del epic.
 
 \section{Pruebas}
 
-Esta sección documenta la estrategia de pruebas, los casos principales, los resultados obtenidos y las evidencias que demuestran el funcionamiento de la solución o del análisis realizado.
+La verificación técnica registrada para el Sprint 01 se enfocó en artefactos de contratos y persistencia. Se ejecutó correctamente la generación del cliente Prisma mediante \texttt{pnpm --filter @pharmacy-pos/backend prisma:generate}. También se ejecutó correctamente el typecheck del paquete compartido con \texttt{pnpm --filter @pharmacy-pos/shared typecheck}, lo que respalda que los contratos exportados compilan como parte del monorepo.
+
+El typecheck del backend fue ejecutado, pero permanece bloqueado por una deuda previa no relacionada con el sprint: una incompatibilidad de tipos en el módulo de autenticación respecto al estado de usuario \texttt{blocked}. Esta falla no proviene de los modelos de proveedores, compras ni persistencia de inventario introducidos en el Sprint 01. La evidencia documentada distingue, por tanto, entre validación satisfactoria del alcance compartido y una deuda técnica existente fuera del corte implementado.
+
+La revisión de la migración confirmó que el cambio crea estructuras nuevas y no incluye operaciones destructivas sobre tablas existentes, como borrado de tablas, truncamiento de datos o eliminación de columnas. No se realizó QA manual en navegador porque el sprint no incorporó rutas, pantallas ni flujos web.
 
 \section{Estimación de costos}
 

@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
 import readline from 'node:readline'
 import { stripVTControlCharacters } from 'node:util'
 import { repoRoot } from './repoPaths.js'
@@ -58,6 +60,24 @@ function summarizeEvent(event: CodexJsonEvent): string | null {
   return null
 }
 
+function getCodexExecutable(): string {
+  if (process.platform !== 'win32') {
+    return 'codex'
+  }
+
+  const candidates = [
+    process.env.CODEX_EXECUTABLE,
+    process.env.LOCALAPPDATA
+      ? path.join(process.env.LOCALAPPDATA, 'OpenAI', 'Codex', 'bin', 'codex.exe')
+      : undefined,
+    process.env.USERPROFILE
+      ? path.join(process.env.USERPROFILE, 'AppData', 'Local', 'OpenAI', 'Codex', 'bin', 'codex.exe')
+      : undefined,
+  ].filter((candidate): candidate is string => Boolean(candidate))
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? 'codex.exe'
+}
+
 export function runCodexTicket(
   selection: SprintSelectionResult,
   config: RunnerConfig,
@@ -75,7 +95,7 @@ export function runCodexTicket(
 
   args.push(prompt)
 
-  const child = spawn('codex', args, {
+  const child = spawn(getCodexExecutable(), args, {
     cwd: repoRoot,
     env: {
       ...process.env,

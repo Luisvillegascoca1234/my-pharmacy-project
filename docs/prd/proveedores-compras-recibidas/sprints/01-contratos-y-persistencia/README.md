@@ -6,7 +6,7 @@ Establecer los contratos compartidos y la persistencia base de proveedores, comp
 
 ## Overall Status
 
-- Status: TODO
+- Status: DONE
 - Owner: Unassigned
 - External dependency: none
 

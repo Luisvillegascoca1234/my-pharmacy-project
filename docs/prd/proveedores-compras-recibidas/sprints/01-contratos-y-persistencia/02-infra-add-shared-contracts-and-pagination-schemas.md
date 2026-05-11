@@ -1,6 +1,6 @@
 # Ticket 02 - Add Shared Contracts And Pagination Schemas
 
-- Status: TODO
+- Status: DONE
 - Category: INFRA
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: none

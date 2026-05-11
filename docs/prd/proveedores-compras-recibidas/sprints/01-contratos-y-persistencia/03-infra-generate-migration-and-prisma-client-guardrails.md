@@ -1,6 +1,6 @@
 # Ticket 03 - Generate Migration And Prisma Client Guardrails
 
-- Status: TODO
+- Status: DONE
 - Category: INFRA
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 01, 02
