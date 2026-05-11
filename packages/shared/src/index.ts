@@ -67,8 +67,7 @@ export {
   SuppliersQuerySchema,
   SupplierStatusSchema,
   SupplierSummarySchema,
-  UpdateSupplierSchema,
-  UpdateSupplierStatusSchema
+  UpdateSupplierSchema
 } from "./schemas/supplier.schema.js";
 export type {
   CreateSupplier,
@@ -77,8 +76,7 @@ export type {
   SuppliersQuery,
   SupplierStatus,
   SupplierSummary,
-  UpdateSupplier,
-  UpdateSupplierStatus
+  UpdateSupplier
 } from "./schemas/supplier.schema.js";
 export {
   CancelPurchaseSchema,

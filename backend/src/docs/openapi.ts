@@ -31,6 +31,10 @@ export const openApiDocument = {
       description: "Role selection for administrative user management"
     },
     {
+      name: "Suppliers",
+      description: "Supplier directory management for purchase workflows"
+    },
+    {
       name: "Users",
       description: "Superadmin user management and current user profile"
     }
@@ -421,6 +425,155 @@ export const openApiDocument = {
           },
           "404": {
             $ref: "#/components/responses/UserNotFound"
+          }
+        }
+      }
+    },
+    "/suppliers": {
+      get: {
+        tags: ["Suppliers"],
+        summary: "List suppliers",
+        description: "Available to superadmin and admin users. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/SupplierStatusQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated suppliers ordered by business name",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SuppliersListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Suppliers"],
+        summary: "Create a supplier",
+        description: "Available to superadmin and admin users. Seller users receive 403. Duplicate NIT values return SUPPLIER_NIT_IN_USE.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateSupplierRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Supplier created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Supplier"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            $ref: "#/components/responses/SupplierNitConflict"
+          }
+        }
+      }
+    },
+    "/suppliers/{id}": {
+      get: {
+        tags: ["Suppliers"],
+        summary: "Get a supplier",
+        description: "Available to superadmin and admin users. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/SupplierId" }],
+        responses: {
+          "200": {
+            description: "Supplier detail",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Supplier"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/SupplierNotFound"
+          }
+        }
+      },
+      patch: {
+        tags: ["Suppliers"],
+        summary: "Update a supplier",
+        description: "Available to superadmin and admin users. Seller users receive 403. Duplicate NIT values return SUPPLIER_NIT_IN_USE.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/SupplierId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdateSupplierRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Supplier updated",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Supplier"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/SupplierNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/SupplierNitConflict"
           }
         }
       }
@@ -844,6 +997,56 @@ export const openApiDocument = {
         },
         description: "Product identifier"
       },
+      SupplierId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Supplier identifier"
+      },
+      SearchQuery: {
+        name: "search",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Search text"
+      },
+      SupplierStatusQuery: {
+        name: "status",
+        in: "query",
+        required: false,
+        schema: {
+          $ref: "#/components/schemas/SupplierStatus"
+        },
+        description: "Filter suppliers by status"
+      },
+      PageQuery: {
+        name: "page",
+        in: "query",
+        required: false,
+        schema: {
+          type: "integer",
+          minimum: 1,
+          default: 1
+        },
+        description: "Page number"
+      },
+      PageSizeQuery: {
+        name: "pageSize",
+        in: "query",
+        required: false,
+        schema: {
+          type: "integer",
+          minimum: 1,
+          maximum: 100,
+          default: 20
+        },
+        description: "Items per page"
+      },
       UserId: {
         name: "id",
         in: "path",
@@ -941,6 +1144,34 @@ export const openApiDocument = {
                   code: "PRODUCT_BARCODE_IN_USE"
                 }
               }
+            }
+          }
+        }
+      },
+      SupplierNotFound: {
+        description: "Supplier was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Supplier was not found.",
+              code: "SUPPLIER_NOT_FOUND"
+            }
+          }
+        }
+      },
+      SupplierNitConflict: {
+        description: "Supplier NIT is already in use",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Supplier NIT is already in use.",
+              code: "SUPPLIER_NIT_IN_USE"
             }
           }
         }
@@ -1185,6 +1416,171 @@ export const openApiDocument = {
       ProductStatus: {
         type: "string",
         enum: ["active", "inactive"]
+      },
+      SupplierStatus: {
+        type: "string",
+        enum: ["active", "inactive"]
+      },
+      PaginationMeta: {
+        type: "object",
+        required: ["page", "pageSize", "total", "totalPages"],
+        properties: {
+          page: {
+            type: "integer",
+            minimum: 1,
+            example: 1
+          },
+          pageSize: {
+            type: "integer",
+            minimum: 1,
+            maximum: 100,
+            example: 20
+          },
+          total: {
+            type: "integer",
+            minimum: 0,
+            example: 42
+          },
+          totalPages: {
+            type: "integer",
+            minimum: 0,
+            example: 3
+          }
+        }
+      },
+      Supplier: {
+        type: "object",
+        required: ["id", "businessName", "status", "createdAt", "updatedAt"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          businessName: {
+            type: "string",
+            example: "Distribuidora Farmaceutica Andina"
+          },
+          nit: {
+            type: "string",
+            example: "123456789"
+          },
+          phone: {
+            type: "string",
+            example: "22222222"
+          },
+          address: {
+            type: "string",
+            example: "Av. Principal 123"
+          },
+          contactName: {
+            type: "string",
+            example: "Ana Perez"
+          },
+          status: {
+            $ref: "#/components/schemas/SupplierStatus"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      SuppliersListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/Supplier"
+            }
+          },
+          pagination: {
+            $ref: "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      CreateSupplierRequest: {
+        type: "object",
+        required: ["businessName"],
+        properties: {
+          businessName: {
+            type: "string",
+            minLength: 2,
+            maxLength: 160,
+            example: "Distribuidora Farmaceutica Andina"
+          },
+          nit: {
+            type: "string",
+            maxLength: 40,
+            nullable: true,
+            example: "123456789"
+          },
+          phone: {
+            type: "string",
+            maxLength: 40,
+            nullable: true,
+            example: "22222222"
+          },
+          address: {
+            type: "string",
+            maxLength: 240,
+            nullable: true,
+            example: "Av. Principal 123"
+          },
+          contactName: {
+            type: "string",
+            maxLength: 120,
+            nullable: true,
+            example: "Ana Perez"
+          },
+          status: {
+            allOf: [{ $ref: "#/components/schemas/SupplierStatus" }],
+            default: "active"
+          }
+        }
+      },
+      UpdateSupplierRequest: {
+        type: "object",
+        description: "All fields are optional for PATCH requests.",
+        properties: {
+          businessName: {
+            type: "string",
+            minLength: 2,
+            maxLength: 160,
+            example: "Distribuidora Farmaceutica Andina"
+          },
+          nit: {
+            type: "string",
+            maxLength: 40,
+            nullable: true,
+            example: "123456789"
+          },
+          phone: {
+            type: "string",
+            maxLength: 40,
+            nullable: true,
+            example: "22222222"
+          },
+          address: {
+            type: "string",
+            maxLength: 240,
+            nullable: true,
+            example: "Av. Principal 123"
+          },
+          contactName: {
+            type: "string",
+            maxLength: 120,
+            nullable: true,
+            example: "Ana Perez"
+          },
+          status: {
+            $ref: "#/components/schemas/SupplierStatus"
+          }
+        }
       },
       ProductType: {
         type: "string",

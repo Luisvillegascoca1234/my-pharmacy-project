@@ -42,12 +42,6 @@ export type CreateSupplier = z.infer<typeof CreateSupplierSchema>;
 export const UpdateSupplierSchema = CreateSupplierSchema.partial();
 export type UpdateSupplier = z.infer<typeof UpdateSupplierSchema>;
 
-export const UpdateSupplierStatusSchema = z.object({
-  status: SupplierStatusSchema
-});
-
-export type UpdateSupplierStatus = z.infer<typeof UpdateSupplierStatusSchema>;
-
 export const SuppliersQuerySchema = PageQuerySchema.extend({
   search: optionalTextSchema,
   status: SupplierStatusSchema.optional()
