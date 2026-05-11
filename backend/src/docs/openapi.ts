@@ -35,6 +35,10 @@ export const openApiDocument = {
       description: "Supplier directory management for purchase workflows"
     },
     {
+      name: "Purchases",
+      description: "Purchase draft, receipt, and cancellation workflows for superadmin and admin users. Seller users do not manage purchases in this PRD."
+    },
+    {
       name: "Users",
       description: "Superadmin user management and current user profile"
     }
@@ -578,6 +582,250 @@ export const openApiDocument = {
         }
       }
     },
+    "/purchases": {
+      get: {
+        tags: ["Purchases"],
+        summary: "List purchases",
+        description: "Available to superadmin and admin users. Seller users receive 403 and do not manage purchases in this PRD.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/PurchaseStatusQuery" },
+          { $ref: "#/components/parameters/PurchaseSupplierIdQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated purchases ordered by purchase date",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PurchasesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Purchases"],
+        summary: "Create a draft purchase",
+        description: "Available to superadmin and admin users. Creates a draft purchase with items and audit metadata. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreatePurchaseRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Draft purchase created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Purchase"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PurchaseBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            $ref: "#/components/responses/PurchaseConflict"
+          }
+        }
+      }
+    },
+    "/purchases/{id}": {
+      get: {
+        tags: ["Purchases"],
+        summary: "Get a purchase",
+        description: "Available to superadmin and admin users. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PurchaseId" }],
+        responses: {
+          "200": {
+            description: "Purchase detail with items, supplier, and users",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Purchase"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PurchaseNotFound"
+          }
+        }
+      },
+      patch: {
+        tags: ["Purchases"],
+        summary: "Update a draft purchase",
+        description: "Available to superadmin and admin users. Only draft purchases can be updated. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PurchaseId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/UpdatePurchaseRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Purchase updated",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Purchase"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PurchaseBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PurchaseNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PurchaseConflict"
+          }
+        }
+      }
+    },
+    "/purchases/{id}/receive": {
+      post: {
+        tags: ["Purchases"],
+        summary: "Receive a draft purchase",
+        description: "Available to superadmin and admin users. Receipt creates inventory batches and movements for tracked items. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PurchaseId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ReceivePurchaseRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Purchase received",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Purchase"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PurchaseBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PurchaseNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PurchaseConflict"
+          }
+        }
+      }
+    },
+    "/purchases/{id}/cancel": {
+      post: {
+        tags: ["Purchases"],
+        summary: "Cancel a purchase",
+        description: "Available to superadmin and admin users. Cancelling a received purchase reverses purchase receipt inventory layers when they are still reversible. Seller users receive 403.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PurchaseId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CancelPurchaseRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Purchase cancelled",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Purchase"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PurchaseBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PurchaseNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PurchaseConflict"
+          }
+        }
+      }
+    },
     "/health": {
       get: {
         tags: ["Health"],
@@ -1006,6 +1254,15 @@ export const openApiDocument = {
         },
         description: "Supplier identifier"
       },
+      PurchaseId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Purchase identifier"
+      },
       SearchQuery: {
         name: "search",
         in: "query",
@@ -1023,6 +1280,46 @@ export const openApiDocument = {
           $ref: "#/components/schemas/SupplierStatus"
         },
         description: "Filter suppliers by status"
+      },
+      PurchaseStatusQuery: {
+        name: "status",
+        in: "query",
+        required: false,
+        schema: {
+          $ref: "#/components/schemas/PurchaseStatus"
+        },
+        description: "Filter purchases by status"
+      },
+      PurchaseSupplierIdQuery: {
+        name: "supplierId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter purchases by supplier"
+      },
+      FromDateQuery: {
+        name: "fromDate",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string",
+          format: "date",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        description: "Inclusive purchase date lower bound in YYYY-MM-DD format"
+      },
+      ToDateQuery: {
+        name: "toDate",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string",
+          format: "date",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        description: "Inclusive purchase date upper bound in YYYY-MM-DD format"
       },
       PageQuery: {
         name: "page",
@@ -1172,6 +1469,152 @@ export const openApiDocument = {
             example: {
               message: "Supplier NIT is already in use.",
               code: "SUPPLIER_NIT_IN_USE"
+            }
+          }
+        }
+      },
+      PurchaseNotFound: {
+        description: "Purchase was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Purchase was not found.",
+              code: "PURCHASE_NOT_FOUND"
+            }
+          }
+        }
+      },
+      PurchaseBadRequest: {
+        description: "Invalid purchase payload or purchase business rule violation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              supplierNotFound: {
+                value: {
+                  message: "Supplier does not exist.",
+                  code: "SUPPLIER_NOT_FOUND"
+                }
+              },
+              supplierNotActive: {
+                value: {
+                  message: "Supplier must be active.",
+                  code: "SUPPLIER_NOT_ACTIVE"
+                }
+              },
+              productNotFound: {
+                value: {
+                  message: "Product does not exist.",
+                  code: "PRODUCT_NOT_FOUND"
+                }
+              },
+              productNotActive: {
+                value: {
+                  message: "Product must be active.",
+                  code: "PRODUCT_NOT_ACTIVE"
+                }
+              },
+              productUnitNotConfigured: {
+                value: {
+                  message: "Unit is not configured for the product.",
+                  code: "PRODUCT_UNIT_NOT_CONFIGURED"
+                }
+              },
+              authenticatedUserNotFound: {
+                value: {
+                  message: "Authenticated user was not found.",
+                  code: "AUTHENTICATED_USER_NOT_FOUND"
+                }
+              },
+              purchaseItemsRequired: {
+                value: {
+                  message: "Purchase must contain at least one item.",
+                  code: "PURCHASE_ITEMS_REQUIRED"
+                }
+              },
+              purchaseBatchRequired: {
+                value: {
+                  message: "Inventory tracked purchase items require a batch number.",
+                  code: "PURCHASE_BATCH_REQUIRED"
+                }
+              },
+              purchaseExpirationRequired: {
+                value: {
+                  message: "Inventory tracked purchase items require an expiration date.",
+                  code: "PURCHASE_EXPIRATION_REQUIRED"
+                }
+              },
+              purchaseExpirationExpired: {
+                value: {
+                  message: "Purchase item expiration date cannot be in the past.",
+                  code: "PURCHASE_EXPIRATION_EXPIRED"
+                }
+              },
+              cancelReasonRequired: {
+                value: {
+                  message: "Cancel reason is required.",
+                  code: "PURCHASE_CANCEL_REASON_REQUIRED"
+                }
+              }
+            }
+          }
+        }
+      },
+      PurchaseConflict: {
+        description: "Purchase domain conflict or invalid state transition",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              purchaseNotDraft: {
+                value: {
+                  message: "Only draft purchases can be updated.",
+                  code: "PURCHASE_NOT_DRAFT"
+                }
+              },
+              purchaseNotDraftForReceipt: {
+                value: {
+                  message: "Only draft purchases can be received.",
+                  code: "PURCHASE_NOT_DRAFT"
+                }
+              },
+              duplicatedPurchaseItem: {
+                value: {
+                  message: "Purchase items cannot contain equivalent duplicates.",
+                  code: "DUPLICATED_PURCHASE_ITEM"
+                }
+              },
+              alreadyCancelled: {
+                value: {
+                  message: "Purchase is already cancelled.",
+                  code: "PURCHASE_ALREADY_CANCELLED"
+                }
+              },
+              invalidStatus: {
+                value: {
+                  message: "Purchase cannot be cancelled from its current status.",
+                  code: "PURCHASE_STATUS_INVALID"
+                }
+              },
+              inventoryLayerMismatch: {
+                value: {
+                  message: "Purchase inventory layers do not match the purchase items.",
+                  code: "PURCHASE_INVENTORY_LAYER_MISMATCH"
+                }
+              },
+              inventoryLayerNotReversible: {
+                value: {
+                  message: "Purchase inventory layers were already consumed or cancelled.",
+                  code: "PURCHASE_INVENTORY_LAYER_NOT_REVERSIBLE"
+                }
+              }
             }
           }
         }
@@ -1957,6 +2400,348 @@ export const openApiDocument = {
             items: {
               $ref: "#/components/schemas/UpsertProductUnitRequest"
             }
+          }
+        }
+      },
+      SupplierSummary: {
+        type: "object",
+        required: ["id", "businessName", "status"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          businessName: {
+            type: "string",
+            example: "Distribuidora Farmaceutica Andina"
+          },
+          nit: {
+            type: "string",
+            example: "123456789"
+          },
+          status: {
+            $ref: "#/components/schemas/SupplierStatus"
+          }
+        }
+      },
+      PurchaseStatus: {
+        type: "string",
+        enum: ["draft", "received", "cancelled"]
+      },
+      PurchaseUserSummary: {
+        type: "object",
+        required: ["id", "fullName", "email"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          fullName: {
+            type: "string",
+            example: "Admin Principal"
+          },
+          email: {
+            type: "string",
+            format: "email",
+            example: "admin@admin.com"
+          }
+        }
+      },
+      PurchaseItem: {
+        type: "object",
+        required: [
+          "id",
+          "purchaseId",
+          "productId",
+          "productName",
+          "unitId",
+          "unitName",
+          "quantity",
+          "unitCost",
+          "conversionFactor",
+          "baseQuantity",
+          "baseUnitCost",
+          "lineTotal",
+          "isInventoryTracked",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          purchaseId: {
+            type: "string"
+          },
+          productId: {
+            type: "string"
+          },
+          productName: {
+            type: "string",
+            example: "Paracetamol 500 mg"
+          },
+          unitId: {
+            type: "string"
+          },
+          unitName: {
+            type: "string",
+            example: "Caja"
+          },
+          quantity: {
+            type: "number",
+            minimum: 0,
+            example: 10
+          },
+          unitCost: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 12.5
+          },
+          conversionFactor: {
+            type: "number",
+            minimum: 0.0001,
+            multipleOf: 0.0001,
+            example: 10
+          },
+          baseQuantity: {
+            type: "number",
+            minimum: 0,
+            example: 100
+          },
+          baseUnitCost: {
+            type: "number",
+            minimum: 0,
+            example: 1.25
+          },
+          lineTotal: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 125
+          },
+          isInventoryTracked: {
+            type: "boolean"
+          },
+          batchNumber: {
+            type: "string",
+            example: "L-2026-001"
+          },
+          expirationDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2027-05-11"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      PurchaseSummary: {
+        type: "object",
+        required: [
+          "id",
+          "supplierId",
+          "supplier",
+          "purchaseDate",
+          "status",
+          "totalAmount",
+          "createdByUserId",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          supplierId: {
+            type: "string"
+          },
+          supplier: {
+            $ref: "#/components/schemas/SupplierSummary"
+          },
+          purchaseDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2026-05-11"
+          },
+          status: {
+            $ref: "#/components/schemas/PurchaseStatus"
+          },
+          totalAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 125
+          },
+          createdByUserId: {
+            type: "string"
+          },
+          receivedByUserId: {
+            type: "string"
+          },
+          receivedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          cancelledAt: {
+            type: "string",
+            format: "date-time"
+          },
+          notes: {
+            type: "string",
+            example: "Compra inicial de reposicion"
+          },
+          receiveNotes: {
+            type: "string",
+            example: "Recepcion completa"
+          },
+          cancelReason: {
+            type: "string",
+            example: "Proveedor no entrego la mercaderia"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      Purchase: {
+        allOf: [
+          {
+            $ref: "#/components/schemas/PurchaseSummary"
+          },
+          {
+            type: "object",
+            required: ["createdByUser", "items"],
+            properties: {
+              createdByUser: {
+                $ref: "#/components/schemas/PurchaseUserSummary"
+              },
+              receivedByUser: {
+                $ref: "#/components/schemas/PurchaseUserSummary"
+              },
+              items: {
+                type: "array",
+                items: {
+                  $ref: "#/components/schemas/PurchaseItem"
+                }
+              }
+            }
+          }
+        ]
+      },
+      PurchaseItemInput: {
+        type: "object",
+        required: ["productId", "unitId", "quantity", "unitCost"],
+        properties: {
+          productId: {
+            type: "string"
+          },
+          unitId: {
+            type: "string"
+          },
+          quantity: {
+            type: "number",
+            minimum: 0.0001,
+            multipleOf: 0.0001,
+            example: 10
+          },
+          unitCost: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 12.5
+          },
+          batchNumber: {
+            type: "string",
+            maxLength: 80,
+            example: "L-2026-001"
+          },
+          expirationDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2027-05-11"
+          }
+        }
+      },
+      CreatePurchaseRequest: {
+        type: "object",
+        required: ["supplierId", "purchaseDate", "items"],
+        properties: {
+          supplierId: {
+            type: "string"
+          },
+          purchaseDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2026-05-11"
+          },
+          notes: {
+            type: "string",
+            example: "Compra inicial de reposicion"
+          },
+          items: {
+            type: "array",
+            minItems: 1,
+            items: {
+              $ref: "#/components/schemas/PurchaseItemInput"
+            }
+          }
+        }
+      },
+      UpdatePurchaseRequest: {
+        allOf: [
+          {
+            $ref: "#/components/schemas/CreatePurchaseRequest"
+          }
+        ],
+        description: "Same payload as create. Only draft purchases can be updated."
+      },
+      ReceivePurchaseRequest: {
+        type: "object",
+        properties: {
+          receiveNotes: {
+            type: "string",
+            example: "Recepcion completa"
+          }
+        }
+      },
+      CancelPurchaseRequest: {
+        type: "object",
+        required: ["cancelReason"],
+        properties: {
+          cancelReason: {
+            type: "string",
+            minLength: 3,
+            maxLength: 240,
+            example: "Proveedor no entrego la mercaderia"
+          }
+        }
+      },
+      PurchasesListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PurchaseSummary"
+            }
+          },
+          pagination: {
+            $ref: "#/components/schemas/PaginationMeta"
           }
         }
       },
