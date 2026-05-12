@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { ModulePage } from "@/pages/module-page";
 import { ProductsPage } from "@/pages/products-page";
+import { SupplierFormPage } from "@/pages/supplier-form-page";
+import { SuppliersPage } from "@/pages/suppliers-page";
 import { UnitsPage } from "@/pages/units-page";
 import { UsersPage } from "@/pages/users-page";
 import { getVisibleNavigationItems, navigationItems } from "./navigation";
@@ -13,6 +15,7 @@ type AppRoutesProps = {
 
 export function AppRoutes({ user }: AppRoutesProps) {
   const visibleItems = getVisibleNavigationItems(user.role.name);
+  const canAccessSuppliers = visibleItems.some((item) => item.key === "suppliers");
 
   return (
     <Routes>
@@ -25,6 +28,8 @@ export function AppRoutes({ user }: AppRoutesProps) {
               <DashboardPage />
             ) : item.key === "products" ? (
               <ProductsPage />
+            ) : item.key === "suppliers" ? (
+              <SuppliersPage />
             ) : item.key === "units" ? (
               <UnitsPage />
             ) : item.key === "users" ? (
@@ -36,11 +41,25 @@ export function AppRoutes({ user }: AppRoutesProps) {
           path={item.path}
         />
       ))}
+      {canAccessSuppliers ? (
+        <>
+          <Route element={<SupplierFormPage mode="create" />} path="/suppliers/new" />
+          <Route element={<SupplierFormPage mode="detail" />} path="/suppliers/:id" />
+        </>
+      ) : null}
       <Route element={<Navigate replace to={visibleItems[0]?.path ?? "/dashboard"} />} path="*" />
     </Routes>
   );
 }
 
 export function getRouteTitle(pathname: string) {
+  if (pathname === "/suppliers/new") {
+    return "Nuevo proveedor";
+  }
+
+  if (pathname.startsWith("/suppliers/")) {
+    return "Detalle de proveedor";
+  }
+
   return navigationItems.find((item) => item.path === pathname)?.label ?? "Dashboard";
 }

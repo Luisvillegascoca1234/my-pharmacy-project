@@ -14,6 +14,8 @@ El tercer corte, documentado como Sprint 03 Backend de Compras e Inventario, imp
 
 El cuarto corte, documentado como Sprint 04 Pruebas Backend y OpenAPI, no agrega nuevas funcionalidades de dominio, sino evidencia de validación sobre lo ya implementado. Su propósito es demostrar que las reglas críticas de proveedores, compras, recepción, anulación, inventario y auditoría pueden verificarse desde la capa de servicios, sin depender de una sesión HTTP real ni de una base de datos real por defecto. Además, revisa la paridad documental de OpenAPI frente a las rutas y contratos existentes antes de avanzar hacia los sprints de frontend e integración final.
 
+El quinto corte, documentado como Sprint 05 Frontend de Proveedores, incorpora la experiencia de usuario para la administración de proveedores sobre los endpoints y contratos ya implementados. Su alcance se limita al módulo frontend portable de proveedores, las rutas \texttt{/suppliers}, \texttt{/suppliers/new} y \texttt{/suppliers/:id}, la navegación del shell y el reseteo de estado de sesión. Este sprint no implementa frontend de compras, inventario visual, SIAT, pagos, cuentas por pagar ni cierre completo del epic; esas capacidades permanecen diferidas a sprints posteriores.
+
 \section{Análisis y diseño}
 
 El diseño mantiene la separación entre contratos compartidos, backend modular y persistencia relacional. En el paquete \texttt{@pharmacy-pos/shared} se definieron esquemas Zod para proveedores, compras, ítems de compra, recepción, anulación y paginación. Estos contratos describen las fronteras de datos esperadas por cliente y servidor, incluyendo paginación \textit{1-based}, tamaño máximo de página, estados de proveedor, estados de compra, fechas puras para \texttt{purchaseDate} y \texttt{expirationDate}, montos con dos decimales y cantidades o factores de conversión con cuatro decimales.
@@ -35,6 +37,10 @@ El inventario relacionado con compras se diseña como un módulo interno, no com
 Las reglas de datos quedan alineadas con el objetivo de inventario transaccional. Las compras pueden estar en \texttt{draft}, \texttt{received} o \texttt{cancelled}; las fechas comerciales \texttt{purchaseDate} y \texttt{expirationDate} se manejan como fechas puras; la fecha \texttt{receivedAt} se asigna desde el servidor; los snapshots de conversión, cantidad base, costo base y total de línea se calculan en backend; y los importes se normalizan con escalas diferenciadas para dinero y cantidades. En consecuencia, una compra recibida conserva evidencia histórica aunque luego cambien unidades, costos o datos operativos del producto.
 
 El Sprint 04 refuerza este diseño mediante una estrategia de pruebas por capa de servicio. La validación se concentra en el comportamiento externo de \texttt{suppliers}, \texttt{purchases} e \texttt{inventory}, utilizando repositorios falsos y utilidades compartidas para aislar Express, Prisma Client y PostgreSQL en las pruebas unitarias. Este enfoque es consistente con la arquitectura controller-service-repository: los controladores y rutas conservan la responsabilidad HTTP, mientras que las reglas de negocio, transacciones conceptuales, auditoría e inventario se prueban donde se coordinan las decisiones del dominio.
+
+El Sprint 05 traslada la gestión de proveedores a la capa de presentación sin mezclar reglas de persistencia ni navegación dentro del estado de dominio. El módulo \texttt{frontend/src/modules/suppliers} se organiza con cliente de API, facade, hook, tipos, utilidades y store Zustand. El cliente de API se limita al transporte hacia \texttt{GET /api/suppliers}, \texttt{GET /api/suppliers/:id}, \texttt{POST /api/suppliers} y \texttt{PATCH /api/suppliers/:id}; el facade expone operaciones de aplicación; y el store conserva lista, filtros, paginación, proveedor seleccionado, formulario editable, \texttt{isDirty}, estados de carga, errores y reset. Esta estructura respalda la portabilidad del módulo porque evita que el store dependa de React Router, componentes visuales, iconos, toasts o copias de pantalla.
+
+Las páginas de proveedores mantienen la responsabilidad de interacción y navegación. La ruta \texttt{/suppliers} presenta una lista paginada con búsqueda y filtro por estado, usando la metadata del contrato backend en lugar de filtrar datos por cliente. Las rutas \texttt{/suppliers/new} y \texttt{/suppliers/:id} concentran la creación, edición, activación y desactivación del proveedor, con validación basada en contratos compartidos cuando corresponde y navegación posterior a la creación desde la página. El shell registra estas rutas para usuarios con rol administrativo y agrega el reset de proveedores al cierre de sesión, de modo que filtros, detalle o formularios no persistan entre sesiones.
 
 \section{Desarrollo}
 
@@ -59,6 +65,14 @@ La anulación también se implementó con reglas diferenciadas por estado. Una c
 La capa HTTP de compras expone \texttt{GET /api/purchases}, \texttt{GET /api/purchases/:id}, \texttt{POST /api/purchases}, \texttt{PATCH /api/purchases/:id}, \texttt{POST /api/purchases/:id/receive} y \texttt{POST /api/purchases/:id/cancel}. Todas las rutas requieren autenticación y restringen gestión a \texttt{superadmin} y \texttt{admin}; \texttt{seller} queda excluido. La documentación OpenAPI fue actualizada con endpoints, esquemas de compra e ítems, solicitudes de recepción y anulación, parámetros de consulta, seguridad bearer y errores esperados de validación, autenticación, autorización, no encontrado y conflictos de dominio.
 
 Durante el Sprint 04 se incorporó Vitest como runner backend y se organizaron utilidades de prueba en \texttt{backend/src/tests}. La cobertura agregada se ubicó junto a los módulos de dominio: \texttt{suppliers.service.spec.ts}, \texttt{purchases.service.spec.ts} e \texttt{inventory.service.spec.ts}. Esta organización mantiene la evidencia cerca de los servicios que valida y evita presentar la prueba como un flujo manual de pantalla. También se revisó \texttt{backend/src/docs/openapi.ts} para que proveedores y compras documenten los endpoints públicos reales, los contratos compartidos vigentes y los errores esperados, sin introducir endpoints públicos de inventario que no pertenecen al alcance del sprint.
+
+En el Sprint 05 se incorporó el módulo \texttt{frontend/src/modules/suppliers}. Sus archivos separan transporte HTTP, facade, hook de consumo, tipos de formulario, utilidades de payload y store Zustand. La implementación consume contratos del paquete compartido y conserva las reglas de interfaz como estado observable: búsqueda, filtro de estado, paginación \textit{1-based}, proveedor seleccionado, formulario editable, estado \texttt{isDirty}, errores de API y acciones de carga, creación, actualización y reset. La limpieza posterior del sprint redujo exportaciones públicas innecesarias y eliminó helpers no utilizados, por lo que el barrel público expone solo hooks, reset/selectores públicos, tipos y contratos útiles.
+
+La pantalla \texttt{frontend/src/pages/suppliers-page.tsx} reemplaza el placeholder de proveedores con una lista operativa. Presenta razón social, NIT cuando existe, contacto, teléfono, dirección, estado y acciones hacia detalle o edición. Los cambios de búsqueda y estado reinician la página a uno y delegan la carga al módulo, mientras que la paginación utiliza la metadata de respuesta. La pantalla también contempla estados de carga, error y vacío con textos en español, manteniendo el contenido visible fuera del módulo portable.
+
+La pantalla \texttt{frontend/src/pages/supplier-form-page.tsx} implementa creación y detalle/edición. En modo creación inicializa un formulario limpio, permite NIT vacío y, después de guardar, navega a la ruta estable del proveedor creado. En modo detalle carga el proveedor por identificador de URL, muestra carga, error y no encontrado, y permite actualizar razón social, NIT, teléfono, dirección, contacto y estado operativo. El cambio entre \texttt{active} e \texttt{inactive} se presenta como acción explícita y conserva la interpretación de baja operativa sin borrado histórico.
+
+La integración de rutas se realizó en \texttt{frontend/src/routes/app-routes.tsx}: \texttt{/suppliers} renderiza la lista real y las subrutas \texttt{/suppliers/new} y \texttt{/suppliers/:id} renderizan el formulario. La navegación visible conserva el control por rol definido previamente, por lo que \texttt{admin} y \texttt{superadmin} pueden acceder desde el shell y \texttt{seller} no obtiene la ruta por navegación visible. Además, \texttt{resetSessionScopedState} invoca \texttt{resetSuppliersStore} junto con los stores existentes, reforzando la decisión del PRD de limpiar estado al desmontar páginas y al cerrar sesión.
 
 \section{Pruebas}
 
@@ -97,6 +111,28 @@ Ticket 07 del Sprint 04 & \texttt{pnpm --filter @pharmacy-pos/backend test} apro
 \end{longtable}
 
 La validación de OpenAPI se mantiene como paridad documental, no como prueba funcional completa de integración. El intento de inspección de Swagger UI en \texttt{http://localhost:4000/api/docs} no pudo completarse porque la conexión local fue rechazada, sin errores de consola adicionales registrados. Por tanto, la evidencia del Sprint 04 permite afirmar que existe cobertura automatizada backend y revisión documental de la API, pero no permite declarar cerrado el epic completo. Permanecen como limitaciones los sprints de frontend, la experiencia de usuario para proveedores y compras, la integración final de rutas y estados de pantalla, y la validación operativa completa con servidor disponible.
+
+Para el Sprint 05, la evidencia principal corresponde a implementación de frontend y trazabilidad documental. Los tickets 01 a 05 registran el módulo portable de proveedores, la lista, el formulario de creación y detalle, la integración de rutas, el reset de sesión y la limpieza de referencias tocadas. El ticket 06 intentó ejecutar QA manual de navegador sobre \texttt{http://localhost:5173/suppliers} y \texttt{http://localhost:5174/suppliers}, pero ambos accesos quedaron bloqueados por \texttt{net::ERR\_CONNECTION\_REFUSED} y por ausencia de listeners activos en esos puertos. Por esta razón no se afirma que los flujos de listado, búsqueda, filtros, paginación, creación, edición o cambio de estado hayan sido ejercitados manualmente en navegador durante el cierre del sprint.
+
+\begin{longtable}{p{0.28\textwidth}p{0.36\textwidth}p{0.27\textwidth}}
+\caption{Evidencia de implementación registrada en el Sprint 05}\\
+\toprule
+\textbf{Fuente trazable} & \textbf{Evidencia documentada} & \textbf{Relación con la tesis}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Fuente trazable} & \textbf{Evidencia documentada} & \textbf{Relación con la tesis}\\
+\midrule
+\endhead
+PRD, epic y decisiones del flujo de proveedores y compras recibidas & Rutas de proveedores, store Zustand separado, reset al desmontar y al cierre de sesión, roles administrativos y exclusión de compras en este sprint. & Delimitan el alcance académico y evitan atribuir al sprint capacidades de compras o inventario visual.\\
+Tickets 01, 02 y 03 del Sprint 05 & Módulo frontend portable de proveedores, lista paginada, búsqueda, filtro por estado, creación, detalle, edición y cambio de estado. & Sustentan la transición desde backend disponible hacia experiencia de usuario administrativa.\\
+Tickets 04 y 05 del Sprint 05 & Integración con rutas reales, títulos del shell, reset de sesión y limpieza de exports/helpers no usados. & Evidencian integración controlada con la aplicación sin acoplar el store a navegación o UI.\\
+Ticket 06 del Sprint 05 & QA manual de navegador bloqueado por ausencia de dev server activo en puertos locales esperados. & Documenta una limitación de validación operativa y evita presentar flujos no ejercitados como verificados.\\
+Código frontend de proveedores & \texttt{frontend/src/modules/suppliers}, \texttt{suppliers-page.tsx}, \texttt{supplier-form-page.tsx}, \texttt{app-routes.tsx} y \texttt{resetSessionScopedState.ts}. & Respalda la arquitectura de módulo portable, rutas dedicadas, flujo de datos y limpieza de estado.\\
+\bottomrule
+\end{longtable}
+
+La limitación principal de este sprint es ambiental y de validación manual, no de alcance funcional implementado: las pantallas y módulos existen en el código, pero no se obtuvo evidencia de recorrido en navegador porque el servidor de desarrollo no estaba accesible durante el ticket de QA. Además, el epic permanece abierto porque todavía faltan el frontend de compras, la experiencia de recepción/anulación en UI y la integración final del flujo completo de compras recibidas con inventario.
 
 \section{Estimación de costos}
 
