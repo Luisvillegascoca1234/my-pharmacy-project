@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { ModulePage } from "@/pages/module-page";
 import { ProductsPage } from "@/pages/products-page";
+import { PurchaseFormPage } from "@/pages/purchase-form-page";
+import { PurchasesPage } from "@/pages/purchases-page";
 import { SupplierFormPage } from "@/pages/supplier-form-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
 import { UnitsPage } from "@/pages/units-page";
@@ -16,6 +18,7 @@ type AppRoutesProps = {
 export function AppRoutes({ user }: AppRoutesProps) {
   const visibleItems = getVisibleNavigationItems(user.role.name);
   const canAccessSuppliers = visibleItems.some((item) => item.key === "suppliers");
+  const canAccessPurchases = visibleItems.some((item) => item.key === "purchases");
 
   return (
     <Routes>
@@ -30,6 +33,8 @@ export function AppRoutes({ user }: AppRoutesProps) {
               <ProductsPage />
             ) : item.key === "suppliers" ? (
               <SuppliersPage />
+            ) : item.key === "purchases" ? (
+              <PurchasesPage />
             ) : item.key === "units" ? (
               <UnitsPage />
             ) : item.key === "users" ? (
@@ -47,6 +52,12 @@ export function AppRoutes({ user }: AppRoutesProps) {
           <Route element={<SupplierFormPage mode="detail" />} path="/suppliers/:id" />
         </>
       ) : null}
+      {canAccessPurchases ? (
+        <>
+          <Route element={<PurchaseFormPage mode="create" />} path="/purchases/new" />
+          <Route element={<PurchaseFormPage mode="detail" />} path="/purchases/:id" />
+        </>
+      ) : null}
       <Route element={<Navigate replace to={visibleItems[0]?.path ?? "/dashboard"} />} path="*" />
     </Routes>
   );
@@ -59,6 +70,14 @@ export function getRouteTitle(pathname: string) {
 
   if (pathname.startsWith("/suppliers/")) {
     return "Detalle de proveedor";
+  }
+
+  if (pathname === "/purchases/new") {
+    return "Nueva compra";
+  }
+
+  if (pathname.startsWith("/purchases/")) {
+    return "Detalle de compra";
   }
 
   return navigationItems.find((item) => item.path === pathname)?.label ?? "Dashboard";
