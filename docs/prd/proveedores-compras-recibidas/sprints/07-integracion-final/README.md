@@ -6,7 +6,7 @@ Cerrar la integracion de proveedores y compras recibidas con navegacion, permiso
 
 ## Overall Status
 
-- Status: TODO
+- Status: DONE
 - Owner: Unassigned
 - External dependency: none
 
