@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -207,6 +207,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
   const isReceiving = purchases.receiveStatus === "loading";
   const isCancelling = purchases.cancelStatus === "loading";
   const isNotFound = !isCreateMode && purchases.detailStatus === "error" && purchases.errorStatusCode === 404;
+  const isDetailError = !isCreateMode && purchases.detailStatus === "error" && !isNotFound;
   const isDraft = isCreateMode || selectedPurchase?.status === "draft";
   const canEdit = purchases.canManage && isDraft && !isLoadingDetail;
   const canOperateDraft = purchases.canManage && !isCreateMode && selectedPurchase?.status === "draft" && !isLoadingDetail;
@@ -454,6 +455,29 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
             <EmptyTitle>Compra no encontrada</EmptyTitle>
             <EmptyDescription>La compra solicitada no existe o ya no está disponible para tu sesión.</EmptyDescription>
           </EmptyHeader>
+        </Empty>
+      ) : isDetailError ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <AlertCircle aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>No se pudo cargar la compra</EmptyTitle>
+            <EmptyDescription>{purchases.error ?? "Intenta nuevamente o vuelve a la lista de compras."}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button disabled={!purchaseId} type="button" variant="outline" onClick={() => purchaseId && void purchases.loadPurchase(purchaseId)}>
+                Reintentar
+              </Button>
+              <Button asChild variant="ghost">
+                <Link to="/purchases">
+                  <ArrowLeft aria-hidden="true" />
+                  Volver
+                </Link>
+              </Button>
+            </div>
+          </EmptyContent>
         </Empty>
       ) : (
         <>

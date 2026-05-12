@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -57,6 +57,7 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
   const isSaving = suppliers.saveStatus === "loading";
   const isLoadingDetail = !isCreateMode && suppliers.detailStatus === "loading";
   const isNotFound = !isCreateMode && suppliers.detailStatus === "error" && suppliers.errorStatusCode === 404;
+  const isDetailError = !isCreateMode && suppliers.detailStatus === "error" && !isNotFound;
   const canSubmit = suppliers.canManage && !isSaving && !isLoadingDetail;
   const nextStatus: SupplierStatus = suppliers.draftForm.status === "active" ? "inactive" : "active";
 
@@ -190,21 +191,36 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
         </Button>
       </div>
 
-      {!suppliers.canManage ? (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <ShieldAlert aria-hidden="true" className="size-4" />
-          Tu rol permite solo consulta de proveedores.
-        </div>
-      ) : null}
-
-      {suppliers.error && !isNotFound ? (
+      {suppliers.error && !isNotFound && !isDetailError ? (
         <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertCircle aria-hidden="true" className="size-4" />
           {suppliers.error}
         </div>
       ) : null}
 
-      {isLoadingDetail ? (
+      {!suppliers.canManage ? (
+        <Card>
+          <CardContent className="min-h-72">
+            <Empty className="border-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ShieldAlert aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>Permiso insuficiente</EmptyTitle>
+                <EmptyDescription>Tu rol actual permite solo consulta general y no puede gestionar proveedores.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button asChild variant="outline">
+                  <Link to="/suppliers">
+                    <ArrowLeft aria-hidden="true" />
+                    Volver a proveedores
+                  </Link>
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </CardContent>
+        </Card>
+      ) : isLoadingDetail ? (
         <Card>
           <CardContent className="flex min-h-72 items-center justify-center gap-2 text-sm text-muted-foreground">
             <Spinner />
@@ -222,6 +238,33 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
                 <EmptyTitle>Proveedor no encontrado</EmptyTitle>
                 <EmptyDescription>El proveedor solicitado no existe o ya no está disponible para tu sesión.</EmptyDescription>
               </EmptyHeader>
+            </Empty>
+          </CardContent>
+        </Card>
+      ) : isDetailError ? (
+        <Card>
+          <CardContent className="min-h-72">
+            <Empty className="border-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <AlertCircle aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>No se pudo cargar el proveedor</EmptyTitle>
+                <EmptyDescription>{suppliers.error ?? "Intenta nuevamente o vuelve a la lista de proveedores."}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button disabled={!supplierId} type="button" variant="outline" onClick={() => supplierId && void suppliers.loadSupplier(supplierId)}>
+                    Reintentar
+                  </Button>
+                  <Button asChild variant="ghost">
+                    <Link to="/suppliers">
+                      <ArrowLeft aria-hidden="true" />
+                      Volver
+                    </Link>
+                  </Button>
+                </div>
+              </EmptyContent>
             </Empty>
           </CardContent>
         </Card>

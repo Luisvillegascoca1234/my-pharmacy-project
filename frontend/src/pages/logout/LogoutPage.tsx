@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
-import { useAuthStore } from "@/modules/auth/store/AuthStore";
-import { resetAllStores } from "./resetAllStores";
+import { AUTH_STORAGE_KEY, useAuthStore } from "@/modules/auth/store/AuthStore";
+import { resetSessionScopedState } from "@/modules/auth/utils/resetSessionScopedState";
 
 export function LogoutPage() {
   const navigate = useNavigate();
@@ -17,9 +17,10 @@ export function LogoutPage() {
 
     void (async () => {
       try {
+        resetSessionScopedState();
         await useAuthStore.getState().logout();
       } finally {
-        resetAllStores();
+        localStorage.removeItem(AUTH_STORAGE_KEY);
         navigate("/login", { replace: true });
       }
     })();
