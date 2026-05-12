@@ -32,7 +32,7 @@ export const openApiDocument = {
     },
     {
       name: "Suppliers",
-      description: "Supplier directory management for purchase workflows"
+      description: "Supplier directory management for purchase workflows. Seller users do not manage suppliers in this PRD."
     },
     {
       name: "Purchases",
@@ -1537,10 +1537,40 @@ export const openApiDocument = {
                   code: "PURCHASE_ITEMS_REQUIRED"
                 }
               },
+              purchaseDateInvalid: {
+                value: {
+                  message: "Purchase dates must use YYYY-MM-DD format.",
+                  code: "PURCHASE_DATE_INVALID"
+                }
+              },
+              purchaseQuantityInvalid: {
+                value: {
+                  message: "Purchase item quantity must be greater than zero with at most 4 decimal places.",
+                  code: "PURCHASE_QUANTITY_INVALID"
+                }
+              },
+              purchaseUnitCostInvalid: {
+                value: {
+                  message: "Purchase item unit cost must be zero or greater with at most 2 decimal places.",
+                  code: "PURCHASE_UNIT_COST_INVALID"
+                }
+              },
+              purchaseBatchNumberInvalid: {
+                value: {
+                  message: "Batch number must have at most 80 characters.",
+                  code: "PURCHASE_BATCH_NUMBER_INVALID"
+                }
+              },
               purchaseBatchRequired: {
                 value: {
                   message: "Inventory tracked purchase items require a batch number.",
                   code: "PURCHASE_BATCH_REQUIRED"
+                }
+              },
+              purchaseExpirationDateInvalid: {
+                value: {
+                  message: "Purchase dates must use YYYY-MM-DD format.",
+                  code: "PURCHASE_EXPIRATION_DATE_INVALID"
                 }
               },
               purchaseExpirationRequired: {
@@ -2645,10 +2675,12 @@ export const openApiDocument = {
         required: ["productId", "unitId", "quantity", "unitCost"],
         properties: {
           productId: {
-            type: "string"
+            type: "string",
+            minLength: 1
           },
           unitId: {
-            type: "string"
+            type: "string",
+            minLength: 1
           },
           quantity: {
             type: "number",
@@ -2665,6 +2697,7 @@ export const openApiDocument = {
           batchNumber: {
             type: "string",
             maxLength: 80,
+            nullable: true,
             example: "L-2026-001"
           },
           expirationDate: {
@@ -2680,7 +2713,8 @@ export const openApiDocument = {
         required: ["supplierId", "purchaseDate", "items"],
         properties: {
           supplierId: {
-            type: "string"
+            type: "string",
+            minLength: 1
           },
           purchaseDate: {
             type: "string",
@@ -2690,6 +2724,7 @@ export const openApiDocument = {
           },
           notes: {
             type: "string",
+            nullable: true,
             example: "Compra inicial de reposicion"
           },
           items: {
@@ -2714,6 +2749,7 @@ export const openApiDocument = {
         properties: {
           receiveNotes: {
             type: "string",
+            nullable: true,
             example: "Recepcion completa"
           }
         }

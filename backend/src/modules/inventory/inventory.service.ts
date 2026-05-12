@@ -2,14 +2,33 @@ import { HttpError } from "../../common/http/http-error.js";
 import { InventoryRepository } from "./inventory.repository.js";
 import type {
   CancelPurchaseInventoryLayersInput,
+  CreateInventoryBatchData,
+  CreateInventoryMovementData,
   CreatePurchaseInventoryLayersInput,
   InventoryBatchWithPurchaseItem,
   InventoryTransactionClient,
   PurchaseInventoryItem
 } from "./inventory.types.js";
 
+type InventoryBatchRecord = Pick<
+  InventoryBatchWithPurchaseItem,
+  "id" | "productId" | "originalQuantity" | "availableQuantity" | "baseUnitCost" | "batchNumber" | "expirationDate" | "status"
+>;
+
+export type InventoryRepositoryPort = {
+  createBatch(data: CreateInventoryBatchData, client: InventoryTransactionClient): Promise<InventoryBatchRecord>;
+  createMovement(data: CreateInventoryMovementData, client: InventoryTransactionClient): Promise<unknown>;
+  findBatchesByPurchaseId(
+    purchaseId: string,
+    client: InventoryTransactionClient
+  ): Promise<InventoryBatchWithPurchaseItem[]>;
+  cancelBatch(id: string, client: InventoryTransactionClient): Promise<unknown>;
+};
+
+export type InventoryServicePort = Pick<InventoryService, "createPurchaseReceiptLayers" | "cancelPurchaseReceiptLayers">;
+
 export class InventoryService {
-  constructor(private readonly inventoryRepository = new InventoryRepository()) {}
+  constructor(private readonly inventoryRepository: InventoryRepositoryPort = new InventoryRepository()) {}
 
   async createPurchaseReceiptLayers(input: CreatePurchaseInventoryLayersInput, client: InventoryTransactionClient) {
     const trackedItems = input.items.filter((item) => item.isInventoryTracked);

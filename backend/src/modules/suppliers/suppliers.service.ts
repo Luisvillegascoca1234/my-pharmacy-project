@@ -1,10 +1,26 @@
 import type { CreateSupplier, Supplier, SuppliersListResponse, SuppliersQuery, UpdateSupplier } from "@pharmacy-pos/shared";
 import { HttpError } from "../../common/http/http-error.js";
 import { SuppliersRepository } from "./suppliers.repository.js";
-import type { AuditContext, SupplierRecord } from "./suppliers.types.js";
+import type {
+  AuditContext,
+  SupplierCreateData,
+  SupplierRecord,
+  SuppliersListFilters,
+  SuppliersListResult,
+  SupplierUpdateData
+} from "./suppliers.types.js";
+
+export type SuppliersRepositoryPort = {
+  listSuppliers(filters: SuppliersListFilters): Promise<SuppliersListResult>;
+  findSupplierById(id: string): Promise<SupplierRecord | null>;
+  findSupplierByNit(nit: string, exceptId?: string): Promise<SupplierRecord | null>;
+  createSupplier(input: SupplierCreateData): Promise<SupplierRecord>;
+  updateSupplier(id: string, input: SupplierUpdateData): Promise<SupplierRecord>;
+  createAuditLog(action: string, entityId: string, metadata: unknown, context: AuditContext): Promise<unknown>;
+};
 
 export class SuppliersService {
-  constructor(private readonly suppliersRepository = new SuppliersRepository()) {}
+  constructor(private readonly suppliersRepository: SuppliersRepositoryPort = new SuppliersRepository()) {}
 
   async listSuppliers(query: SuppliersQuery): Promise<SuppliersListResponse> {
     const page = query.page;

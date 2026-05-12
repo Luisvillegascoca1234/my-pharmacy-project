@@ -11,12 +11,16 @@ import type {
   UpdatePurchase
 } from "@pharmacy-pos/shared";
 import { HttpError } from "../../common/http/http-error.js";
-import { InventoryService } from "../inventory/inventory.service.js";
+import { InventoryService, type InventoryServicePort } from "../inventory/inventory.service.js";
 import { PurchasesRepository } from "./purchases.repository.js";
 import type {
   AuditContext,
   ProductWithPurchaseRelations,
+  PurchaseDraftData,
   PurchaseDraftItemData,
+  PurchaseDraftUpdateData,
+  PurchasesListFilters,
+  PurchasesListResult,
   PurchaseSummaryRecord,
   PurchaseWithRelations,
   SupplierRecord,
@@ -25,10 +29,54 @@ import type {
 
 const ZERO_MONEY = new Prisma.Decimal(0);
 
+export type PurchasesRepositoryPort = {
+  runInTransaction<T>(callback: (client: Prisma.TransactionClient) => Promise<T>): Promise<T>;
+  listPurchases(filters: PurchasesListFilters): Promise<PurchasesListResult>;
+  getPurchase(id: string, client?: Prisma.TransactionClient): Promise<PurchaseWithRelations | null>;
+  findSupplierById(id: string, client?: Prisma.TransactionClient): Promise<SupplierRecord | null>;
+  findUserById(id: string, client?: Prisma.TransactionClient): Promise<UserRecord | null>;
+  findProductById(id: string, client?: Prisma.TransactionClient): Promise<ProductWithPurchaseRelations | null>;
+  createDraftPurchase(
+    input: PurchaseDraftData,
+    items: PurchaseDraftItemData[],
+    context: AuditContext
+  ): Promise<PurchaseWithRelations>;
+  replaceDraftPurchase(
+    id: string,
+    input: PurchaseDraftUpdateData,
+    items: PurchaseDraftItemData[],
+    context: AuditContext
+  ): Promise<PurchaseWithRelations>;
+  markPurchaseReceived(
+    id: string,
+    input: {
+      receivedByUserId: string;
+      receivedAt: Date;
+      receiveNotes: string | null;
+    },
+    client?: Prisma.TransactionClient
+  ): Promise<PurchaseWithRelations>;
+  markPurchaseCancelled(
+    id: string,
+    input: {
+      cancelledAt: Date;
+      cancelReason: string;
+    },
+    client?: Prisma.TransactionClient
+  ): Promise<PurchaseWithRelations>;
+  createAuditLog(
+    action: string,
+    entityId: string,
+    metadata: unknown,
+    context: AuditContext,
+    client?: Prisma.TransactionClient
+  ): Promise<unknown>;
+};
+
 export class PurchasesService {
   constructor(
-    private readonly purchasesRepository = new PurchasesRepository(),
-    private readonly inventoryService = new InventoryService()
+    private readonly purchasesRepository: PurchasesRepositoryPort = new PurchasesRepository(),
+    private readonly inventoryService: InventoryServicePort = new InventoryService()
   ) {}
 
   async listPurchases(query: PurchasesQuery): Promise<PurchasesListResponse> {
@@ -339,7 +387,7 @@ export class PurchasesService {
 function normalizePurchaseInput(input: CreatePurchase | UpdatePurchase) {
   return {
     supplierId: input.supplierId,
-    purchaseDate: toPureDate(input.purchaseDate),
+    purchaseDate: toPureDate(input.purchaseDate, "PURCHASE_DATE_INVALID"),
     notes: normalizeOptionalText(input.notes) ?? null
   };
 }
@@ -349,14 +397,15 @@ function buildDraftItem(
   product: ProductWithPurchaseRelations,
   productUnit: ProductWithPurchaseRelations["units"][number]
 ): PurchaseDraftItemData {
-  const quantity = toDecimal4(item.quantity);
-  const unitCost = toMoney(item.unitCost);
+  const quantity = toQuantity(item.quantity);
+  const unitCost = toUnitCost(item.unitCost);
   const conversionFactor = toDecimal4(productUnit.conversionFactor);
   const baseQuantity = toDecimal4(quantity.mul(conversionFactor));
   const baseUnitCost = toDecimal4(unitCost.div(conversionFactor));
   const lineTotal = toMoney(quantity.mul(unitCost));
   const batchNumber = product.isInventoryTracked ? normalizeBatchNumber(item.batchNumber) : null;
-  const expirationDate = product.isInventoryTracked && item.expirationDate ? toPureDate(item.expirationDate) : null;
+  const expirationDate =
+    product.isInventoryTracked && item.expirationDate ? toPureDate(item.expirationDate, "PURCHASE_EXPIRATION_DATE_INVALID") : null;
 
   return {
     productId: item.productId,
@@ -471,6 +520,10 @@ function toPurchaseUser(user: UserRecord) {
 function normalizeBatchNumber(value?: string) {
   const normalizedValue = normalizeOptionalText(value)?.toUpperCase();
 
+  if (normalizedValue && normalizedValue.length > 80) {
+    throw new HttpError(400, "Batch number must have at most 80 characters.", "PURCHASE_BATCH_NUMBER_INVALID");
+  }
+
   return normalizedValue ?? null;
 }
 
@@ -494,12 +547,48 @@ function toMoney(value: Prisma.Decimal.Value) {
   return new Prisma.Decimal(value).toDecimalPlaces(2);
 }
 
+function toQuantity(value: Prisma.Decimal.Value) {
+  const quantity = new Prisma.Decimal(value);
+
+  if (!quantity.isFinite() || quantity.lte(0) || !hasMaxDecimalPlaces(quantity, 4)) {
+    throw new HttpError(400, "Purchase item quantity must be greater than zero with at most 4 decimal places.", "PURCHASE_QUANTITY_INVALID");
+  }
+
+  return toDecimal4(quantity);
+}
+
+function toUnitCost(value: Prisma.Decimal.Value) {
+  const unitCost = new Prisma.Decimal(value);
+
+  if (!unitCost.isFinite() || unitCost.lt(0) || !hasMaxDecimalPlaces(unitCost, 2)) {
+    throw new HttpError(400, "Purchase item unit cost must be zero or greater with at most 2 decimal places.", "PURCHASE_UNIT_COST_INVALID");
+  }
+
+  return toMoney(unitCost);
+}
+
 function toDecimal4(value: Prisma.Decimal.Value) {
   return new Prisma.Decimal(value).toDecimalPlaces(4);
 }
 
-function toPureDate(value: string) {
-  return new Date(`${value}T00:00:00.000Z`);
+function toPureDate(value: string, errorCode = "PURCHASE_DATE_INVALID") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new HttpError(400, "Purchase dates must use YYYY-MM-DD format.", errorCode);
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  if (Number.isNaN(date.getTime()) || toDateOnly(date) !== value) {
+    throw new HttpError(400, "Purchase dates must be valid calendar dates.", errorCode);
+  }
+
+  return date;
+}
+
+function hasMaxDecimalPlaces(value: Prisma.Decimal, places: number) {
+  const [, decimals = ""] = value.toString().split(".");
+
+  return decimals.length <= places;
 }
 
 function toDateOnly(value: Date) {

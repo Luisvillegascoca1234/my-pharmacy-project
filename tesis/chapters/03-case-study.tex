@@ -12,6 +12,8 @@ El segundo corte, documentado como Sprint 02 Backend de Proveedores, transforma 
 
 El tercer corte, documentado como Sprint 03 Backend de Compras e Inventario, implementa la superficie backend operativa para compras recibidas. El alcance cubre creación y edición de compras en estado \texttt{draft}, listado y consulta de detalle, recepción transaccional, anulación con motivo, generación interna de capas de inventario y movimientos firmados, autorización administrativa y documentación OpenAPI. Este corte no entrega aún frontend de compras, visualización de stock por lote, kardex visual, SIAT, pagos ni cuentas por pagar; esas capacidades permanecen fuera del sprint y deben tratarse como trabajo posterior.
 
+El cuarto corte, documentado como Sprint 04 Pruebas Backend y OpenAPI, no agrega nuevas funcionalidades de dominio, sino evidencia de validación sobre lo ya implementado. Su propósito es demostrar que las reglas críticas de proveedores, compras, recepción, anulación, inventario y auditoría pueden verificarse desde la capa de servicios, sin depender de una sesión HTTP real ni de una base de datos real por defecto. Además, revisa la paridad documental de OpenAPI frente a las rutas y contratos existentes antes de avanzar hacia los sprints de frontend e integración final.
+
 \section{Análisis y diseño}
 
 El diseño mantiene la separación entre contratos compartidos, backend modular y persistencia relacional. En el paquete \texttt{@pharmacy-pos/shared} se definieron esquemas Zod para proveedores, compras, ítems de compra, recepción, anulación y paginación. Estos contratos describen las fronteras de datos esperadas por cliente y servidor, incluyendo paginación \textit{1-based}, tamaño máximo de página, estados de proveedor, estados de compra, fechas puras para \texttt{purchaseDate} y \texttt{expirationDate}, montos con dos decimales y cantidades o factores de conversión con cuatro decimales.
@@ -31,6 +33,8 @@ El Sprint 03 extiende el mismo criterio arquitectónico al módulo \texttt{purch
 El inventario relacionado con compras se diseña como un módulo interno, no como una API pública en este sprint. Sus helpers reciben un cliente transaccional desde el servicio de compras y crean o revierten capas \texttt{InventoryBatch} junto con movimientos \texttt{InventoryMovement}. La recepción registra movimientos \texttt{purchase\_received} con cantidad positiva y la anulación de una recepción intacta registra movimientos \texttt{purchase\_cancelled} con cantidad negativa. Esta estrategia permite conservar movimientos firmados y referencias exactas al ítem de compra, al producto, a la capa afectada, al usuario actor y al motivo.
 
 Las reglas de datos quedan alineadas con el objetivo de inventario transaccional. Las compras pueden estar en \texttt{draft}, \texttt{received} o \texttt{cancelled}; las fechas comerciales \texttt{purchaseDate} y \texttt{expirationDate} se manejan como fechas puras; la fecha \texttt{receivedAt} se asigna desde el servidor; los snapshots de conversión, cantidad base, costo base y total de línea se calculan en backend; y los importes se normalizan con escalas diferenciadas para dinero y cantidades. En consecuencia, una compra recibida conserva evidencia histórica aunque luego cambien unidades, costos o datos operativos del producto.
+
+El Sprint 04 refuerza este diseño mediante una estrategia de pruebas por capa de servicio. La validación se concentra en el comportamiento externo de \texttt{suppliers}, \texttt{purchases} e \texttt{inventory}, utilizando repositorios falsos y utilidades compartidas para aislar Express, Prisma Client y PostgreSQL en las pruebas unitarias. Este enfoque es consistente con la arquitectura controller-service-repository: los controladores y rutas conservan la responsabilidad HTTP, mientras que las reglas de negocio, transacciones conceptuales, auditoría e inventario se prueban donde se coordinan las decisiones del dominio.
 
 \section{Desarrollo}
 
@@ -54,6 +58,8 @@ La anulación también se implementó con reglas diferenciadas por estado. Una c
 
 La capa HTTP de compras expone \texttt{GET /api/purchases}, \texttt{GET /api/purchases/:id}, \texttt{POST /api/purchases}, \texttt{PATCH /api/purchases/:id}, \texttt{POST /api/purchases/:id/receive} y \texttt{POST /api/purchases/:id/cancel}. Todas las rutas requieren autenticación y restringen gestión a \texttt{superadmin} y \texttt{admin}; \texttt{seller} queda excluido. La documentación OpenAPI fue actualizada con endpoints, esquemas de compra e ítems, solicitudes de recepción y anulación, parámetros de consulta, seguridad bearer y errores esperados de validación, autenticación, autorización, no encontrado y conflictos de dominio.
 
+Durante el Sprint 04 se incorporó Vitest como runner backend y se organizaron utilidades de prueba en \texttt{backend/src/tests}. La cobertura agregada se ubicó junto a los módulos de dominio: \texttt{suppliers.service.spec.ts}, \texttt{purchases.service.spec.ts} e \texttt{inventory.service.spec.ts}. Esta organización mantiene la evidencia cerca de los servicios que valida y evita presentar la prueba como un flujo manual de pantalla. También se revisó \texttt{backend/src/docs/openapi.ts} para que proveedores y compras documenten los endpoints públicos reales, los contratos compartidos vigentes y los errores esperados, sin introducir endpoints públicos de inventario que no pertenecen al alcance del sprint.
+
 \section{Pruebas}
 
 La verificación técnica registrada para el Sprint 01 se enfocó en artefactos de contratos y persistencia. Se ejecutó correctamente la generación del cliente Prisma mediante \texttt{pnpm --filter @pharmacy-pos/backend prisma:generate}. También se ejecutó correctamente el typecheck del paquete compartido con \texttt{pnpm --filter @pharmacy-pos/shared typecheck}, lo que respalda que los contratos exportados compilan como parte del monorepo.
@@ -67,6 +73,30 @@ Para el Sprint 02, la evidencia de cierre registrada indica que el QA manual de 
 Para el Sprint 03, la estrategia de validación se apoya principalmente en contratos compartidos, validaciones de dominio en servicios, transacciones Prisma, autorización por roles, auditoría y documentación explícita de errores. La evidencia implementada muestra que la recepción y la anulación se ejecutan desde el servicio de compras con un cliente transaccional compartido por los helpers de inventario, lo que reduce el riesgo de estados parciales entre compra, capas, movimientos y auditoría. También se registran códigos de error específicos para estados inválidos, proveedor o producto no válido, unidad no configurada, ítems duplicados, vencimiento inválido, motivo faltante y capas no reversibles.
 
 El QA manual del Sprint 03 fue solicitado para API/backend, pero quedó bloqueado por la misma condición ambiental registrada en el ticket de QA: no existía un listener activo en los puertos locales esperados y la autenticación contra \texttt{POST http://localhost:4000/api/auth/login} fue rechazada por el host local. Por ello, no se afirma que los endpoints hayan sido ejercitados manualmente en ejecución local durante ese cierre. La tesis toma como evidencia de este sprint el código implementado, la documentación OpenAPI y la trazabilidad del sprint, dejando la verificación manual como una limitación operativa pendiente de disponibilidad del servidor.
+
+El Sprint 04 cambia el énfasis de la verificación: en lugar de depender de QA manual sobre una API levantada localmente, formaliza pruebas automatizadas de servicios. En proveedores, la cobertura valida paginación, búsqueda, detalle, creación, actualización, NIT opcional, unicidad de NIT cuando existe, normalización de campos y auditoría. En compras, la cobertura valida listado, detalle, creación y actualización de borradores, reemplazo transaccional de ítems, proveedor activo, usuario creador válido, productos activos, unidades configuradas, duplicados equivalentes, fechas puras, lote, cantidades, costos, snapshots y total calculado por backend.
+
+La recepción y anulación se verifican como flujos transaccionales de dominio. Las pruebas comprueban que una compra válida crea inventario solo para ítems inventariables, que los ítems no inventariables no generan capas, que los requisitos de lote y vencimiento se rechazan antes de producir cambios parciales, y que la anulación de una compra recibida solo procede cuando las capas permanecen intactas. En inventario, las pruebas verifican que cada ítem inventariable recibido crea una capa activa y un movimiento \texttt{purchase\_received}; la anulación crea movimientos \texttt{purchase\_cancelled} con cantidad negativa y cancela las capas intactas. Esta evidencia fortalece la confiabilidad del flujo porque contrasta las reglas que protegen consistencia, reversibilidad y trazabilidad administrativa.
+
+\begin{longtable}{p{0.28\textwidth}p{0.36\textwidth}p{0.27\textwidth}}
+\caption{Evidencia de validación registrada en el Sprint 04}\\
+\toprule
+\textbf{Fuente trazable} & \textbf{Evidencia documentada} & \textbf{Relación con la tesis}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Fuente trazable} & \textbf{Evidencia documentada} & \textbf{Relación con la tesis}\\
+\midrule
+\endhead
+PRD y epic de proveedores y compras recibidas & Reglas esperadas para proveedores, compras, inventario por capas, movimientos, auditoría, roles y contratos compartidos. & Delimitan el alcance académico y evitan afirmar funcionalidades fuera del epic.\\
+Tickets 01, 02 y 03 del Sprint 04 & Pruebas de servicios para proveedores, borradores de compras, validaciones, recepción, anulación e inventario. & Sustentan la separación por capas y la confiabilidad del dominio backend.\\
+Tickets 04 y 06 del Sprint 04 & Runner Vitest, utilidades de prueba, repositorios falsos y limpieza de referencias tocadas. & Evidencian una estrategia de validación mantenible sin depender de Express ni base real por defecto.\\
+Ticket 05 del Sprint 04 & Revisión de paridad entre OpenAPI, rutas reales, contratos compartidos y errores documentados. & Respalda la consistencia documental de la API disponible para clientes futuros.\\
+Ticket 07 del Sprint 04 & \texttt{pnpm --filter @pharmacy-pos/backend test} aprobado con 3 archivos y 23 pruebas; \texttt{pnpm --filter @pharmacy-pos/backend typecheck} aprobado. & Aporta evidencia técnica de compilación y ejecución automatizada del backend.\\
+\bottomrule
+\end{longtable}
+
+La validación de OpenAPI se mantiene como paridad documental, no como prueba funcional completa de integración. El intento de inspección de Swagger UI en \texttt{http://localhost:4000/api/docs} no pudo completarse porque la conexión local fue rechazada, sin errores de consola adicionales registrados. Por tanto, la evidencia del Sprint 04 permite afirmar que existe cobertura automatizada backend y revisión documental de la API, pero no permite declarar cerrado el epic completo. Permanecen como limitaciones los sprints de frontend, la experiencia de usuario para proveedores y compras, la integración final de rutas y estados de pantalla, y la validación operativa completa con servidor disponible.
 
 \section{Estimación de costos}
 

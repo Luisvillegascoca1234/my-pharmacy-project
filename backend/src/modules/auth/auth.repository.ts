@@ -1,3 +1,4 @@
+import type { User } from "@prisma/client";
 import { AuthenticatedUserSchema, type AuthenticatedUser } from "@pharmacy-pos/shared";
 import { prisma } from "../../infrastructure/prisma/prisma.client.js";
 
@@ -5,7 +6,7 @@ type UserWithRolePermissions = {
   id: string;
   email: string;
   fullName: string;
-  status: "active" | "inactive";
+  status: User["status"];
   role: {
     id: string;
     name: string;
