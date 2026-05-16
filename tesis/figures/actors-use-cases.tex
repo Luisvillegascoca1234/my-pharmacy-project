@@ -1,0 +1,38 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  actor/.style={draw, circle, minimum size=1.1cm, align=center, fill=gray!10},
+  usecase/.style={draw, rounded corners=6pt, minimum width=3.6cm, minimum height=0.8cm, align=center, fill=blue!6},
+  blocked/.style={draw, rounded corners=6pt, minimum width=3.6cm, minimum height=0.8cm, align=center, fill=red!7},
+  link/.style={-Latex, thick},
+  note/.style={draw, rounded corners=4pt, align=center, fill=yellow!12, text width=4.3cm}
+]
+  \node[actor] (superadmin) at (0,3.1) {Super\\admin.};
+  \node[actor] (admin) at (0,1.4) {Admin.};
+  \node[actor] (seller) at (0,-0.6) {Vendedor};
+
+  \node[usecase] (suppliers) at (5,3.2) {Gestionar\\proveedores};
+  \node[usecase] (draft) at (5,2.0) {Preparar compra\\en borrador};
+  \node[usecase] (receive) at (5,0.8) {Recibir compra\\y crear inventario};
+  \node[usecase] (cancel) at (5,-0.4) {Anular compra\\con motivo};
+  \node[blocked] (blocked) at (5,-1.8) {Sin acceso a\\compras administrativas};
+
+  \draw[link] (superadmin) -- (suppliers);
+  \draw[link] (superadmin) -- (draft);
+  \draw[link] (superadmin) -- (receive);
+  \draw[link] (superadmin) -- (cancel);
+
+  \draw[link] (admin) -- (suppliers);
+  \draw[link] (admin) -- (draft);
+  \draw[link] (admin) -- (receive);
+  \draw[link] (admin) -- (cancel);
+
+  \draw[link] (seller) -- (blocked);
+
+  \node[note] at (9.6,0.8) {Las acciones que afectan proveedores, compras e inventario quedan reservadas a perfiles administrativos.};
+  \draw[link] (receive) -- (7.35,0.8);
+\end{tikzpicture}
+\caption{Actores y casos de uso del flujo administrativo de proveedores y compras}
+\label{fig:actores-compras}
+\end{figure}

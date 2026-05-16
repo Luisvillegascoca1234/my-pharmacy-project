@@ -1,0 +1,38 @@
+---
+title: Devoluciones y anulaciones
+description: Diferencias entre devolucion, anulacion comercial y anulacion fiscal.
+---
+
+Las devoluciones y anulaciones deben manejarse con control estricto porque pueden afectar inventario, caja, reportes y facturación. En farmacia, además, existe una dimensión sanitaria: no todo producto devuelto puede reincorporarse automáticamente al stock disponible.
+
+## Devolucion
+
+La devolución ocurre cuando el cliente retorna uno o más productos asociados a una venta. Debe registrar venta original, productos devueltos, lotes involucrados, motivo, usuario que registra y usuario que autoriza cuando corresponda.
+
+## Anulacion comercial
+
+La anulación comercial deja sin efecto una operación interna bajo reglas controladas. Puede aplicar cuando hubo error operativo, duplicidad o registro incorrecto. Debe conservar evidencia y no borrar la historia.
+
+## Anulacion fiscal
+
+La anulación fiscal afecta la factura emitida ante SIAT. Es distinta de la devolución física del producto y debe gestionarse con permisos restringidos, motivo y registro de respuesta fiscal cuando corresponda.
+
+## Impacto en inventario
+
+Una devolución puede o no retornar stock disponible. Si el producto mantiene condiciones sanitarias válidas, podría reincorporarse con trazabilidad. Si existe riesgo por manipulación, daño o pérdida de cadena de conservación, puede tratarse como merma o producto no vendible.
+
+## Impacto en caja
+
+La devolución puede generar salida de dinero, nota interna o ajuste administrativo. El sistema debe diferenciar el impacto en caja del impacto en inventario y del impacto fiscal.
+
+## Reglas de negocio
+
+- Toda devolución debe tener motivo.
+- La venta original debe ser identificable.
+- Los lotes involucrados deben conservarse.
+- Las anulaciones fiscales deben ser realizadas por usuarios autorizados.
+- No debe borrarse la operación original.
+
+## Resultado esperado
+
+El sistema debe permitir corregir operaciones sin destruir evidencia. La farmacia debe poder explicar qué se devolvió, por qué, quién autorizó, qué pasó con el stock, cómo se afectó caja y si existió impacto fiscal.

@@ -1,0 +1,35 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  process/.style={draw, rounded corners=5pt, minimum width=2.6cm, minimum height=0.85cm, align=center, fill=blue!6},
+  decision/.style={draw, diamond, aspect=2.1, minimum width=2.5cm, align=center, fill=yellow!12},
+  endstep/.style={draw, rounded corners=5pt, minimum width=2.6cm, minimum height=0.85cm, align=center, fill=green!9},
+  reject/.style={draw, rounded corners=5pt, minimum width=2.6cm, minimum height=0.85cm, align=center, fill=red!8},
+  flow/.style={-Latex, thick},
+  label/.style={font=\scriptsize, fill=white, inner sep=1pt}
+]
+  \node[process] (draft) at (0,0) {Compra en\\borrador};
+  \node[decision] (supplier) at (3.2,0) {Proveedor\\válido};
+  \node[decision] (items) at (6.4,0) {Ítems\\válidos};
+  \node[process] (tx) at (9.8,0) {Transacción de\\recepción};
+  \node[process] (batches) at (9.8,-1.7) {Crear capas\\de inventario};
+  \node[process] (movements) at (6.4,-1.7) {Registrar\\movimientos};
+  \node[process] (audit) at (3.2,-1.7) {Registrar\\auditoría};
+  \node[endstep] (received) at (0,-1.7) {Compra\\recibida};
+  \node[reject] (reject) at (4.8,1.7) {Rechazar operación\\sin afectar inventario};
+
+  \draw[flow] (draft) -- (supplier);
+  \draw[flow] (supplier) -- node[label, above] {sí} (items);
+  \draw[flow] (items) -- node[label, above] {sí} (tx);
+  \draw[flow] (tx) -- (batches);
+  \draw[flow] (batches) -- (movements);
+  \draw[flow] (movements) -- (audit);
+  \draw[flow] (audit) -- (received);
+
+  \draw[flow] (supplier) .. controls (3.2,1.2) and (4.0,1.7) .. node[label, left] {no} (reject);
+  \draw[flow] (items) .. controls (6.4,1.2) and (5.6,1.7) .. node[label, right] {no} (reject);
+\end{tikzpicture}
+\caption{Flujo transaccional de recepción de compras}
+\label{fig:flujo-recepcion}
+\end{figure}

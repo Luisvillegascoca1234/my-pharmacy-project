@@ -1,0 +1,43 @@
+---
+title: Facturacion SIAT
+description: Conceptos fiscales bolivianos previstos para la facturacion del sistema.
+---
+
+La facturación SIAT representa el componente fiscal del sistema. Debe entenderse como un proceso relacionado con la venta, pero no idéntico a ella. La venta refleja la operación comercial e inventario; la factura representa el documento tributario y su relación con el Servicio de Impuestos Nacionales.
+
+## Conceptos principales
+
+- **SIAT:** Sistema Integrado de la Administración Tributaria utilizado en Bolivia.
+- **CUIS:** código único de inicio de sistemas.
+- **CUFD:** código único de facturación diaria.
+- **Punto de venta:** identificador fiscal del lugar o canal desde donde se emite.
+- **Leyenda:** texto tributario asociado al documento fiscal.
+- **Factura:** documento fiscal emitido por la operación comercial.
+- **Respuesta del SIN:** resultado de validación, observación, rechazo o recepción.
+
+## Estados conceptuales de factura
+
+Una factura puede encontrarse en estados como borrador, emitida, enviada, validada, observada, rechazada o anulada. Estos estados permiten separar el momento comercial de la venta del ciclo fiscal posterior.
+
+## Relacion con ventas
+
+La venta puede generar una factura, pero no debe confundirse con ella. Una venta afecta productos, pagos e inventario. Una factura afecta obligaciones fiscales, validaciones externas, códigos de recepción y posibles anulaciones ante SIAT.
+
+## Anulacion fiscal
+
+La anulación de factura es una acción sensible. Debe reservarse a usuarios administrativos autorizados, registrar motivo y conservar respuesta fiscal cuando aplique. No equivale automáticamente a una devolución física de productos ni a una reversa de caja.
+
+## Contingencia
+
+Cuando el servicio externo no se encuentra disponible, el sistema debe contemplar la posibilidad conceptual de contingencia. Esto permite registrar el evento y diferenciar problemas fiscales externos de errores propios de operación.
+
+## Reglas de negocio
+
+- Solo admin y superadmin deben poder anular facturas.
+- La factura debe conservar estado fiscal.
+- La venta y la factura deben relacionarse sin fusionarse.
+- Las respuestas fiscales relevantes deben quedar auditadas.
+
+## Resultado esperado
+
+La farmacia debe poder emitir y consultar documentos fiscales de forma trazable, diferenciando claramente operación comercial, control de inventario y cumplimiento tributario.

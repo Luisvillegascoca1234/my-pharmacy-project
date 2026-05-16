@@ -194,6 +194,7 @@ Use this structure:
 ## Out of Scope
 
 ## Notes for create-epic-sprint
+## Documentation and Thesis Impact
 ```
 
 Guidance:
@@ -202,6 +203,11 @@ Guidance:
 - keep code identifiers and category names in English
 - make `Sprint Plan` a numbered sequence of likely sprint themes, not full tickets
 - use `Ticket Category Hints` to identify likely `UI`, `BACKEND`, and `INFRA` ticket groups
+- use `Documentation and Thesis Impact` to state the agent's inferred documentation outcome for this epic:
+  - whether the epic is expected to require a final docs/thesis sprint
+  - the reason for that decision
+  - which evidence, user-facing docs, or thesis sections would be affected if documentation is required
+  - why no docs/thesis sprint is expected when the epic is a functional refactor, internal cleanup, or implementation-only change without meaningful academic or end-user documentation impact
 - include enough detail that `$create-epic-sprint` can scaffold the first sprint without re-reading the entire conversation
 - do not create `sprints/` or ticket files here unless the user explicitly asks for sprint creation in the same turn
 

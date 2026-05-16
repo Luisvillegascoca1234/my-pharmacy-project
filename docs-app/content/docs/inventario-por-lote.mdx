@@ -1,0 +1,40 @@
+---
+title: Inventario por lote
+description: Control de stock, vencimiento y costo por capas de inventario.
+---
+
+El inventario por lote permite controlar existencias con precisión sanitaria y contable. En farmacia, conocer solamente la cantidad total de un producto no es suficiente: también se necesita saber de qué lote proviene, cuándo vence, cuánto costó y si está disponible para la venta.
+
+## Lote operativo
+
+Un lote operativo agrupa existencias por producto, número de lote y fecha de vencimiento. Esta vista es útil para el personal de farmacia porque muestra cuánto stock existe de una partida reconocible.
+
+## Capa de inventario
+
+Una capa de inventario representa una recepción específica con su propio costo. Dos compras pueden ingresar el mismo producto, mismo número de lote y mismo vencimiento, pero con costos distintos. Mantener capas separadas permite calcular margen real y conservar historia de costos sin confundir la vista operativa.
+
+## Estados del stock
+
+- **Activo:** disponible para operaciones.
+- **Agotado:** ya no tiene cantidad disponible.
+- **Cancelado:** fue revertido por una anulación válida.
+
+## FEFO
+
+El metodo FEFO prioriza la salida de los lotes con vencimiento más cercano. Este criterio reduce pérdidas por caducidad y ayuda a que la farmacia venda primero los productos que deben rotar antes.
+
+## Reglas de negocio
+
+- El stock debe expresarse en unidad base.
+- Cada capa conserva costo unitario base.
+- Los lotes vencidos no deben seleccionarse para venta.
+- Los lotes cancelados no deben estar disponibles.
+- La disponibilidad debe considerar cantidad, vencimiento y estado.
+
+## Casos especiales
+
+Un mismo lote físico puede tener costos distintos si fue recibido en fechas diferentes o bajo condiciones comerciales diferentes. El usuario puede necesitar ver el stock agrupado, pero el sistema debe conservar internamente la diferencia de costos para reportes de margen.
+
+## Resultado esperado
+
+El inventario debe permitir responder cuánto stock existe, de qué lote proviene, cuándo vence, cuánto costó, qué cantidad queda disponible y qué movimientos explican su situación actual.

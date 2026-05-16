@@ -1,0 +1,83 @@
+---
+title: Guia de compras recibidas
+description: Como crear borradores, agregar items, recibir y anular compras.
+---
+
+## Ruta
+
+Abrir **Compras > Compras**.
+
+## Para que sirve
+
+La pantalla **Compras** permite preparar una compra en borrador y luego recibirla para que impacte inventario. Este flujo es el puente entre el proveedor y el stock por lote.
+
+## Buscar compras
+
+1. Entrar a **Compras > Compras**.
+2. Escribir en **Buscar compra o proveedor** si se quiere filtrar por texto.
+3. Usar **Estado** para ver todos los estados, borrador, recibida o anulada.
+4. Usar **Proveedor** para filtrar por proveedor.
+5. Completar **Desde** y **Hasta** para filtrar por fecha.
+6. Revisar la tabla de compras.
+7. Usar **Anterior** o **Siguiente** si existen varias paginas.
+
+## Crear una compra en borrador
+
+1. Entrar a **Compras > Compras**.
+2. Presionar **Nueva compra**.
+3. En **Encabezado**, seleccionar **Proveedor**.
+4. Confirmar la **Fecha comercial**.
+5. Escribir **Notas** si existe una observacion interna.
+6. En **Items**, seleccionar **Producto**.
+7. Seleccionar **Unidad**.
+8. Completar **Cantidad**.
+9. Completar **Costo unitario**.
+10. Escribir **Lote** si el producto es inventariable.
+11. Seleccionar **Vencimiento** si el producto es inventariable.
+12. Revisar el **Subtotal** de la fila y el **Total visual** del resumen.
+13. Presionar **Guardar borrador**.
+
+## Agregar o quitar items
+
+1. En la pantalla de compra, presionar **Agregar item** para sumar otra fila.
+2. Completar producto, unidad, cantidad, costo, lote y vencimiento.
+3. Para retirar una fila, usar el boton **Quitar item**.
+4. La compra debe conservar al menos un item.
+
+## Recibir una compra
+
+1. Abrir una compra guardada en estado **Borrador**.
+2. Revisar que no aparezca el aviso **Cambios pendientes**.
+3. Si existen cambios pendientes, presionar **Guardar borrador**.
+4. Presionar **Recibir** o **Recibir compra**.
+5. En el dialogo **Recibir compra**, escribir **Notas de recepción** si corresponde.
+6. Presionar **Confirmar recepción**.
+
+## Anular una compra
+
+1. Abrir una compra en estado **Borrador**.
+2. Presionar **Anular** o **Anular compra**.
+3. En el dialogo **Anular compra**, escribir **Motivo de anulación**.
+4. Presionar **Confirmar anulación**.
+
+## Controles visibles
+
+- Link **Nueva compra**.
+- Campo **Buscar compra o proveedor**.
+- Filtros **Estado**, **Proveedor**, **Desde** y **Hasta**.
+- Link **Volver**.
+- Boton **Guardar borrador**.
+- Boton **Agregar item**.
+- Boton **Quitar item**.
+- Boton **Recibir** o **Recibir compra**.
+- Boton **Anular** o **Anular compra**.
+- Boton **Confirmar recepción**.
+- Boton **Confirmar anulación**.
+
+## Resultado esperado
+
+Una compra guardada queda como borrador y puede editarse. Una compra recibida pasa a historial de solo lectura y genera inventario. Una compra anulada conserva evidencia administrativa.
+
+## Consejo
+
+No recibir la compra hasta revisar proveedor, fecha, productos, cantidades, costos, lotes y vencimientos. La recepción es una accion operativa sensible porque crea stock y movimientos de inventario.

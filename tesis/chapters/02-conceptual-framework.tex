@@ -2,109 +2,85 @@
 
 \section{Revisión de la literatura}
 
-El desarrollo de un sistema de punto de venta para farmacia requiere articular fundamentos de ingeniería de software, arquitectura de aplicaciones web, seguridad de autenticación y gestión persistente de datos. Desde la ingeniería de software, el sistema debe entenderse como un producto compuesto por requisitos, diseño, implementación, pruebas y mantenimiento, no solamente como una colección de pantallas o funciones aisladas. \textcite{pressman2020software} sostienen que la calidad del software depende de procesos técnicos sistemáticos, mientras que \textcite{sommerville2016software} enfatiza la importancia de estructurar el sistema para controlar complejidad, evolución y mantenibilidad.
+El desarrollo de un sistema administrativo para farmacia requiere fundamentos de arquitectura de software, aplicaciones web, persistencia transaccional y seguridad de acceso. En sistemas empresariales, la arquitectura no se limita a seleccionar tecnologías, sino a definir responsabilidades, dependencias y mecanismos de evolución. \textcite{richards2015architecture} describe la arquitectura en capas como un patrón apropiado cuando se busca separar presentación, lógica de negocio y acceso a datos. Esta separación resulta pertinente para el caso de estudio porque las operaciones farmacéuticas combinan interacción de usuario, validaciones de dominio y persistencia histórica.
 
-En aplicaciones empresariales, la separación de responsabilidades es un principio recurrente. \textcite{fowler2003patterns} describe patrones de arquitectura de aplicaciones empresariales orientados a distinguir presentación, lógica de dominio y acceso a datos. Esta división es pertinente para el presente proyecto porque el código fuente evidencia una organización en capas: una interfaz web desarrollada con React y Vite, una API HTTP construida con Express y TypeScript, y una capa de persistencia relacional basada en PostgreSQL accedida mediante Prisma ORM.
+La gestión de datos transaccionales también es central. \textcite{kleppmann2017data} enfatiza que los sistemas de datos deben diseñarse considerando confiabilidad, mantenibilidad y consistencia. En una farmacia, estos atributos se relacionan directamente con compras, lotes, vencimientos y movimientos de inventario. Una compra recibida no debe entenderse solamente como un registro administrativo, sino como el origen de existencias que podrían ser vendidas, auditadas o anuladas bajo reglas controladas.
 
-La literatura y documentación técnica también respaldan el uso de interfaces web de una sola página, contratos compartidos y validación de datos. React se orienta a la construcción de interfaces declarativas por componentes \parencite{react2026learn}, Vite proporciona un entorno de desarrollo y construcción para aplicaciones frontend modernas \parencite{vite2026guide}, y TypeScript añade tipado estático sobre JavaScript para reducir errores de integración en tiempo de desarrollo \parencite{typescript2026handbook}. En este contexto, Zod se emplea como mecanismo de validación de esquemas y de inferencia de tipos, lo que permite alinear los datos enviados por el cliente con los datos aceptados por el servidor \parencite{zod2026docs}.
+Para la interfaz web, \textcite{banks2020learning} presenta React como una herramienta orientada a construir interfaces por componentes y administrar cambios de estado de forma declarativa. Esta orientación permite construir pantallas administrativas donde filtros, formularios, estados de carga y confirmaciones de operación se mantienen comprensibles para el usuario. En el lado servidor, \textcite{mardan2014express} expone Express como un marco flexible para construir APIs HTTP con rutas y middleware, lo que facilita separar autenticación, autorización y tratamiento de errores. De forma complementaria, \textcite{casciaro2020node} desarrolla patrones de diseño para aplicaciones Node.js que respaldan la modularidad y la separación de responsabilidades en servicios web.
 
-Respecto a la seguridad de sesión, el proyecto implementa autenticación basada en credenciales, hashing de contraseñas, emisión de tokens JWT y autorización mediante el encabezado HTTP \texttt{Authorization: Bearer}. El estándar JSON Web Token define un formato compacto para representar declaraciones entre partes de forma verificable \parencite{rfc7519}. Aunque JWT no reemplaza por sí solo una política integral de seguridad, su uso en una API HTTP moderna permite desacoplar la sesión del almacenamiento de estado del servidor, siempre que se protejan adecuadamente la clave de firma, el tiempo de expiración, el transporte HTTPS y la revocación o renovación cuando el dominio lo exija.
+La persistencia relacional se sustenta en PostgreSQL, cuyo modelo permite restricciones, transacciones, índices y relaciones entre entidades \parencite{postgresql2026docs}. Para el acceso a datos desde TypeScript, Prisma ofrece un ORM con esquema declarativo, migraciones y cliente tipado \parencite{prisma2026docs}. Esta combinación es adecuada cuando se necesita representar usuarios, roles, proveedores, compras, productos, unidades, lotes y movimientos sin perder integridad referencial.
 
-Finalmente, el uso de Docker en el proyecto responde a una necesidad de reproducibilidad del entorno. Docker permite empaquetar y ejecutar servicios en contenedores aislados, reduciendo diferencias entre equipos de desarrollo y facilitando la provisión de dependencias como PostgreSQL \parencite{docker2026overview}. En este caso, \texttt{docker-compose.yml} define el servicio de base de datos PostgreSQL 16 con volumen persistente y verificación de salud, por lo que el contenedor no constituye la aplicación completa, sino la infraestructura local que sostiene la capa de datos.
+La validación de datos y los contratos compartidos se apoyan en TypeScript y Zod. TypeScript aporta tipado estático para reducir errores de integración entre partes del sistema \parencite{typescript2026handbook}, mientras que Zod permite expresar esquemas de validación ejecutables \parencite{zod2026docs}. En sistemas administrativos, esta práctica reduce divergencias entre lo que la interfaz envía, lo que la API acepta y lo que la base de datos puede conservar.
+
+Finalmente, la seguridad de sesión se relaciona con autenticación, autorización y auditoría. El estándar JSON Web Token define un formato compacto para transmitir declaraciones verificables entre partes \parencite{rfc7519}. Sin embargo, su uso debe complementarse con controles de rol, expiración, validación de usuario activo y registro de acciones. En el contexto farmacéutico, la auditoría no es un adorno técnico: permite reconstruir quién creó, recibió o anuló una operación que afecta inventario.
 
 \section{Conceptos, teorías y modelos}
 
 \subsection{Sistema de información transaccional para farmacia}
 
-Un sistema de información transaccional registra operaciones cotidianas que modifican el estado de una organización: ventas, compras, pagos, movimientos de inventario y auditoría. En el dominio farmacéutico, esta clase de sistema exige trazabilidad mayor que un catálogo simple, porque el inventario depende de lotes, vencimientos, proveedores, precios, usuarios autorizados y registros históricos. Por ello, el diseño conceptual debe considerar que cada operación crítica no solo produce una respuesta visual al usuario, sino también cambios persistentes y verificables en la base de datos.
+Un sistema de información transaccional registra operaciones que modifican el estado de una organización. En una farmacia, estas operaciones incluyen compras, ventas, movimientos de inventario, administración de productos, usuarios y auditoría. La particularidad farmacéutica se encuentra en la trazabilidad: el sistema debe conservar datos suficientes para explicar el origen, disponibilidad, costo y estado de cada existencia relevante.
 
-El proyecto se orienta a un punto de venta farmacéutico. Sus lineamientos técnicos contemplan módulos como autenticación, usuarios, roles, productos, unidades, proveedores, compras, inventario, ventas, caja, facturación, devoluciones, auditoría, alertas, reportes y exportaciones. Esta división funcional permite modelar el sistema como un monolito modular: una sola aplicación backend desplegable, pero internamente organizada por dominios para evitar acoplamiento excesivo.
+El concepto de lote se refiere a un conjunto identificable de productos que comparten una referencia de fabricación o distribución. La fecha de vencimiento indica el límite temporal de uso o comercialización segura. La unidad comercial puede diferir de la unidad base de inventario; por ejemplo, una compra puede registrarse por caja, pero el control interno puede requerir unidades individuales. Por esta razón, el sistema debe manejar factores de conversión, cantidades base y costos base.
 
-\subsection{Arquitectura de tres capas}
+\subsection{Arquitectura web modular}
 
-La arquitectura de tres capas separa el sistema en presentación, lógica de aplicación o negocio, y persistencia. Esta separación no debe interpretarse solamente como carpetas distintas, sino como una distribución de responsabilidades. La capa de presentación interactúa con el usuario y muestra estados; la capa de negocio valida reglas, coordina operaciones y aplica políticas; la capa de datos encapsula consultas, transacciones y persistencia. Esta organización mejora la mantenibilidad porque una modificación visual no debería exigir cambios directos en consultas de base de datos, y una modificación del motor de persistencia no debería alterar los componentes de interfaz \parencite{sommerville2016software,fowler2003patterns}.
+La arquitectura web modular separa el sistema en responsabilidades comprensibles: una interfaz orientada al usuario, una API que aplica reglas de negocio, contratos de datos que definen entradas y salidas, y una base relacional que conserva el estado histórico. Esta separación permite que una pantalla cambie sin reescribir reglas de recepción de compras, y que una regla de inventario evolucione sin duplicarse en cada vista.
 
-En la base de código revisada, la arquitectura se expresa de la siguiente forma:
-
-\begin{longtable}{p{0.25\textwidth}p{0.32\textwidth}p{0.34\textwidth}}
-\caption{Correspondencia entre capas conceptuales y componentes del proyecto}\\
+\begin{longtable}{p{0.28\textwidth}p{0.62\textwidth}}
+\caption{Responsabilidades conceptuales de la arquitectura propuesta}\\
 \toprule
-\textbf{Capa conceptual} & \textbf{Implementación observada} & \textbf{Responsabilidad principal}\\
+\textbf{Responsabilidad} & \textbf{Propósito dentro del sistema}\\
 \midrule
 \endfirsthead
 \toprule
-\textbf{Capa conceptual} & \textbf{Implementación observada} & \textbf{Responsabilidad principal}\\
+\textbf{Responsabilidad} & \textbf{Propósito dentro del sistema}\\
 \midrule
 \endhead
-Presentación & \texttt{frontend/src}, React, Vite, Zustand, componentes UI & Renderizar la interfaz, capturar eventos, conservar estado de sesión del cliente y consumir la API.\\
-Aplicación y negocio & \texttt{backend/src/modules}, Express, controllers, services, middleware & Exponer endpoints HTTP, validar solicitudes, autenticar usuarios y ejecutar reglas de aplicación.\\
-Persistencia & \texttt{backend/prisma}, Prisma Client, PostgreSQL & Definir el modelo relacional, ejecutar consultas, preservar integridad y registrar auditoría.\\
-Contratos compartidos & \texttt{packages/shared}, Zod, TypeScript & Compartir esquemas y tipos entre cliente y servidor para reducir divergencias de datos.\\
+Interfaz web & Presentar formularios, listas, estados de operación y mensajes en español para usuarios administrativos.\\
+API de aplicación & Validar solicitudes, aplicar reglas de negocio, autorizar operaciones y responder mediante contratos consistentes.\\
+Contratos de datos & Definir estructuras compartidas para proveedores, compras, ítems, paginación, recepción y anulación.\\
+Persistencia relacional & Conservar usuarios, productos, proveedores, compras, capas de inventario, movimientos y auditoría con integridad referencial.\\
+Auditoría & Registrar acciones relevantes para reconstruir operaciones administrativas y cambios de inventario.\\
 \bottomrule
 \end{longtable}
 
-La inclusión de una capa de contratos compartidos complementa el modelo clásico. Aunque no constituye una cuarta capa funcional independiente, sí opera como mecanismo transversal de consistencia: los esquemas de autenticación, usuario y respuesta de sesión se definen una vez y son consumidos tanto por el frontend como por el backend.
+\subsection{API REST y control de roles}
 
-\subsection{Frontend web moderno}
+Una API REST organiza recursos y operaciones mediante HTTP. Para el caso de estudio, proveedores y compras se tratan como recursos administrativos; la recepción y la anulación se modelan como transiciones de estado controladas. La autorización por roles permite distinguir usuarios con capacidad administrativa de usuarios de venta. Esta distinción es importante porque una compra recibida puede crear inventario y afectar costos, por lo que no debe estar disponible para todo perfil de usuario.
 
-El frontend del sistema utiliza React como biblioteca de interfaz y Vite como herramienta de desarrollo y construcción. Conceptualmente, esta combinación corresponde a una aplicación web de una sola página, donde el navegador carga una aplicación cliente que actualiza vistas sin solicitar documentos HTML completos en cada interacción. React facilita la composición de componentes reutilizables y Vite acelera el ciclo de desarrollo mediante servidor local y empaquetado optimizado \parencite{react2026learn,vite2026guide}.
+\subsection{Persistencia transaccional e inventario por capas}
 
-El estado de autenticación se administra con Zustand. En el código revisado, el almacén del módulo de autenticación conserva el token y restaura la sesión al iniciar la aplicación. Este patrón evita pasar manualmente credenciales por múltiples componentes, pero exige disciplina: el estado global debe reservarse para información transversal y no para datos efímeros de pantalla. El cliente HTTP base centraliza la URL de la API, serializa el cuerpo de las solicitudes y agrega el encabezado \texttt{Authorization} cuando existe token.
+La persistencia transaccional asegura que una operación crítica se complete de manera íntegra o no se aplique. En una compra recibida, esto significa que el cambio de estado de la compra, la creación de capas de inventario, los movimientos asociados y la auditoría deben mantenerse coherentes. El inventario por capas permite conservar existencias separadas por origen de compra, costo base, lote y vencimiento, incluso cuando dos compras correspondan al mismo producto.
 
-\subsection{Backend, API REST y monolito modular}
+Este enfoque favorece la trazabilidad farmacéutica porque permite explicar no solo cuánto stock existe, sino de dónde proviene y bajo qué costo ingresó. También facilita una futura visualización de kardex o stock por lote sin sacrificar la precisión histórica de las operaciones.
 
-El backend está construido con Express y TypeScript. Express proporciona el enrutamiento HTTP y el manejo de middleware, mientras que TypeScript mejora la legibilidad y seguridad del código mediante tipos explícitos \parencite{express2026guide,typescript2026handbook}. La organización observada responde a un monolito modular: los módulos se agrupan por dominio y cada uno puede contener rutas, controladores, servicios, repositorios y tipos.
+\subsection{Validación compartida y mantenibilidad}
 
-El patrón controller-service-repository delimita responsabilidades. El controlador recibe la solicitud HTTP, valida la entrada y delega; el servicio concentra reglas de aplicación, autenticación, auditoría y coordinación; el repositorio encapsula el acceso a Prisma y, por tanto, a la base de datos. Esta división reduce el acoplamiento entre HTTP, reglas de negocio y persistencia, lo que es coherente con los criterios de modularidad y mantenibilidad descritos por la literatura de ingeniería de software \parencite{pressman2020software,sommerville2016software}.
+La validación compartida consiste en expresar reglas de datos en contratos reutilizables por más de una parte del sistema. En vez de depender únicamente de validaciones visuales, el sistema define restricciones para campos como NIT, estado de proveedor, fecha comercial, estado de compra, cantidad, costo, lote, vencimiento y motivo de anulación. Esta práctica mejora la mantenibilidad porque reduce interpretaciones contradictorias de los mismos datos.
 
-\subsection{Persistencia relacional y ORM}
+\subsection{Stack tecnológico}
 
-PostgreSQL es el sistema de gestión de base de datos relacional definido para el proyecto. Una base relacional resulta adecuada cuando se requiere integridad entre entidades como usuarios, roles, permisos, auditoría, productos, ventas y movimientos. PostgreSQL documenta características de transacciones, tipos de datos e integridad que son relevantes para aplicaciones empresariales \parencite{postgresql2026docs}.
-
-Prisma ORM se utiliza como capa de acceso a datos. Su esquema declara modelos, relaciones, restricciones y migraciones; el cliente generado permite consultar la base desde TypeScript \parencite{prisma2026docs}. En términos conceptuales, Prisma no elimina la necesidad de arquitectura: el ORM debe permanecer en repositorios o infraestructura, de modo que la lógica de negocio no quede mezclada con detalles de consulta.
-
-\subsection{Autenticación moderna basada en tokens}
-
-El flujo de autenticación implementado responde a una estrategia moderna de APIs HTTP. El usuario envía correo y contraseña; el backend normaliza el correo, busca al usuario, compara la contraseña con un hash mediante \texttt{bcryptjs}, verifica el estado de la cuenta, registra auditoría y emite un JWT firmado. En solicitudes posteriores, el cliente envía el token en el encabezado \texttt{Authorization: Bearer}. El middleware del backend verifica el token, obtiene al usuario activo y adjunta la identidad autenticada a la solicitud.
-
-Este flujo separa autenticación y autorización. La autenticación responde a la pregunta de quién es el usuario; la autorización determina qué puede hacer, a partir de roles y permisos. El modelo de datos incluye usuarios, roles, permisos y una relación de asignación de permisos a roles. Además, el registro de auditoría para inicios de sesión exitosos, fallidos y cierres de sesión añade trazabilidad, aspecto importante en sistemas administrativos donde las acciones deben poder reconstruirse.
-
-Desde una perspectiva académica, JWT debe tratarse como un mecanismo de representación de sesión, no como una garantía absoluta de seguridad. La protección depende de prácticas complementarias: secreto robusto, expiración limitada, transporte seguro, validación de usuario activo y auditoría. En el proyecto, la expiración del token se parametriza mediante variables de entorno y la validación del usuario activo evita aceptar tokens de cuentas deshabilitadas.
-
-\subsection{Contenedores Docker y reproducibilidad}
-
-Docker permite ejecutar servicios en contenedores con configuración explícita. En el proyecto, Docker Compose levanta PostgreSQL 16 Alpine con variables de base de datos, puerto local, volumen persistente y \textit{healthcheck}. Esto aporta reproducibilidad porque el equipo de desarrollo puede iniciar la dependencia principal de datos sin instalar manualmente PostgreSQL en el sistema operativo.
-
-Conceptualmente, Docker no reemplaza el diseño de arquitectura, sino que lo apoya a nivel de infraestructura. La aplicación conserva sus capas de cliente, servidor y persistencia; Docker facilita que la capa de persistencia se ejecute de forma controlada. Esta decisión es coherente con el objetivo de reducir fricción ambiental durante desarrollo, pruebas y futuras etapas de despliegue.
-
-\subsection{Stack tecnológico identificado}
-
-\begin{longtable}{p{0.25\textwidth}p{0.28\textwidth}p{0.38\textwidth}}
-\caption{Stack tecnológico utilizado en el proyecto}\\
+\begin{longtable}{p{0.25\textwidth}p{0.30\textwidth}p{0.35\textwidth}}
+\caption{Stack tecnológico utilizado y justificación conceptual}\\
 \toprule
-\textbf{Área} & \textbf{Tecnologías} & \textbf{Función dentro del sistema}\\
+\textbf{Área} & \textbf{Tecnologías} & \textbf{Justificación}\\
 \midrule
 \endfirsthead
 \toprule
-\textbf{Área} & \textbf{Tecnologías} & \textbf{Función dentro del sistema}\\
+\textbf{Área} & \textbf{Tecnologías} & \textbf{Justificación}\\
 \midrule
 \endhead
-Monorepo y ejecución & pnpm workspaces, scripts raíz & Coordinar frontend, backend y paquete compartido desde un repositorio único.\\
-Frontend & React 19, Vite 6, TypeScript, Tailwind CSS, Radix/Base UI, shadcn, Zustand & Construir la interfaz web, componentes reutilizables, estilos, estado de sesión y consumo de API.\\
-Backend & Node.js, Express 4, TypeScript, Zod, Swagger UI Express & Exponer API HTTP, documentar endpoints, validar entradas y organizar módulos de aplicación.\\
-Autenticación & bcryptjs, jsonwebtoken, middleware Bearer, roles y permisos & Comparar contraseñas hasheadas, emitir/verificar JWT y asociar permisos al usuario autenticado.\\
-Persistencia & PostgreSQL 16, Prisma ORM, migraciones Prisma & Modelar datos relacionales, ejecutar consultas tipadas y mantener historial de cambios de esquema.\\
-Infraestructura local & Docker Compose & Ejecutar PostgreSQL en contenedor con volumen persistente y verificación de salud.\\
-Contratos compartidos & paquete \texttt{@pharmacy-pos/shared}, Zod, TypeScript & Reutilizar esquemas y tipos entre frontend y backend.\\
+Interfaz & React, Vite, TypeScript, Zustand & Permiten construir una aplicación web administrativa con componentes reutilizables, estado de sesión y formularios controlados.\\
+API & Node.js, Express, TypeScript & Favorecen una API modular, tipada y adecuada para reglas de negocio separadas de la presentación.\\
+Validación & Zod, contratos compartidos & Reducen divergencias entre cliente y servidor al validar estructuras comunes.\\
+Datos & PostgreSQL, Prisma ORM & Sostienen persistencia relacional, migraciones, transacciones y consultas tipadas.\\
+Seguridad & JWT, hashing de contraseñas, roles & Permiten autenticar usuarios, restringir operaciones y asociar acciones a responsables.\\
+Infraestructura local & Docker Compose & Facilita reproducibilidad del servicio de base de datos durante desarrollo y validación técnica.\\
 \bottomrule
 \end{longtable}
 
 \section{Antecedentes históricos o contextuales}
 
-Los sistemas de punto de venta evolucionaron desde cajas registradoras orientadas al registro de importes hacia plataformas integradas que conectan ventas, inventario, usuarios, reportes y cumplimiento normativo. En una farmacia, esta evolución es especialmente relevante porque el producto vendido puede estar sujeto a control por lote, fecha de vencimiento, proveedor, precio, receta, devolución y auditoría. Por tanto, el problema no consiste únicamente en ``vender productos'', sino en mantener consistencia operativa entre transacciones comerciales y existencias físicas.
+Los sistemas de punto de venta evolucionaron desde registros centrados en importes hacia plataformas que conectan ventas, inventario, proveedores, usuarios y reportes. En farmacias, esta evolución es especialmente relevante porque la mercadería puede caducar, requerir control por lote o depender de proveedores con condiciones comerciales distintas. Por tanto, el problema no consiste únicamente en vender productos, sino en mantener consistencia entre transacciones comerciales, existencias físicas y evidencia administrativa.
 
-En el contexto tecnológico actual, las aplicaciones web administrativas tienden a separar cliente y servidor mediante APIs. Esta separación permite que el frontend evolucione como interfaz especializada y que el backend mantenga reglas de negocio, seguridad y persistencia. El proyecto analizado adopta esta orientación: el cliente React consume endpoints bajo \texttt{/api}, el servidor Express organiza los módulos y PostgreSQL conserva la información transaccional.
-
-La adopción de TypeScript tanto en cliente como en servidor responde a la necesidad de reducir errores en un sistema con varias fronteras de datos. De forma complementaria, el paquete compartido con esquemas Zod permite que la validación no dependa solamente de formularios visuales ni de supuestos informales. Esta decisión es relevante para la rigurosidad del sistema, porque las entradas de usuario y las respuestas de API se contrastan con contratos explícitos.
-
-El antecedente técnico inmediato del proyecto es una primera base funcional con autenticación, roles, permisos y auditoría. Aunque varios módulos del dominio farmacéutico aún aparecen como estructura planificada, el diseño inicial ya establece los límites arquitectónicos sobre los cuales se podrán implementar compras, inventario, ventas, caja, facturación, devoluciones y reportes. Esta base resulta coherente con una estrategia incremental: primero se estabilizan fundamentos transversales, luego se incorporan procesos de negocio de mayor complejidad.
+En el contexto tecnológico actual, las aplicaciones administrativas tienden a separar cliente y servidor mediante APIs, utilizar bases de datos relacionales para información crítica y aplicar mecanismos de autenticación con roles. Esta orientación permite construir sistemas incrementales sin perder control sobre la consistencia de datos. Para una farmacia, el flujo de proveedores y compras recibidas constituye una base estratégica: antes de vender con confianza, el sistema debe saber cómo ingresó la mercadería, con qué costo, bajo qué lote y qué usuario autorizó la recepción.

@@ -1,0 +1,39 @@
+---
+title: Unidades y conversiones
+description: Uso de unidad base y presentaciones comerciales en farmacia.
+---
+
+Las unidades y conversiones permiten que la farmacia compre, almacene y venda productos en diferentes presentaciones sin perder precisión en el inventario. Este criterio es indispensable cuando un producto se compra por caja, se almacena por unidad base y se vende por blister, frasco o unidad.
+
+## Unidad base
+
+La unidad base es la medida principal con la que se controla el stock. Debe elegirse de forma que represente la cantidad mínima o más estable para analizar entradas, salidas, costos y disponibilidad.
+
+Ejemplo: si un medicamento se comercializa en cajas y blisters, pero la farmacia necesita conocer cuántas tabletas tiene realmente, la tableta puede ser la unidad base.
+
+## Presentacion comercial
+
+La presentación comercial expresa cómo se compra o vende el producto. Puede ser caja, blister, frasco, ampolla, sobre, tubo, unidad u otra presentación válida para farmacia.
+
+## Conversion
+
+La conversión indica cuántas unidades base contiene una presentación comercial. Si una caja equivale a 100 tabletas, una compra de 3 cajas incrementa el inventario en 300 tabletas. Si un blister equivale a 10 tabletas, una venta de 2 blisters descuenta 20 tabletas.
+
+## Impacto en compras
+
+En una compra, el usuario puede registrar la cantidad según la presentación recibida. El sistema debe convertir esa cantidad a unidad base para crear inventario y calcular el costo unitario real. Esto evita que el stock quede expresado en unidades mezcladas.
+
+## Impacto en ventas
+
+En una venta, la cantidad vendida debe descontarse desde inventario en unidad base. Si se venden presentaciones comerciales, la conversión permite aplicar FEFO sobre lotes y mantener la trazabilidad del descuento.
+
+## Reglas de negocio
+
+- Cada producto debe tener una unidad base definida.
+- Las presentaciones comerciales deben tener una conversión clara hacia la unidad base.
+- La conversión utilizada en una compra debe conservarse como dato histórico.
+- Los cambios futuros de conversión no deben alterar compras ya recibidas.
+
+## Resultado esperado
+
+El sistema debe permitir que la operación sea cómoda para el usuario, pero que el inventario y los reportes mantengan cantidades normalizadas, comparables y auditables.

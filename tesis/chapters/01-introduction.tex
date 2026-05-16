@@ -2,34 +2,39 @@
 
 \section{Presentación del tema y su importancia}
 
-En esta sección se presenta el tema de la monografía, su contexto institucional, académico y práctico, además de la importancia que tiene para el área de Ingeniería de Sistemas.
+La presente monografía aborda el análisis, diseño y desarrollo de un sistema web de punto de venta y gestión administrativa para farmacia. El rubro farmacéutico exige un control más riguroso que el de un comercio minorista genérico, debido a que los productos pueden estar asociados a lotes, fechas de vencimiento, unidades de medida, proveedores, precios de reposición, movimientos de inventario y responsabilidades de usuario. En este contexto, el sistema propuesto busca integrar operaciones administrativas y transaccionales bajo una misma base de información confiable.
+
+La importancia del tema radica en que una farmacia requiere disponibilidad oportuna de medicamentos e insumos, trazabilidad de las entradas de mercadería y separación clara de responsabilidades entre usuarios administrativos y usuarios de venta. Un registro deficiente de proveedores o compras puede generar inconsistencias de stock, pérdidas por vencimiento, dificultades para reconstruir operaciones y decisiones comerciales basadas en datos incompletos. Por ello, la solución se orienta a que el inventario no dependa de ajustes manuales aislados, sino de operaciones de compra recibidas, auditables y vinculadas con el catálogo de productos.
 
 \section{Planteamiento del problema}
 
-Aquí se describe la situación problemática que motiva el trabajo. Se recomienda delimitar el contexto, identificar las causas principales y explicar las consecuencias que justifican la necesidad del estudio.
+Las farmacias pequeñas y medianas suelen enfrentar problemas de control cuando la información de proveedores, compras e inventario se registra en herramientas separadas, documentos manuales o sistemas que no preservan adecuadamente la trazabilidad. Esta fragmentación dificulta conocer el origen de la mercadería, validar qué usuario ejecutó una operación, distinguir compras en preparación de compras ya recibidas y mantener coherencia entre cantidades comerciales y unidades base de inventario.
+
+El problema se intensifica cuando los productos tienen lote y vencimiento, porque una compra no solo representa un gasto administrativo: también puede originar existencias que luego serán vendidas, devueltas, vencidas o auditadas. Si el sistema no conserva la relación entre proveedor, producto, unidad de compra, cantidad base, costo unitario, lote, vencimiento y usuario responsable, la farmacia queda expuesta a registros inconsistentes y a una baja capacidad de control operativo.
 
 \section{Formulación del problema}
 
-La formulación del problema debe expresarse como una pregunta clara, concreta y alineada con el alcance de la monografía.
+¿Cómo diseñar y desarrollar un sistema web para farmacia que permita gestionar proveedores y compras recibidas con trazabilidad, control de roles, validación de datos e integración con inventario por lotes, sin comprometer la mantenibilidad arquitectónica del sistema?
 
 \section{Objetivo general}
 
-El objetivo general debe expresar el propósito central del trabajo y responder directamente a la formulación del problema.
+Diseñar y desarrollar un sistema web de punto de venta y gestión administrativa para farmacia, con énfasis en la gestión de proveedores, compras recibidas, trazabilidad de inventario y control de acceso por roles.
 
 \section{Objetivos específicos}
 
 \begin{enumerate}[label=\arabic*.]
-  \item Definir el primer objetivo específico de la monografía.
-  \item Definir el segundo objetivo específico de la monografía.
-  \item Definir el tercer objetivo específico de la monografía.
-  \item Definir el cuarto objetivo específico de la monografía.
-  \item Definir el quinto objetivo específico de la monografía.
+  \item Identificar los requerimientos funcionales y no funcionales necesarios para administrar proveedores, compras recibidas e inventario trazable en el contexto farmacéutico.
+  \item Diseñar una arquitectura web modular que separe interfaz, reglas de aplicación, contratos de datos y persistencia relacional.
+  \item Implementar el flujo administrativo de proveedores y compras, incluyendo estados de compra, recepción, anulación, auditoría y generación de inventario por capas.
+  \item Definir una estrategia de validación técnica que permita verificar reglas críticas del dominio sin depender exclusivamente de recorridos manuales de interfaz.
 \end{enumerate}
 
-\section{Justificación}
+\section{Justificación general}
 
-La justificación debe desarrollarse en un solo apartado e incluir la relevancia académica, técnica, social o institucional del trabajo, según corresponda.
+El proyecto se justifica por su aporte técnico y operativo al control de una farmacia. Desde el punto de vista institucional, permite organizar procesos que suelen quedar dispersos entre registros manuales, hojas de cálculo o sistemas parciales. Desde la perspectiva de Ingeniería de Sistemas, constituye un caso de estudio pertinente porque combina arquitectura web, validación compartida, persistencia transaccional, seguridad por roles y trazabilidad de dominio en un escenario realista. Asimismo, el uso de terminología farmacéutica como lote, vencimiento, proveedor, recepción de mercadería e inventario por capas se incorpora con un propósito práctico: representar con mayor precisión las operaciones que afectan la disponibilidad y el costo de los productos.
 
 \section{Alcance y limitaciones}
 
-En esta sección se explica hasta dónde llegará el estudio, qué aspectos serán abordados y cuáles quedarán fuera del análisis.
+El alcance de la monografía comprende la base funcional del sistema administrativo de farmacia, con autenticación de usuarios, control de roles, catálogo base de productos y unidades, administración de proveedores, registro de compras en estado de borrador, recepción de compras, anulación justificada, generación de capas de inventario y movimientos asociados. También se considera la interfaz web necesaria para operar proveedores y compras desde perfiles administrativos, junto con una estrategia de pruebas enfocada en reglas críticas del dominio.
+
+Quedan fuera del alcance la facturación fiscal, la integración con servicios tributarios, pagos a proveedores, cuentas por pagar, punto de venta completo, devoluciones comerciales, reportes gerenciales avanzados y visualización operativa completa de kardex o stock por lote. Estas limitaciones no representan fallas del sistema, sino una delimitación razonable para concentrar la monografía en el flujo que origina inventario desde compras recibidas y auditables.

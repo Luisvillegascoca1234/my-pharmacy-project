@@ -1,0 +1,62 @@
+---
+title: Glosario farmaceutico
+description: Terminos principales del dominio de farmacia usados en el sistema.
+---
+
+Este glosario reúne los terminos necesarios para comprender los procesos del sistema POS farmacéutico. Las definiciones se presentan con sentido operativo, es decir, orientadas a cómo se usan dentro de una farmacia y cómo afectan compras, inventario, ventas y reportes.
+
+## Producto farmaceutico
+
+Bien comercializado por la farmacia dentro de su alcance sanitario y operativo. Puede tratarse de un medicamento, producto de venta libre, insumo medico, producto de higiene o desinfeccion, o articulo relacionado directamente con salud.
+
+## Medicamento
+
+Producto con principio activo destinado a prevenir, diagnosticar, aliviar o tratar una condición de salud. En el sistema puede requerir registro sanitario, control de lote, fecha de vencimiento y, según corresponda, receta.
+
+## Principio activo
+
+Sustancia responsable del efecto terapéutico de un medicamento. Este dato permite distinguir productos con distinto nombre comercial pero con composición farmacológica relacionada.
+
+## Producto OTC
+
+Producto de venta libre, conocido por la sigla inglesa OTC. Puede venderse sin receta, pero continúa sujeto a control de inventario, vencimiento y trazabilidad cuando forma parte del stock de farmacia.
+
+## Lote
+
+Identificador asociado a una fabricación, recepción o partida específica de un producto. Permite rastrear origen, costo, vencimiento y movimientos posteriores. En farmacia, el lote es un dato sanitario clave.
+
+## Fecha de vencimiento
+
+Fecha límite hasta la cual el producto puede considerarse apto para comercialización bajo condiciones normales. El sistema debe usarla para alertas, bloqueo operativo y selección FEFO.
+
+## Unidad base
+
+Unidad mínima o principal con la que se controla el inventario de un producto. Por ejemplo, una tableta puede ser unidad base aunque el producto se compre por caja o se venda por blister.
+
+## Presentacion comercial
+
+Forma en la que se compra o vende un producto, como caja, blister, frasco, ampolla o unidad. Cada presentación debe relacionarse con la unidad base mediante una conversión.
+
+## Conversion
+
+Equivalencia entre una presentación comercial y la unidad base. Por ejemplo, si una caja contiene 100 tabletas, la conversión permite que una compra de una caja aumente el inventario en 100 tabletas.
+
+## Kardex
+
+Registro cronológico de movimientos de inventario. Explica entradas, salidas, anulaciones y ajustes, indicando producto, lote, cantidad, costo, referencia, usuario y motivo.
+
+## FEFO
+
+Metodo de salida First Expired, First Out. Significa que se priorizan los lotes con vencimiento más cercano, siempre que estén disponibles y sean aptos para venta. Es especialmente importante en farmacia porque reduce pérdidas por vencimiento y mejora la trazabilidad.
+
+## Compra recibida
+
+Compra cuyo contenido fue confirmado y que ya generó inventario. A diferencia de una compra en borrador, la recepción tiene impacto operativo: crea lotes o capas de inventario y movimientos de entrada.
+
+## Capa de inventario
+
+Registro interno que representa una cantidad recibida de un producto, lote y vencimiento con un costo específico. Permite conservar costos históricos diferentes incluso cuando el lote físico parezca el mismo.
+
+## Auditoria
+
+Registro de acciones relevantes realizadas por usuarios o por procesos del sistema. Sirve para explicar quién hizo una operación, cuándo ocurrió, sobre qué entidad y con qué información asociada.

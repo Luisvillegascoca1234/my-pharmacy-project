@@ -1,0 +1,46 @@
+---
+title: Catalogo farmaceutico
+description: Criterios para registrar productos, categorias y datos sanitarios.
+---
+
+El catálogo farmacéutico concentra la información necesaria para identificar, vender, controlar y analizar productos dentro de la farmacia. No se limita al nombre comercial; también debe conservar datos sanitarios, comerciales y operativos que afectan inventario, facturación y reportes.
+
+## Alcance del catalogo
+
+El sistema contempla productos medicinales y productos relacionados con la actividad farmacéutica, como insumos medicos, materiales de curacion, productos de higiene, desinfeccion y otros artículos vinculados con salud. Quedan fuera del alcance los productos de micromercado, abarrotes o artículos sin relación directa con el expendio farmacéutico.
+
+## Datos principales del producto
+
+Un producto debe poder identificarse por código interno, código de barras, nombre comercial, nombre genérico cuando corresponda, categoría, laboratorio o marca, tipo de producto, unidad base, precio de venta y estado operativo.
+
+En medicamentos, también pueden ser relevantes el registro sanitario, el principio activo, la necesidad de receta y la condición de venta libre.
+
+## Tipos conceptuales
+
+- Medicamento.
+- Producto de venta libre.
+- Insumo medico.
+- Higiene y desinfeccion.
+- Misceláneo farmacéutico relacionado.
+
+## Reglas de negocio
+
+Los productos inventariables deben exigir lote y vencimiento. Esta decisión favorece la trazabilidad sanitaria, permite aplicar FEFO y facilita reportes de vencimiento. Aunque algunos productos no medicinales puedan tener menor riesgo sanitario, el control uniforme reduce errores operativos.
+
+Un producto inactivo no debe incorporarse a nuevas compras ni ventas. Sin embargo, debe conservarse en el historial para explicar operaciones previas, reportes, movimientos y documentos asociados.
+
+## Flujo normal
+
+1. El usuario administrativo registra el producto con su identificación comercial y sanitaria.
+2. Define la unidad base para inventario.
+3. Asocia unidades comerciales mediante conversiones.
+4. Establece precio de venta y stock mínimo.
+5. Mantiene el producto activo mientras sea comercializable.
+
+## Casos especiales
+
+Un producto puede no tener código de barras, especialmente si se trata de un insumo o producto recibido de proveedor informal. También puede no tener nombre genérico cuando no corresponde a un medicamento. Estas ausencias no deben impedir el registro si el producto es válido para la operación farmacéutica.
+
+## Resultado esperado
+
+El catálogo debe permitir identificar productos de forma confiable, sostener ventas correctas, recibir compras con control de lote y generar reportes útiles para decisiones administrativas.

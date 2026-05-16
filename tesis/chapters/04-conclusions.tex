@@ -2,8 +2,24 @@
 
 \section{Conclusiones}
 
-Las conclusiones deben responder de forma directa a los objetivos específicos planteados en el capítulo de introducción. Se recomienda presentar una conclusión por cada objetivo específico.
+Respecto al primer objetivo específico, se identificaron requerimientos funcionales y no funcionales propios del contexto farmacéutico. La gestión de proveedores, compras recibidas, lotes, vencimientos, unidades, costos, estados de compra y auditoría demuestra que el sistema debe tratar el ingreso de mercadería como una operación trazable, no como un simple registro administrativo.
+
+Respecto al segundo objetivo específico, se diseñó una arquitectura web modular que separa interfaz, API de aplicación, contratos de datos y persistencia relacional. Esta separación permite conservar reglas críticas en el lugar adecuado, reducir duplicación de validaciones y facilitar la evolución del sistema hacia módulos posteriores como ventas, facturación o reportes.
+
+Respecto al tercer objetivo específico, se implementó el flujo administrativo de proveedores y compras recibidas con estados controlados, recepción, anulación justificada, generación de capas de inventario, movimientos asociados y auditoría. Esta solución permite que el inventario tenga origen verificable en compras recibidas y que las anulaciones respeten la consistencia de existencias.
+
+Respecto al cuarto objetivo específico, se definió una estrategia de validación técnica centrada en reglas de dominio, contratos de datos, autorización y transacciones de inventario. Este enfoque permite verificar los riesgos más importantes del sistema antes de depender únicamente de recorridos manuales de interfaz.
+
+En conjunto, el caso de estudio demuestra que un sistema de farmacia requiere equilibrio entre facilidad de uso y control técnico. La interfaz debe ser comprensible para usuarios administrativos, pero las reglas de recepción, inventario y auditoría deben permanecer protegidas por validaciones, roles y transacciones consistentes.
 
 \section{Recomendaciones}
 
-Las recomendaciones deben derivarse de los hallazgos, limitaciones y resultados del trabajo. Pueden orientar mejoras futuras, ampliaciones del estudio o acciones institucionales relacionadas con el caso de estudio.
+Se recomienda continuar el desarrollo con el módulo completo de ventas y punto de venta, cuidando que la salida de inventario respete las capas, lotes y vencimientos generados por las compras recibidas.
+
+Se recomienda incorporar una visualización operativa de kardex y stock por lote, de manera que el personal administrativo pueda consultar existencias disponibles, vencimientos próximos y origen de cada movimiento sin acceder a detalles técnicos internos.
+
+Se recomienda definir políticas de respaldo, restauración y monitoreo antes de un despliegue institucional, debido a que la información de inventario, compras y auditoría constituye evidencia crítica para la operación de la farmacia.
+
+Se recomienda ampliar la validación manual de interfaz en un ambiente estable, cubriendo perfiles administrativos y de venta, restricciones por rol, mensajes de error, navegación y flujos completos de proveedores y compras.
+
+Se recomienda evaluar en una etapa posterior la integración con facturación fiscal, pagos a proveedores, cuentas por pagar, devoluciones y reportes gerenciales, manteniendo la misma disciplina arquitectónica aplicada al flujo de compras recibidas.

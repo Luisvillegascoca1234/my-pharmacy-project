@@ -1,0 +1,29 @@
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  entity/.style={draw, rounded corners=5pt, minimum width=2.8cm, minimum height=0.9cm, align=center, fill=green!7},
+  audit/.style={draw, rounded corners=5pt, minimum width=2.8cm, minimum height=0.9cm, align=center, fill=orange!10},
+  rel/.style={-Latex, thick},
+  label/.style={font=\scriptsize, fill=white, inner sep=1pt}
+]
+  \node[entity] (supplier) at (0,2.3) {Proveedor};
+  \node[entity] (purchase) at (4,2.3) {Compra};
+  \node[entity] (item) at (8,2.3) {Ítem de\\compra};
+  \node[entity] (batch) at (8,0.2) {Capa de\\inventario};
+  \node[entity] (movement) at (4,0.2) {Movimiento de\\inventario};
+  \node[audit] (user) at (0,0.2) {Usuario\\responsable};
+  \node[audit] (audit) at (0,-1.8) {Auditoría};
+
+  \draw[rel] (supplier) -- node[label, above] {provee} (purchase);
+  \draw[rel] (purchase) -- node[label, above] {contiene} (item);
+  \draw[rel] (item) -- node[label, right] {origina al recibir} (batch);
+  \draw[rel] (batch) -- node[label, below] {registra entradas o reversas} (movement);
+  \draw[rel] (movement) -- node[label, below] {referencia} (purchase);
+  \draw[rel] (user) -- node[label, below] {ejecuta} (movement);
+  \draw[rel] (user) -- node[label, left] {deja evidencia} (audit);
+  \draw[rel] (purchase) .. controls (2.5,-0.5) and (1.2,-0.7) .. node[label, right] {cambios de estado} (audit);
+\end{tikzpicture}
+\caption{Modelo conceptual del origen trazable del inventario}
+\label{fig:modelo-inventario}
+\end{figure}

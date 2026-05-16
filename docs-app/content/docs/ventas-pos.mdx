@@ -1,0 +1,43 @@
+---
+title: Ventas POS
+description: Flujo conceptual de venta, descuento de stock y trazabilidad comercial.
+---
+
+La venta POS representa la operación de mostrador de la farmacia. Su objetivo es registrar la entrega del producto, calcular el total, cobrar al cliente y descontar inventario de manera trazable.
+
+## Flujo normal
+
+1. El vendedor busca el producto por nombre, código, código de barras o criterio disponible.
+2. Verifica stock apto para venta.
+3. Selecciona la presentación comercial y cantidad.
+4. El sistema identifica los lotes disponibles según FEFO.
+5. Se confirma el total.
+6. Se registra el pago.
+7. Se descuenta inventario y se genera evidencia de la venta.
+
+## Stock apto para venta
+
+Un producto puede tener stock total, pero no necesariamente stock vendible. Para considerarse apto, el lote debe tener cantidad disponible, estado activo y fecha de vencimiento válida. Este criterio protege a la farmacia de vender productos vencidos o bloqueados.
+
+## Descuento FEFO
+
+Cuando existen varios lotes disponibles, el sistema debe priorizar los de vencimiento más cercano. Si una venta requiere más cantidad que la disponible en un solo lote, puede descontar de varias capas o lotes, siempre conservando la trazabilidad del origen.
+
+## Datos de venta
+
+Una venta debe conservar vendedor, fecha y hora, productos, cantidades, unidad vendida, precio unitario, subtotal, total, pago asociado y, cuando aplique, relación con factura.
+
+## Margen comercial
+
+El margen no se calcula solamente con el precio de venta. Debe considerar el costo real del lote o capa descontada. Esta decisión permite saber si una venta fue rentable incluso cuando el mismo producto se recibió con costos diferentes.
+
+## Reglas de negocio
+
+- No debe venderse stock vencido, cancelado o no disponible.
+- La cantidad vendida debe convertirse a unidad base para descontar inventario.
+- La venta debe relacionarse con pagos.
+- Si existe facturación, la venta y la factura deben mantenerse como conceptos relacionados pero distintos.
+
+## Resultado esperado
+
+La venta POS debe ser rápida para el mostrador, pero rigurosa para el inventario. Cada producto vendido debe poder rastrearse hasta el lote o capa que fue descontada.

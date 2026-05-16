@@ -26,7 +26,6 @@ function parseArgs(argv) {
     },
     cleanupTitle: 'Clean Up Touched Code And References',
     qaTitle: 'Run Manual QA On Affected Areas',
-    thesisTitle: 'Update Thesis With Sprint Evidence',
   }
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -73,9 +72,6 @@ function parseArgs(argv) {
         break
       case '--qa-title':
         args.qaTitle = next
-        break
-      case '--thesis-title':
-        args.thesisTitle = next
         break
       default:
         throw new Error(`Unknown argument: ${current}`)
@@ -134,7 +130,7 @@ function ensurePreviousSprintDone(sprintDirs) {
   }
 }
 
-function buildTicketsByCategory(categoryTickets, cleanupTitle, qaTitle, thesisTitle) {
+function buildTicketsByCategory(categoryTickets, cleanupTitle, qaTitle) {
   const tickets = []
 
   for (const category of CATEGORY_ORDER) {
@@ -145,16 +141,12 @@ function buildTicketsByCategory(categoryTickets, cleanupTitle, qaTitle, thesisTi
 
   const hasCleanup = tickets.some((ticket) => isCleanupTitle(ticket.title))
   const hasManualQa = tickets.some((ticket) => isManualQaTitle(ticket.title))
-  const hasThesisUpdate = tickets.some((ticket) => isThesisUpdateTitle(ticket.title))
 
   if (!hasCleanup) {
     tickets.push({ category: 'INFRA', title: cleanupTitle, kind: 'cleanup' })
   }
   if (!hasManualQa) {
     tickets.push({ category: 'INFRA', title: qaTitle, kind: 'manual-qa' })
-  }
-  if (!hasThesisUpdate) {
-    tickets.push({ category: 'INFRA', title: thesisTitle, kind: 'thesis-update' })
   }
 
   return tickets
@@ -210,9 +202,6 @@ function buildDependencyMaps(tickets) {
     } else if (ticket.kind === 'manual-qa') {
       const cleanupTicket = tickets.find((candidate) => candidate.kind === 'cleanup')
       dependencies = cleanupTicket ? [cleanupTicket.number] : []
-    } else if (ticket.kind === 'thesis-update') {
-      const manualQaTicket = tickets.find((candidate) => candidate.kind === 'manual-qa')
-      dependencies = manualQaTicket ? [manualQaTicket.number] : []
     }
 
     dependenciesByTicket.set(ticket.number, dependencies)
@@ -442,7 +431,7 @@ function main() {
     throw new Error(`Sprint directory already exists: ${sprintDir}`)
   }
 
-  const tickets = buildTicketsByCategory(args.categoryTickets, args.cleanupTitle, args.qaTitle, args.thesisTitle).map((ticket, index) => ({
+  const tickets = buildTicketsByCategory(args.categoryTickets, args.cleanupTitle, args.qaTitle).map((ticket, index) => ({
     ...ticket,
     number: index + 1,
   }))

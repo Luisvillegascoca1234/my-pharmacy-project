@@ -1,0 +1,39 @@
+---
+title: Movimientos y kardex
+description: Trazabilidad cronologica de entradas, salidas y reversas de inventario.
+---
+
+El kardex es la memoria operativa del inventario. Cada vez que el stock cambia, debe existir un movimiento que explique la causa, la cantidad afectada, el lote involucrado, el usuario responsable y la referencia al documento que originó el cambio.
+
+## Proposito
+
+El kardex permite reconstruir la historia de un producto. No solo informa el stock actual, sino también cómo se llegó a ese saldo. Esto es fundamental para auditoria, control sanitario, valoración de inventario y análisis de rotación.
+
+## Tipos de movimiento
+
+En la primera etapa, los movimientos principales son:
+
+- Entrada por compra recibida.
+- Reversa por compra anulada.
+
+En etapas posteriores, el mismo criterio se extiende a ventas, devoluciones, ajustes manuales, mermas, vencimientos y correcciones.
+
+## Datos del movimiento
+
+Un movimiento debe identificar producto, lote o capa, tipo de movimiento, cantidad en unidad base, costo unitario base, referencia documental, usuario responsable, fecha y motivo cuando corresponda.
+
+## Cantidades firmadas
+
+Las entradas aumentan inventario y se registran con cantidad positiva. Las salidas, reversas o descuentos se registran con cantidad negativa. Esta convención facilita reportes de entradas, salidas y saldos por periodo.
+
+## Reglas de negocio
+
+- Ningún cambio de stock debe ocurrir sin movimiento asociado.
+- El movimiento debe conservar la referencia que explica su origen.
+- El producto indicado debe coincidir con el lote o capa afectada.
+- Las reversas deben explicar el motivo administrativo.
+- Los reportes de inventario deben poder apoyarse en movimientos.
+
+## Resultado esperado
+
+El kardex debe funcionar como evidencia cronológica. Si existe una diferencia de stock, el sistema debe permitir revisar qué movimientos la generaron y bajo qué operación administrativa ocurrió cada cambio.

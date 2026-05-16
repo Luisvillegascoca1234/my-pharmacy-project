@@ -10,3 +10,6 @@ El código de cliente en español.
 
 No hagas QA a menos que te lo pida explícitamente.
 
+Aplicación de docs con jerga especializada en el rubro farmaceutico.
+
+En docs no menciones nada de como esta estructurado el codigo.

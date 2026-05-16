@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thesis Writing"
+  short_description: "Guia academica para redactar la tesis del sistema farmaceutico."
+  default_prompt: "Ayudame a redactar o revisar una seccion de la tesis siguiendo los lineamientos academicos del proyecto."

@@ -1,0 +1,49 @@
+---
+title: Compras recibidas
+description: Flujo de borrador, recepcion y anulacion de compras.
+---
+
+Las compras recibidas conectan el abastecimiento con el inventario real. Una compra no debe entenderse solo como un registro comercial, porque al recibirse genera stock, costos por lote, movimientos de inventario y evidencia administrativa.
+
+## Estados de compra
+
+Una compra puede encontrarse en tres estados principales:
+
+- **Borrador:** contiene datos preliminares y no modifica inventario.
+- **Recibida:** fue confirmada y generó inventario.
+- **Anulada:** queda conservada como evidencia, pero ya no representa una operación vigente.
+
+## Flujo normal
+
+1. El admin selecciona un proveedor activo.
+2. Registra la fecha comercial de compra.
+3. Agrega productos, unidades, cantidades, costos, lote y vencimiento cuando corresponde.
+4. Guarda la compra como borrador.
+5. Revisa que no existan cambios pendientes.
+6. Recibe la compra.
+7. El sistema crea inventario y movimientos de entrada.
+
+## Datos del item de compra
+
+Cada item debe indicar producto, unidad de compra, cantidad, costo, conversión hacia unidad base y total calculado. Si el producto es inventariable, también debe incluir lote y fecha de vencimiento.
+
+## Recepcion
+
+La recepción es el momento en que la compra impacta el inventario. Para productos inventariables, cada item recibido crea una capa de inventario con cantidad en unidad base, costo unitario base, lote y vencimiento. Además, se registra un movimiento de entrada que explica el incremento de stock.
+
+## Anulacion
+
+Una compra en borrador puede anularse con motivo para conservar evidencia administrativa. Una compra recibida solo debe anularse si las capas de inventario generadas siguen intactas. Si parte del stock ya fue vendido o consumido, la anulación directa debe bloquearse para no romper la trazabilidad.
+
+## Reglas de negocio
+
+- Una compra debe tener al menos un item.
+- El total debe calcularse desde los items, no escribirse manualmente.
+- La fecha de vencimiento no debe estar vencida al momento de recibir.
+- El lote debe normalizarse para evitar duplicados visuales.
+- La recepción debe ser transaccional: o se recibe toda la compra válida o no se recibe nada.
+- La anulación debe registrar motivo obligatorio.
+
+## Resultado esperado
+
+La compra recibida debe explicar el nacimiento del inventario. Desde ella debe poder rastrearse qué proveedor entregó el producto, qué lote ingresó, con qué costo, en qué cantidad, cuándo fue recibido y quién confirmó la operación.

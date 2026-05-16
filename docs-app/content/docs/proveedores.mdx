@@ -1,0 +1,37 @@
+---
+title: Proveedores
+description: Registro y control administrativo de proveedores de farmacia.
+---
+
+Los proveedores representan el origen comercial de los productos que ingresan a la farmacia. Su registro permite asociar compras, costos, lotes y documentos administrativos a una entidad identificable.
+
+## Datos del proveedor
+
+Un proveedor puede registrarse con razón social o nombre comercial, NIT cuando exista, teléfono, dirección, persona de contacto y estado. El NIT puede ser opcional para no bloquear operaciones con proveedores informales o datos incompletos, pero debe evitar duplicados cuando se encuentre disponible.
+
+## Estado operativo
+
+Un proveedor activo puede utilizarse para nuevas compras. Un proveedor inactivo conserva su historial, pero deja de estar disponible para nuevas operaciones. Esta distinción permite suspender relaciones comerciales sin borrar evidencia de compras anteriores.
+
+## Flujo normal
+
+1. El admin registra los datos básicos del proveedor.
+2. El proveedor queda disponible para compras mientras esté activo.
+3. Las compras futuras se asocian al proveedor seleccionado.
+4. Si deja de operar con la farmacia, se marca como inactivo.
+5. Si corresponde, puede reactivarse conservando su historial.
+
+## Reglas de negocio
+
+- La razón social o nombre comercial debe permitir identificar al proveedor.
+- El NIT es opcional, pero debe ser único cuando se registre.
+- Un proveedor inactivo no debe seleccionarse en nuevas compras.
+- Las compras históricas deben conservar la relación con su proveedor.
+
+## Casos especiales
+
+Algunas farmacias trabajan con proveedores pequeños, distribuidores locales o contactos comerciales que no entregan toda la información formal desde el primer momento. El sistema debe permitir operar sin perder trazabilidad mínima, siempre que se pueda identificar quién suministró el producto.
+
+## Resultado esperado
+
+La farmacia debe poder conocer de dónde provino cada compra, analizar compras por proveedor y conservar evidencia comercial aunque el proveedor sea desactivado posteriormente.
