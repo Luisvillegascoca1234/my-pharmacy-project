@@ -123,12 +123,8 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
       return null;
     }
 
-    if (isCreateMode) {
-      navigate(`/suppliers/${supplier.id}`, { replace: true });
-      return supplier;
-    }
-
-    setFormNotice("Cambios guardados.");
+    suppliers.resetDraftForm();
+    navigate("/suppliers", { replace: true });
     return supplier;
   }
 
