@@ -2201,6 +2201,8 @@ export const openApiDocument = {
           "category",
           "baseUnitId",
           "baseUnit",
+          "supplierId",
+          "supplier",
           "isMedicine",
           "isOverTheCounter",
           "requiresPrescription",
@@ -2220,7 +2222,7 @@ export const openApiDocument = {
           },
           internalCode: {
             type: "string",
-            example: "MED-001"
+            example: "MED-000001"
           },
           barcode: {
             type: "string",
@@ -2251,6 +2253,12 @@ export const openApiDocument = {
           },
           baseUnit: {
             $ref: "#/components/schemas/Unit"
+          },
+          supplierId: {
+            type: "string"
+          },
+          supplier: {
+            $ref: "#/components/schemas/SupplierSummary"
           },
           laboratoryName: {
             type: "string",
@@ -2309,13 +2317,14 @@ export const openApiDocument = {
       },
       CreateProductRequest: {
         type: "object",
-        required: ["internalCode", "commercialName", "type", "categoryId", "baseUnitId", "salePrice"],
+        required: ["commercialName", "type", "categoryId", "baseUnitId", "supplierId", "salePrice"],
         properties: {
           internalCode: {
             type: "string",
             minLength: 2,
             maxLength: 40,
-            example: "MED-001"
+            description: "Optional override. When omitted, the backend generates it from product type.",
+            example: "MED-000001"
           },
           barcode: {
             type: "string",
@@ -2345,6 +2354,10 @@ export const openApiDocument = {
           },
           baseUnitId: {
             type: "string"
+          },
+          supplierId: {
+            type: "string",
+            description: "Unique supplier assigned to this product."
           },
           laboratoryName: {
             type: "string",

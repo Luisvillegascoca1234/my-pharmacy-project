@@ -15,7 +15,6 @@ import { productStatusLabels, productTypeLabels } from "./products/product-label
 const productTypes = Object.keys(productTypeLabels) as ProductType[];
 
 const emptyProductForm: CreateProduct = {
-  internalCode: "",
   barcode: undefined,
   commercialName: "",
   genericName: undefined,
@@ -23,6 +22,7 @@ const emptyProductForm: CreateProduct = {
   type: "medicine",
   categoryId: "",
   baseUnitId: "",
+  supplierId: "",
   laboratoryName: undefined,
   sanitaryRegistration: undefined,
   isMedicine: true,
@@ -42,7 +42,7 @@ export function ProductsPage() {
   const [conversionRows, setConversionRows] = useState<Array<{ unitId: string; conversionFactor: number }>>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const hasCatalogBase = catalog.categories.length > 0 && catalog.units.length > 0;
+  const hasCatalogBase = catalog.categories.length > 0 && catalog.units.length > 0 && catalog.suppliers.length > 0;
   const selectedProduct = useMemo(
     () => catalog.products.find((product) => product.id === selectedProductId) ?? null,
     [catalog.products, selectedProductId]
@@ -53,7 +53,8 @@ export function ProductsPage() {
       setForm((currentForm) => ({
         ...currentForm,
         categoryId: currentForm.categoryId || catalog.categories[0]?.id || "",
-        baseUnitId: currentForm.baseUnitId || catalog.units[0]?.id || ""
+        baseUnitId: currentForm.baseUnitId || catalog.units[0]?.id || "",
+        supplierId: currentForm.supplierId || catalog.suppliers[0]?.id || ""
       }));
       return;
     }
@@ -67,6 +68,7 @@ export function ProductsPage() {
       type: selectedProduct.type,
       categoryId: selectedProduct.categoryId,
       baseUnitId: selectedProduct.baseUnitId,
+      supplierId: selectedProduct.supplierId,
       laboratoryName: selectedProduct.laboratoryName,
       sanitaryRegistration: selectedProduct.sanitaryRegistration,
       isMedicine: selectedProduct.isMedicine,
@@ -83,7 +85,7 @@ export function ProductsPage() {
         ? selectedProduct.units.map((unit) => ({ unitId: unit.unitId, conversionFactor: unit.conversionFactor }))
         : [{ unitId: selectedProduct.baseUnitId, conversionFactor: 1 }]
     );
-  }, [catalog.categories, catalog.units, selectedProduct]);
+  }, [catalog.categories, catalog.suppliers, catalog.units, selectedProduct]);
 
   const summary = useMemo(
     () => ({
@@ -104,7 +106,8 @@ export function ProductsPage() {
       setForm({
         ...emptyProductForm,
         categoryId: catalog.categories[0]?.id || "",
-        baseUnitId: catalog.units[0]?.id || ""
+        baseUnitId: catalog.units[0]?.id || "",
+        supplierId: catalog.suppliers[0]?.id || ""
       });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "No se pudo guardar el producto.");
@@ -184,6 +187,7 @@ export function ProductsPage() {
                   <TableHead>Producto</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Unidad</TableHead>
+                  <TableHead>Proveedor</TableHead>
                   <TableHead>Precio</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acción</TableHead>
@@ -201,6 +205,7 @@ export function ProductsPage() {
                     </TableCell>
                     <TableCell>{product.category.name}</TableCell>
                     <TableCell>{product.baseUnit.abbreviation}</TableCell>
+                    <TableCell>{product.supplier.businessName}</TableCell>
                     <TableCell>Bs {product.salePrice.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge variant={product.status === "active" ? "default" : "secondary"}>
@@ -217,7 +222,7 @@ export function ProductsPage() {
                 ))}
                 {catalog.products.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-32 text-center text-muted-foreground" colSpan={7}>
+                    <TableCell className="h-32 text-center text-muted-foreground" colSpan={8}>
                       {catalog.status === "loading" ? "Cargando productos..." : "Todavía no hay productos registrados."}
                     </TableCell>
                   </TableRow>
@@ -241,10 +246,9 @@ export function ProductsPage() {
                   <Field>
                     <FieldLabel>Código interno</FieldLabel>
                     <Input
-                      required
-                      disabled={!catalog.canManage}
-                      value={form.internalCode}
-                      onChange={(event) => setForm({ ...form, internalCode: event.target.value })}
+                      disabled
+                      value={selectedProduct ? form.internalCode ?? "" : "Automático al guardar"}
+                      readOnly
                     />
                   </Field>
                   <Field>
@@ -264,6 +268,15 @@ export function ProductsPage() {
                     disabled={!catalog.canManage}
                     value={form.commercialName}
                     onChange={(event) => setForm({ ...form, commercialName: event.target.value })}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>Principio activo</FieldLabel>
+                  <Input
+                    disabled={!catalog.canManage}
+                    value={form.genericName ?? ""}
+                    onChange={(event) => setForm({ ...form, genericName: event.target.value || undefined })}
                   />
                 </Field>
 
@@ -301,6 +314,23 @@ export function ProductsPage() {
                     </NativeSelect>
                   </Field>
                 </div>
+
+                <Field>
+                  <FieldLabel>Proveedor</FieldLabel>
+                  <NativeSelect
+                    required
+                    className="w-full"
+                    disabled={!catalog.canManage || catalog.suppliers.length === 0}
+                    value={form.supplierId}
+                    onChange={(event) => setForm({ ...form, supplierId: event.target.value })}
+                  >
+                    {catalog.suppliers.map((supplier) => (
+                      <NativeSelectOption key={supplier.id} value={supplier.id}>
+                        {supplier.businessName}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </Field>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field>
@@ -371,7 +401,12 @@ export function ProductsPage() {
                     variant="outline"
                     onClick={() => {
                       setSelectedProductId(null);
-                      setForm({ ...emptyProductForm, categoryId: catalog.categories[0]?.id || "", baseUnitId: catalog.units[0]?.id || "" });
+                      setForm({
+                        ...emptyProductForm,
+                        categoryId: catalog.categories[0]?.id || "",
+                        baseUnitId: catalog.units[0]?.id || "",
+                        supplierId: catalog.suppliers[0]?.id || ""
+                      });
                     }}
                   >
                     <PackagePlus aria-hidden="true" />

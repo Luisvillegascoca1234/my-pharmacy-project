@@ -8,7 +8,7 @@ import { useProductsCatalogStore } from "../store/ProductsCatalogStore";
 export function useProductsCatalog() {
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
-  const { categories, error, products, search, status, units } = useProductsCatalogStore(useShallow(selectProductsCatalogState));
+  const { categories, error, products, search, status, suppliers, units } = useProductsCatalogStore(useShallow(selectProductsCatalogState));
   const { loadCatalog: loadCatalogFromStore, reset, saveProduct: saveProductToStore, saveProductUnits: saveProductUnitsToStore, setSearch } =
     useProductsCatalogStore(useShallow(selectProductsCatalogActions));
 
@@ -21,9 +21,9 @@ export function useProductsCatalog() {
         return;
       }
 
-      await loadCatalogFromStore(search, signal);
+      await loadCatalogFromStore(search, canManage, signal);
     },
-    [loadCatalogFromStore, reset, search, token]
+    [canManage, loadCatalogFromStore, reset, search, token]
   );
 
   useEffect(() => {
@@ -61,6 +61,7 @@ export function useProductsCatalog() {
       products,
       categories,
       units,
+      suppliers,
       search,
       setSearch,
       status,
@@ -70,6 +71,6 @@ export function useProductsCatalog() {
       saveProduct,
       saveProductUnits
     }),
-    [canManage, categories, error, loadCatalog, products, saveProduct, saveProductUnits, search, setSearch, status, units]
+    [canManage, categories, error, loadCatalog, products, saveProduct, saveProductUnits, search, setSearch, status, suppliers, units]
   );
 }

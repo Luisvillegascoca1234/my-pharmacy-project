@@ -17,5 +17,6 @@ export const selectProductsCatalogState = (state: ProductsCatalogStore) => ({
   products: state.products,
   search: state.search,
   status: state.status,
+  suppliers: state.suppliers,
   units: state.units
 });

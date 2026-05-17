@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SupplierSummarySchema } from "./supplier.schema.js";
 
 export const ProductStatusSchema = z.enum(["active", "inactive"]);
 export type ProductStatus = z.infer<typeof ProductStatusSchema>;
@@ -7,6 +8,10 @@ export const ProductTypeSchema = z.enum(["medicine", "otc", "medical_supply", "h
 export type ProductType = z.infer<typeof ProductTypeSchema>;
 
 const optionalText = z.string().trim().optional().nullable().transform((value) => value || undefined);
+const optionalInternalCode = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(2).max(40).optional()
+);
 const money = z.coerce.number().min(0);
 const quantity = z.coerce.number().min(0);
 
@@ -72,6 +77,8 @@ export const ProductSchema = z.object({
   category: ProductCategorySchema,
   baseUnitId: z.string(),
   baseUnit: UnitSchema,
+  supplierId: z.string(),
+  supplier: SupplierSummarySchema,
   laboratoryName: z.string().optional(),
   sanitaryRegistration: z.string().optional(),
   isMedicine: z.boolean(),
@@ -91,7 +98,7 @@ export const ProductSchema = z.object({
 export type Product = z.infer<typeof ProductSchema>;
 
 export const CreateProductSchema = z.object({
-  internalCode: z.string().trim().min(2).max(40),
+  internalCode: optionalInternalCode,
   barcode: optionalText,
   commercialName: z.string().trim().min(2).max(160),
   genericName: optionalText,
@@ -99,6 +106,7 @@ export const CreateProductSchema = z.object({
   type: ProductTypeSchema,
   categoryId: z.string().min(1),
   baseUnitId: z.string().min(1),
+  supplierId: z.string().min(1),
   laboratoryName: optionalText,
   sanitaryRegistration: optionalText,
   isMedicine: z.boolean().default(false),

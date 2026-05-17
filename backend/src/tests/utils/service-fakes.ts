@@ -385,6 +385,7 @@ export function makeProductWithPurchaseRelations(
     type: "medicine",
     categoryId: "category-1",
     baseUnitId: unitId,
+    supplierId: "supplier-1",
     laboratoryName: null,
     sanitaryRegistration: null,
     isMedicine: true,

@@ -1,6 +1,7 @@
 import type { UpdateProduct } from "@pharmacy-pos/shared";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { suppliersFacade } from "@/modules/suppliers";
 import { unitsFacade } from "@/modules/units/facades/unitsFacade";
 import { productsFacade } from "../facades/productsFacade";
 import type { ProductsCatalogActions } from "./ProductsCatalogActions";
@@ -13,14 +14,15 @@ export const useProductsCatalogStore = create<ProductsCatalogStore>()(
     (set, get) => ({
       ...initialProductsCatalogState,
 
-      async loadCatalog(search, signal) {
+      async loadCatalog(search, includeSuppliers, signal) {
         set({ error: null, status: "loading" }, false, "loadCatalog:start");
 
         try {
-          const [products, categories, units] = await Promise.all([
+          const [products, categories, units, suppliersResponse] = await Promise.all([
             productsFacade.getAll(search, signal),
             productsFacade.getCategories(signal),
-            unitsFacade.getAll(signal)
+            unitsFacade.getAll(signal),
+            includeSuppliers ? suppliersFacade.getAll({ page: 1, pageSize: 100, status: "active" }, signal) : Promise.resolve(null)
           ]);
 
           set(
@@ -29,6 +31,7 @@ export const useProductsCatalogStore = create<ProductsCatalogStore>()(
               error: null,
               products,
               status: "success",
+              suppliers: suppliersResponse?.data ?? [],
               units
             },
             false,
@@ -61,12 +64,12 @@ export const useProductsCatalogStore = create<ProductsCatalogStore>()(
           await productsFacade.create(input);
         }
 
-        await get().loadCatalog(get().search);
+        await get().loadCatalog(get().search, true);
       },
 
       async saveProductUnits(productId, input) {
         await productsFacade.updateUnits(productId, input);
-        await get().loadCatalog(get().search);
+        await get().loadCatalog(get().search, true);
       },
 
       setSearch(search) {

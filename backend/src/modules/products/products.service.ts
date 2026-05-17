@@ -3,12 +3,21 @@ import type {
   CreateProductCategory,
   Product,
   ProductCategory,
+  ProductType,
   UpdateProduct,
   UpdateProductUnits
 } from "@pharmacy-pos/shared";
 import { HttpError } from "../../common/http/http-error.js";
 import { ProductsRepository } from "./products.repository.js";
 import type { AuditContext, ProductWithRelations } from "./products.types.js";
+
+const productInternalCodePrefixes: Record<ProductType, string> = {
+  medicine: "MED",
+  otc: "VTL",
+  medical_supply: "INM",
+  hygiene_disinfection: "HIG",
+  related_misc: "REL"
+};
 
 export class ProductsService {
   constructor(private readonly productsRepository = new ProductsRepository()) {}
@@ -51,12 +60,14 @@ export class ProductsService {
   }
 
   async createProduct(input: CreateProduct, context: AuditContext): Promise<Product> {
-    await this.ensureProductReferences(input.categoryId, input.baseUnitId);
-    await this.ensureUniqueProductCodes(input.internalCode, input.barcode);
+    await this.ensureProductReferences(input.categoryId, input.baseUnitId, input.supplierId);
+    const internalCode = input.internalCode ?? (await this.generateInternalCode(input.type));
+    await this.ensureUniqueProductCodes(internalCode, input.barcode);
     this.ensureInventoryRules(input);
 
     const product = await this.productsRepository.createProduct({
       ...input,
+      internalCode,
       barcode: input.barcode ?? null,
       genericName: input.genericName ?? null,
       description: input.description ?? null,
@@ -76,8 +87,12 @@ export class ProductsService {
       throw new HttpError(404, "Product was not found.", "PRODUCT_NOT_FOUND");
     }
 
-    if (input.categoryId || input.baseUnitId) {
-      await this.ensureProductReferences(input.categoryId ?? currentProduct.categoryId, input.baseUnitId ?? currentProduct.baseUnitId);
+    if (input.categoryId || input.baseUnitId || input.supplierId) {
+      await this.ensureProductReferences(
+        input.categoryId ?? currentProduct.categoryId,
+        input.baseUnitId ?? currentProduct.baseUnitId,
+        input.supplierId ?? currentProduct.supplierId
+      );
     }
 
     if (input.internalCode || input.barcode !== undefined) {
@@ -144,10 +159,11 @@ export class ProductsService {
     return toProduct(updatedProduct);
   }
 
-  private async ensureProductReferences(categoryId: string, baseUnitId: string) {
-    const [category, unit] = await Promise.all([
+  private async ensureProductReferences(categoryId: string, baseUnitId: string, supplierId: string) {
+    const [category, unit, supplier] = await Promise.all([
       this.productsRepository.findCategoryById(categoryId),
-      this.productsRepository.findUnitById(baseUnitId)
+      this.productsRepository.findUnitById(baseUnitId),
+      this.productsRepository.findSupplierById(supplierId)
     ]);
 
     if (!category) {
@@ -156,6 +172,14 @@ export class ProductsService {
 
     if (!unit) {
       throw new HttpError(400, "Base unit does not exist.", "BASE_UNIT_NOT_FOUND");
+    }
+
+    if (!supplier) {
+      throw new HttpError(400, "Supplier does not exist.", "SUPPLIER_NOT_FOUND");
+    }
+
+    if (supplier.status !== "active") {
+      throw new HttpError(400, "Supplier must be active.", "SUPPLIER_NOT_ACTIVE");
     }
   }
 
@@ -184,6 +208,23 @@ export class ProductsService {
       );
     }
   }
+
+  private async generateInternalCode(type: ProductType) {
+    const prefix = productInternalCodePrefixes[type];
+    const products = await this.productsRepository.listProductsByInternalCodePrefix(prefix);
+    const latestSequence = products.reduce(
+      (currentMax, product) => Math.max(currentMax, getInternalCodeSequence(product.internalCode, prefix)),
+      0
+    );
+
+    return `${prefix}-${String(latestSequence + 1).padStart(6, "0")}`;
+  }
+}
+
+function getInternalCodeSequence(internalCode: string, prefix: string) {
+  const match = new RegExp(`^${prefix}-(\\d+)$`, "i").exec(internalCode);
+
+  return match ? Number(match[1]) : 0;
 }
 
 function toProductCategory(category: {
@@ -237,6 +278,13 @@ function toProduct(product: ProductWithRelations): Product {
     category: toProductCategory(product.category),
     baseUnitId: product.baseUnitId,
     baseUnit: toUnit(product.baseUnit),
+    supplierId: product.supplierId,
+    supplier: {
+      id: product.supplier.id,
+      businessName: product.supplier.businessName,
+      nit: product.supplier.nit ?? undefined,
+      status: product.supplier.status
+    },
     laboratoryName: product.laboratoryName ?? undefined,
     sanitaryRegistration: product.sanitaryRegistration ?? undefined,
     isMedicine: product.isMedicine,
@@ -266,10 +314,12 @@ function buildProductAuditMetadata(before: ProductWithRelations, after: ProductW
   return {
     before: {
       salePrice: Number(before.salePrice),
+      supplierId: before.supplierId,
       status: before.status
     },
     after: {
       salePrice: Number(after.salePrice),
+      supplierId: after.supplierId,
       status: after.status
     }
   };

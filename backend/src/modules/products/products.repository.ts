@@ -5,6 +5,7 @@ import type { AuditContext, ProductWithRelations } from "./products.types.js";
 const productInclude = {
   category: true,
   baseUnit: true,
+  supplier: true,
   units: {
     include: {
       unit: true
@@ -87,6 +88,23 @@ export class ProductsRepository {
     });
   }
 
+  listProductsByInternalCodePrefix(prefix: string) {
+    return prisma.product.findMany({
+      where: {
+        internalCode: {
+          startsWith: `${prefix}-`,
+          mode: "insensitive"
+        }
+      },
+      select: {
+        internalCode: true
+      },
+      orderBy: {
+        internalCode: "desc"
+      }
+    });
+  }
+
   findProductByBarcode(barcode: string, exceptId?: string) {
     return prisma.product.findFirst({
       where: {
@@ -104,6 +122,12 @@ export class ProductsRepository {
 
   findUnitById(id: string) {
     return prisma.unit.findUnique({
+      where: { id }
+    });
+  }
+
+  findSupplierById(id: string) {
+    return prisma.supplier.findUnique({
       where: { id }
     });
   }

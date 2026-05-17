@@ -1,8 +1,9 @@
-import type { Product, ProductCategory, ProductUnit, Unit } from "@prisma/client";
+import type { Product, ProductCategory, ProductUnit, Supplier, Unit } from "@prisma/client";
 
 export type ProductWithRelations = Product & {
   category: ProductCategory;
   baseUnit: Unit;
+  supplier: Supplier;
   units: Array<ProductUnit & { unit: Unit }>;
 };
 

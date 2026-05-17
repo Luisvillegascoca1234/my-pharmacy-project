@@ -300,6 +300,15 @@ describe("PurchasesService draft rules", () => {
       "PRODUCT_UNIT_NOT_CONFIGURED"
     );
 
+    const supplierMismatchRepository = createSeededRepository();
+    supplierMismatchRepository.seedProducts([makePurchaseProduct({ supplierId: "supplier-2" })]);
+    const supplierMismatchService = new PurchasesService(supplierMismatchRepository, new FakeInventoryService());
+
+    await expectPurchaseError(
+      () => supplierMismatchService.createPurchase(basePurchaseInput, auditContext),
+      "PRODUCT_SUPPLIER_MISMATCH"
+    );
+
     const duplicatesRepository = createSeededRepository();
     duplicatesRepository.seedProducts([makePurchaseProduct()]);
     const duplicatesService = new PurchasesService(duplicatesRepository, new FakeInventoryService());
@@ -657,6 +666,7 @@ function makePurchaseProduct(overrides: Parameters<typeof makeProductWithPurchas
   return makeProductWithPurchaseRelations({
     id: "product-1",
     baseUnitId: "unit-each",
+    supplierId: "supplier-1",
     units: [
       {
         id: "product-unit-each",

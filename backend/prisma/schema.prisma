@@ -143,6 +143,8 @@ model Product {
   category             ProductCategory     @relation(fields: [categoryId], references: [id])
   baseUnitId           String
   baseUnit             Unit                @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
+  supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id])
   laboratoryName       String?
   sanitaryRegistration String?
   isMedicine           Boolean             @default(false)
@@ -163,6 +165,7 @@ model Product {
 
   @@index([categoryId])
   @@index([baseUnitId])
+  @@index([supplierId])
   @@index([commercialName])
 }
 
@@ -188,6 +191,7 @@ model Supplier {
   address      String?
   contactName  String?
   status       SupplierStatus @default(active)
+  products     Product[]
   purchases    Purchase[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt

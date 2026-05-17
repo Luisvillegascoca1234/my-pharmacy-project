@@ -1,4 +1,4 @@
-import type { Product, ProductCategory, Unit } from "@pharmacy-pos/shared";
+import type { Product, ProductCategory, Supplier, Unit } from "@pharmacy-pos/shared";
 
 export type CatalogStatus = "error" | "idle" | "loading" | "success";
 
@@ -8,6 +8,7 @@ export type ProductsCatalogState = {
   products: Product[];
   search: string;
   status: CatalogStatus;
+  suppliers: Supplier[];
   units: Unit[];
 };
 
@@ -17,5 +18,6 @@ export const initialProductsCatalogState: ProductsCatalogState = {
   products: [],
   search: "",
   status: "idle",
+  suppliers: [],
   units: []
 };

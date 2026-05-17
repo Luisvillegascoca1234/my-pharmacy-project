@@ -124,7 +124,7 @@ export class PurchasesService {
     this.ensureValidActor(createdByUser);
 
     const normalizedInput = normalizePurchaseInput(input);
-    const items = await this.buildDraftItems(input.items);
+    const items = await this.buildDraftItems(input.items, normalizedInput.supplierId);
     const totalAmount = sumLineTotals(items);
 
     const purchase = await this.purchasesRepository.createDraftPurchase(
@@ -157,7 +157,7 @@ export class PurchasesService {
     this.ensureActiveSupplier(supplier);
 
     const normalizedInput = normalizePurchaseInput(input);
-    const items = await this.buildDraftItems(input.items);
+    const items = await this.buildDraftItems(input.items, normalizedInput.supplierId);
     const totalAmount = sumLineTotals(items);
 
     const purchase = await this.purchasesRepository.replaceDraftPurchase(
@@ -309,7 +309,7 @@ export class PurchasesService {
     }
   }
 
-  private async buildDraftItems(items: PurchaseItemInput[]): Promise<PurchaseDraftItemData[]> {
+  private async buildDraftItems(items: PurchaseItemInput[], supplierId: string): Promise<PurchaseDraftItemData[]> {
     if (items.length === 0) {
       throw new HttpError(400, "Purchase must contain at least one item.", "PURCHASE_ITEMS_REQUIRED");
     }
@@ -320,7 +320,8 @@ export class PurchasesService {
     for (const item of items) {
       const purchaseItemReferences = this.ensurePurchasableProductUnit(
         await this.purchasesRepository.findProductById(item.productId),
-        item.unitId
+        item.unitId,
+        supplierId
       );
       const normalizedItem = buildDraftItem(item, purchaseItemReferences.product, purchaseItemReferences.productUnit);
       const duplicateKey = buildDuplicateKey(normalizedItem);
@@ -336,13 +337,17 @@ export class PurchasesService {
     return draftItems;
   }
 
-  private ensurePurchasableProductUnit(product: ProductWithPurchaseRelations | null, unitId: string) {
+  private ensurePurchasableProductUnit(product: ProductWithPurchaseRelations | null, unitId: string, supplierId: string) {
     if (!product) {
       throw new HttpError(400, "Product does not exist.", "PRODUCT_NOT_FOUND");
     }
 
     if (product.status !== "active") {
       throw new HttpError(400, "Product must be active.", "PRODUCT_NOT_ACTIVE");
+    }
+
+    if (product.supplierId !== supplierId) {
+      throw new HttpError(400, "Product does not belong to the selected supplier.", "PRODUCT_SUPPLIER_MISMATCH");
     }
 
     const productUnit = product.units.find((unit) => unit.unitId === unitId);
@@ -363,7 +368,7 @@ export class PurchasesService {
     }
 
     for (const item of purchase.items) {
-      this.ensurePurchasableProductUnit(await this.purchasesRepository.findProductById(item.productId, client), item.unitId);
+      this.ensurePurchasableProductUnit(await this.purchasesRepository.findProductById(item.productId, client), item.unitId, purchase.supplierId);
 
       if (!item.isInventoryTracked) {
         continue;

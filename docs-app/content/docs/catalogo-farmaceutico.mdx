@@ -11,7 +11,7 @@ El sistema contempla productos medicinales y productos relacionados con la activ
 
 ## Datos principales del producto
 
-Un producto debe poder identificarse por código interno, código de barras, nombre comercial, nombre genérico cuando corresponda, categoría, laboratorio o marca, tipo de producto, unidad base, precio de venta y estado operativo.
+Un producto debe poder identificarse por código interno, código de barras, nombre comercial, nombre genérico cuando corresponda, categoría, laboratorio o marca, tipo de producto, unidad base, proveedor, precio de venta y estado operativo.
 
 En medicamentos, también pueden ser relevantes el registro sanitario, el principio activo, la necesidad de receta y la condición de venta libre.
 
@@ -27,15 +27,18 @@ En medicamentos, también pueden ser relevantes el registro sanitario, el princi
 
 Los productos inventariables deben exigir lote y vencimiento. Esta decisión favorece la trazabilidad sanitaria, permite aplicar FEFO y facilita reportes de vencimiento. Aunque algunos productos no medicinales puedan tener menor riesgo sanitario, el control uniforme reduce errores operativos.
 
+Cada producto debe tener un único proveedor asociado. Esta regla evita que un mismo medicamento o artículo se mezcle entre abastecimientos distintos y permite que una compra solo incluya productos suministrados por el proveedor seleccionado.
+
 Un producto inactivo no debe incorporarse a nuevas compras ni ventas. Sin embargo, debe conservarse en el historial para explicar operaciones previas, reportes, movimientos y documentos asociados.
 
 ## Flujo normal
 
 1. El usuario administrativo registra el producto con su identificación comercial y sanitaria.
-2. Define la unidad base para inventario.
-3. Asocia unidades comerciales mediante conversiones.
-4. Establece precio de venta y stock mínimo.
-5. Mantiene el producto activo mientras sea comercializable.
+2. Selecciona el proveedor que lo suministra.
+3. Define la unidad base para inventario.
+4. Asocia unidades comerciales mediante conversiones.
+5. Establece precio de venta y stock mínimo.
+6. Mantiene el producto activo mientras sea comercializable.
 
 ## Casos especiales
 

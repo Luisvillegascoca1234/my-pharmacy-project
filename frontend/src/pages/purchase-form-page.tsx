@@ -96,7 +96,7 @@ function getLineTotal(item: PurchaseDraftItemForm) {
   return Number(item.quantity || 0) * Number(item.unitCost || 0);
 }
 
-function validateDraft(items: PurchaseDraftItemForm[], products: Product[]): ValidationResult {
+function validateDraft(items: PurchaseDraftItemForm[], products: Product[], supplierId: string): ValidationResult {
   const itemErrors: Record<number, string> = {};
   const seenKeys = new Map<string, number>();
 
@@ -111,6 +111,11 @@ function validateDraft(items: PurchaseDraftItemForm[], products: Product[]): Val
 
     if (!product) {
       itemErrors[index] = "El producto seleccionado ya no está disponible en el catálogo.";
+      return;
+    }
+
+    if (!supplierId || product.supplierId !== supplierId) {
+      itemErrors[index] = "El producto no pertenece al proveedor seleccionado.";
       return;
     }
 
@@ -214,6 +219,13 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
   const canReceive = canOperateDraft && !purchases.isDirty && !isReceiving && !isCancelling;
   const canCancel = canOperateDraft && !isReceiving && !isCancelling;
   const activeProducts = useMemo(() => productsCatalog.products.filter((product) => product.status === "active"), [productsCatalog.products]);
+  const supplierProducts = useMemo(
+    () =>
+      purchases.draftForm.supplierId
+        ? activeProducts.filter((product) => product.supplierId === purchases.draftForm.supplierId)
+        : [],
+    [activeProducts, purchases.draftForm.supplierId]
+  );
   const activeSuppliers = useMemo(() => suppliers.items.filter((supplier) => supplier.status === "active"), [suppliers.items]);
   const selectedSupplierOption = selectedPurchase?.supplier;
   const supplierOptions = useMemo(() => {
@@ -224,7 +236,10 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
     return [...activeSuppliers, selectedSupplierOption as Supplier];
   }, [activeSuppliers, selectedSupplierOption]);
   const subtotal = useMemo(() => purchases.draftForm.items.reduce((total, item) => total + getLineTotal(item), 0), [purchases.draftForm.items]);
-  const validation = useMemo(() => validateDraft(purchases.draftForm.items, activeProducts), [activeProducts, purchases.draftForm.items]);
+  const validation = useMemo(
+    () => validateDraft(purchases.draftForm.items, activeProducts, purchases.draftForm.supplierId),
+    [activeProducts, purchases.draftForm.items, purchases.draftForm.supplierId]
+  );
   const canSubmit =
     canEdit &&
     !isSaving &&
@@ -317,8 +332,24 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
     purchases.setDraftItemField(index, field, value as never);
   }
 
+  function updateSupplier(supplierId: string) {
+    setLocalError(null);
+    purchases.setDraftField("supplierId", supplierId);
+
+    purchases.draftForm.items.forEach((item, index) => {
+      const product = getProductById(activeProducts, item.productId);
+
+      if (product && product.supplierId !== supplierId) {
+        purchases.setDraftItemField(index, "productId", "");
+        purchases.setDraftItemField(index, "unitId", "");
+        purchases.setDraftItemField(index, "batchNumber", "");
+        purchases.setDraftItemField(index, "expirationDate", "");
+      }
+    });
+  }
+
   function updateProduct(index: number, productId: string) {
-    const product = getProductById(activeProducts, productId);
+    const product = getProductById(supplierProducts, productId);
     const firstUnitId = getConfiguredUnits(product)[0]?.unitId ?? "";
 
     setLocalError(null);
@@ -519,8 +550,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                       disabled={!canEdit || suppliers.listStatus === "loading"}
                       value={purchases.draftForm.supplierId}
                       onChange={(event) => {
-                        setLocalError(null);
-                        purchases.setDraftField("supplierId", event.target.value);
+                        updateSupplier(event.target.value);
                       }}
                     >
                       <NativeSelectOption value="">Seleccionar proveedor</NativeSelectOption>
@@ -564,7 +594,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <CardTitle>Items</CardTitle>
-                      <CardDescription>Selecciona productos activos y una unidad configurada por producto.</CardDescription>
+                      <CardDescription>Selecciona productos activos asociados al proveedor del encabezado.</CardDescription>
                     </div>
                     <Button disabled={!canEdit} type="button" variant="outline" onClick={() => purchases.addDraftItem()}>
                       <Plus aria-hidden="true" />
@@ -598,9 +628,13 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                               <TableCell className="align-top">
                                 <Field>
                                   <FieldLabel className="sr-only">Producto</FieldLabel>
-                                  <NativeSelect disabled={!canEdit} value={item.productId} onChange={(event) => updateProduct(index, event.target.value)}>
+                                  <NativeSelect
+                                    disabled={!canEdit || !purchases.draftForm.supplierId}
+                                    value={item.productId}
+                                    onChange={(event) => updateProduct(index, event.target.value)}
+                                  >
                                     <NativeSelectOption value="">Seleccionar producto</NativeSelectOption>
-                                    {activeProducts.map((productOption) => (
+                                    {supplierProducts.map((productOption) => (
                                       <NativeSelectOption key={productOption.id} value={productOption.id}>
                                         {productOption.commercialName}
                                       </NativeSelectOption>
