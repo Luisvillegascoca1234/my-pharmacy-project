@@ -1,9 +1,13 @@
 import { Prisma } from "@prisma/client";
 import type { InventoryServicePort } from "../../modules/inventory/inventory.service.js";
 import type {
+  AuditContext as InventoryAuditContext,
+  CreateInventoryAdjustmentData,
   CreateInventoryBatchData,
   CreateInventoryMovementData,
+  InventoryBatchRecord,
   InventoryBatchWithPurchaseItem,
+  InventoryMovementFilters,
   InventoryTransactionClient
 } from "../../modules/inventory/inventory.types.js";
 import type { PurchasesRepositoryPort } from "../../modules/purchases/purchases.service.js";
@@ -285,8 +289,28 @@ export class FakePurchasesRepository implements PurchasesRepositoryPort {
 }
 
 export class FakeInventoryRepository {
+  readonly adjustments: CreateInventoryAdjustmentData[] = [];
+  readonly auditLogs: Array<{
+    action: string;
+    context: InventoryAuditContext;
+    entityId: string;
+    metadata: unknown;
+  }> = [];
   readonly batches: InventoryBatchWithPurchaseItem[] = [];
   readonly movements: CreateInventoryMovementData[] = [];
+
+  async runInTransaction<T>(callback: (client: InventoryTransactionClient) => Promise<T>) {
+    return callback(testTransactionClient);
+  }
+
+  async createAdjustment(data: CreateInventoryAdjustmentData) {
+    this.adjustments.push(data);
+
+    return {
+      id: `adjustment-${this.adjustments.length}`,
+      createdAt: new Date("2026-01-01T00:00:00.000Z")
+    };
+  }
 
   async createBatch(data: CreateInventoryBatchData) {
     const batch = makeInventoryBatchRecord({
@@ -314,6 +338,38 @@ export class FakeInventoryRepository {
     });
   }
 
+  async findBatchById(id: string) {
+    return (this.batches.find((batch) => batch.id === id) as InventoryBatchRecord | undefined) ?? null;
+  }
+
+  async listBatches() {
+    return this.batches as unknown as InventoryBatchRecord[];
+  }
+
+  async listFefoBatches(productId: string) {
+    return this.batches.filter((batch) => batch.productId === productId && batch.status === "active") as unknown as InventoryBatchRecord[];
+  }
+
+  async listMovements(_filters: InventoryMovementFilters) {
+    return {
+      data: [],
+      total: 0
+    };
+  }
+
+  async updateBatchQuantity(id: string, availableQuantity: Prisma.Decimal) {
+    const batch = this.batches.find((currentBatch) => currentBatch.id === id);
+
+    if (!batch) {
+      throw new Error(`Inventory batch ${id} does not exist in fake repository.`);
+    }
+
+    batch.availableQuantity = availableQuantity;
+    batch.status = availableQuantity.equals(0) ? "depleted" : "active";
+
+    return batch;
+  }
+
   async cancelBatch(id: string) {
     const batch = this.batches.find((currentBatch) => currentBatch.id === id);
 
@@ -325,6 +381,12 @@ export class FakeInventoryRepository {
     batch.status = "cancelled";
 
     return batch;
+  }
+
+  async createAuditLog(action: string, entityId: string, metadata: unknown, context: InventoryAuditContext) {
+    this.auditLogs.push({ action, entityId, metadata, context });
+
+    return { id: `audit-${this.auditLogs.length}` };
   }
 }
 

@@ -1,6 +1,8 @@
 import { Router } from "express";
+import { alertsRoutes } from "../modules/alerts/alerts.routes.js";
 import { authRoutes } from "../modules/auth/auth.routes.js";
 import { healthRoutes } from "../modules/health/health.routes.js";
+import { inventoryRoutes } from "../modules/inventory/inventory.routes.js";
 import { productCategoriesRoutes, productsRoutes } from "../modules/products/products.routes.js";
 import { purchasesRoutes } from "../modules/purchases/purchases.routes.js";
 import { rolesRoutes } from "../modules/roles/roles.routes.js";
@@ -10,8 +12,10 @@ import { usersRoutes } from "../modules/users/users.routes.js";
 
 export const apiRoutes = Router();
 
+apiRoutes.use("/alerts", alertsRoutes);
 apiRoutes.use("/auth", authRoutes);
 apiRoutes.use("/health", healthRoutes);
+apiRoutes.use("/inventory", inventoryRoutes);
 apiRoutes.use("/product-categories", productCategoriesRoutes);
 apiRoutes.use("/products", productsRoutes);
 apiRoutes.use("/purchases", purchasesRoutes);

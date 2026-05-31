@@ -2,6 +2,8 @@ export { BASE_ROLES } from "./constants/roles.js";
 export type { BaseRole } from "./constants/roles.js";
 export { ApiErrorSchema } from "./schemas/api-error.schema.js";
 export type { ApiError } from "./schemas/api-error.schema.js";
+export { AlertSchema, AlertsListResponseSchema, AlertSeveritySchema, AlertTypeSchema } from "./schemas/alert.schema.js";
+export type { Alert, AlertsListResponse, AlertSeverity, AlertType } from "./schemas/alert.schema.js";
 export { AuthenticatedUserSchema, AuthSessionSchema, LoginRequestSchema } from "./schemas/auth.schema.js";
 export type { AuthenticatedUser, AuthSession, LoginRequest } from "./schemas/auth.schema.js";
 export { HealthStatusSchema } from "./schemas/health-status.schema.js";
@@ -106,3 +108,39 @@ export type {
   ReceivePurchase,
   UpdatePurchase
 } from "./schemas/purchase.schema.js";
+export {
+  CreateInventoryAdjustmentSchema,
+  FefoAllocationSchema,
+  FefoPreviewQuerySchema,
+  FefoPreviewSchema,
+  InventoryAdjustmentSchema,
+  InventoryBatchSchema,
+  InventoryBatchStatusSchema,
+  InventoryMovementSchema,
+  InventoryMovementsListResponseSchema,
+  InventoryMovementsQuerySchema,
+  InventoryMovementTypeSchema,
+  InventoryProductSummarySchema,
+  InventoryStockItemSchema,
+  InventoryStockListResponseSchema,
+  InventoryStockQuerySchema,
+  InventoryStockStatusSchema
+} from "./schemas/inventory.schema.js";
+export type {
+  CreateInventoryAdjustment,
+  FefoAllocation,
+  FefoPreview,
+  FefoPreviewQuery,
+  InventoryAdjustment,
+  InventoryBatch,
+  InventoryBatchStatus,
+  InventoryMovement,
+  InventoryMovementsListResponse,
+  InventoryMovementsQuery,
+  InventoryMovementType,
+  InventoryProductSummary,
+  InventoryStockItem,
+  InventoryStockListResponse,
+  InventoryStockQuery,
+  InventoryStockStatus
+} from "./schemas/inventory.schema.js";

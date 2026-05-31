@@ -666,7 +666,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                                   step="0.0001"
                                   type="number"
                                   value={item.quantity}
-                                  onChange={(event) => updateItem(index, "quantity", Number(event.target.value))}
+                                  onChange={(event) => updateItem(index, "quantity", getPositiveNumberInputValue(event.currentTarget))}
                                 />
                               </TableCell>
                               <TableCell className="align-top">
@@ -676,7 +676,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                                   step="0.01"
                                   type="number"
                                   value={item.unitCost}
-                                  onChange={(event) => updateItem(index, "unitCost", Number(event.target.value))}
+                                  onChange={(event) => updateItem(index, "unitCost", getNumberInputValue(event.currentTarget))}
                                 />
                               </TableCell>
                               <TableCell className="align-top">
@@ -887,4 +887,12 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
       </Dialog>
     </section>
   );
+}
+
+function getNumberInputValue(input: HTMLInputElement) {
+  return Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : 0;
+}
+
+function getPositiveNumberInputValue(input: HTMLInputElement) {
+  return Number.isFinite(input.valueAsNumber) && input.valueAsNumber > 0 ? input.valueAsNumber : 1;
 }

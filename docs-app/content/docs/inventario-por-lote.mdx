@@ -13,15 +13,24 @@ Un lote operativo agrupa existencias por producto, número de lote y fecha de ve
 
 Una capa de inventario representa una recepción específica con su propio costo. Dos compras pueden ingresar el mismo producto, mismo número de lote y mismo vencimiento, pero con costos distintos. Mantener capas separadas permite calcular margen real y conservar historia de costos sin confundir la vista operativa.
 
+## Vista de stock actual
+
+La pantalla **Lotes y stock** muestra el producto, codigo interno, lote, vencimiento, estado, cantidad disponible, valor de inventario y cantidad de capas agrupadas. El usuario puede buscar por producto, codigo o lote, y tambien filtrar por estado.
+
 ## Estados del stock
 
-- **Activo:** disponible para operaciones.
+- **Disponible:** apto para operaciones.
+- **Stock bajo:** disponible, pero por debajo del minimo definido para el producto.
 - **Agotado:** ya no tiene cantidad disponible.
+- **Proximo a vencer:** requiere atencion antes de la fecha limite.
+- **Vencido:** no debe venderse.
 - **Cancelado:** fue revertido por una anulación válida.
 
 ## FEFO
 
 El metodo FEFO prioriza la salida de los lotes con vencimiento más cercano. Este criterio reduce pérdidas por caducidad y ayuda a que la farmacia venda primero los productos que deben rotar antes.
+
+La vista **FEFO visible** permite seleccionar un producto y simular una cantidad de salida. El sistema muestra si el stock alcanza y que lote se tomaria primero, sin descontar inventario.
 
 ## Reglas de negocio
 
@@ -30,6 +39,7 @@ El metodo FEFO prioriza la salida de los lotes con vencimiento más cercano. Est
 - Los lotes vencidos no deben seleccionarse para venta.
 - Los lotes cancelados no deben estar disponibles.
 - La disponibilidad debe considerar cantidad, vencimiento y estado.
+- Una simulacion FEFO no modifica saldos.
 
 ## Casos especiales
 

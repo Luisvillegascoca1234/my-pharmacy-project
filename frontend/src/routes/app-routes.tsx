@@ -1,7 +1,11 @@
 import type { AuthenticatedUser } from "@pharmacy-pos/shared";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AdjustmentsPage } from "@/pages/adjustments-page";
+import { AlertsPage } from "@/pages/alerts-page";
+import { BatchesPage } from "@/pages/batches-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { ModulePage } from "@/pages/module-page";
+import { MovementsPage } from "@/pages/movements-page";
 import { ProductsPage } from "@/pages/products-page";
 import { PurchaseFormPage } from "@/pages/purchase-form-page";
 import { PurchasesPage } from "@/pages/purchases-page";
@@ -39,6 +43,14 @@ export function AppRoutes({ user }: AppRoutesProps) {
               <UnitsPage />
             ) : item.key === "users" ? (
               <UsersPage />
+            ) : item.key === "batches" ? (
+              <BatchesPage />
+            ) : item.key === "movements" ? (
+              <MovementsPage />
+            ) : item.key === "adjustments" ? (
+              <AdjustmentsPage />
+            ) : item.key === "alerts" ? (
+              <AlertsPage />
             ) : (
               <ModulePage description={item.description} icon={item.icon} title={item.label} />
             )

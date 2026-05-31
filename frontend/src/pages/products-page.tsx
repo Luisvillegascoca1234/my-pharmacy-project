@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { CreateProduct, ProductType, UpdateProductUnits } from "@pharmacy-pos/shared";
 import { Edit3, PackagePlus, RefreshCcw, Save, Search, ShieldAlert } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,38 +10,24 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useProductsCatalog } from "@/modules/products";
+import { createEmptyProductForm, selectProductFormUiActions, selectProductFormUiState, useProductFormUiStore } from "./products/product-form-ui-store";
 import { productStatusLabels, productTypeLabels } from "./products/product-labels";
 
 const productTypes = Object.keys(productTypeLabels) as ProductType[];
-
-const emptyProductForm: CreateProduct = {
-  barcode: undefined,
-  commercialName: "",
-  genericName: undefined,
-  description: undefined,
-  type: "medicine",
-  categoryId: "",
-  baseUnitId: "",
-  supplierId: "",
-  laboratoryName: undefined,
-  sanitaryRegistration: undefined,
-  isMedicine: true,
-  isOverTheCounter: false,
-  requiresPrescription: false,
-  isInventoryTracked: true,
-  requiresBatch: true,
-  requiresExpiration: true,
-  minimumStock: 0,
-  salePrice: 0
-};
+const PRODUCT_SEARCH_DEBOUNCE_MS = 350;
 
 export function ProductsPage() {
   const catalog = useProductsCatalog();
+  const { newProductForm } = useProductFormUiStore(useShallow(selectProductFormUiState));
+  const { patchNewProductForm, resetNewProductForm, setNewProductField } = useProductFormUiStore(useShallow(selectProductFormUiActions));
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [form, setForm] = useState<CreateProduct>(emptyProductForm);
+  const [editProductForm, setEditProductForm] = useState<CreateProduct>(createEmptyProductForm());
   const [conversionRows, setConversionRows] = useState<Array<{ unitId: string; conversionFactor: number }>>([]);
+  const [searchInput, setSearchInput] = useState(catalog.search);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const debouncedSearchInput = useDebouncedValue(searchInput, PRODUCT_SEARCH_DEBOUNCE_MS);
 
   const hasCatalogBase = catalog.categories.length > 0 && catalog.units.length > 0 && catalog.suppliers.length > 0;
   const selectedProduct = useMemo(
@@ -48,18 +35,27 @@ export function ProductsPage() {
     [catalog.products, selectedProductId]
   );
 
+  const form = selectedProduct ? editProductForm : newProductForm;
+  const defaultProductReferences = useMemo(
+    () => ({
+      categoryId: catalog.categories[0]?.id || "",
+      baseUnitId: catalog.units[0]?.id || "",
+      supplierId: catalog.suppliers[0]?.id || ""
+    }),
+    [catalog.categories, catalog.suppliers, catalog.units]
+  );
+
   useEffect(() => {
     if (!selectedProduct) {
-      setForm((currentForm) => ({
-        ...currentForm,
-        categoryId: currentForm.categoryId || catalog.categories[0]?.id || "",
-        baseUnitId: currentForm.baseUnitId || catalog.units[0]?.id || "",
-        supplierId: currentForm.supplierId || catalog.suppliers[0]?.id || ""
-      }));
+      patchNewProductForm({
+        categoryId: newProductForm.categoryId || defaultProductReferences.categoryId,
+        baseUnitId: newProductForm.baseUnitId || defaultProductReferences.baseUnitId,
+        supplierId: newProductForm.supplierId || defaultProductReferences.supplierId
+      });
       return;
     }
 
-    setForm({
+    setEditProductForm({
       internalCode: selectedProduct.internalCode,
       barcode: selectedProduct.barcode,
       commercialName: selectedProduct.commercialName,
@@ -85,7 +81,19 @@ export function ProductsPage() {
         ? selectedProduct.units.map((unit) => ({ unitId: unit.unitId, conversionFactor: unit.conversionFactor }))
         : [{ unitId: selectedProduct.baseUnitId, conversionFactor: 1 }]
     );
-  }, [catalog.categories, catalog.suppliers, catalog.units, selectedProduct]);
+  }, [defaultProductReferences, newProductForm.baseUnitId, newProductForm.categoryId, newProductForm.supplierId, patchNewProductForm, selectedProduct]);
+
+  useEffect(() => {
+    setSearchInput(catalog.search);
+  }, [catalog.search]);
+
+  useEffect(() => {
+    if (debouncedSearchInput === catalog.search) {
+      return;
+    }
+
+    catalog.setSearch(debouncedSearchInput);
+  }, [catalog.search, catalog.setSearch, debouncedSearchInput]);
 
   const summary = useMemo(
     () => ({
@@ -101,14 +109,10 @@ export function ProductsPage() {
     setSubmitError(null);
 
     try {
-      await catalog.saveProduct(form, selectedProduct?.id);
+      await catalog.saveProduct(buildProductSubmitPayload(form), selectedProduct?.id);
       setSelectedProductId(null);
-      setForm({
-        ...emptyProductForm,
-        categoryId: catalog.categories[0]?.id || "",
-        baseUnitId: catalog.units[0]?.id || "",
-        supplierId: catalog.suppliers[0]?.id || ""
-      });
+      setEditProductForm(createEmptyProductForm());
+      resetNewProductForm(defaultProductReferences);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "No se pudo guardar el producto.");
     }
@@ -160,7 +164,7 @@ export function ProductsPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card>
           <CardHeader className="gap-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -173,44 +177,64 @@ export function ProductsPage() {
                 <Input
                   className="pl-8"
                   placeholder="Buscar producto"
-                  value={catalog.search}
-                  onChange={(event) => catalog.setSearch(event.target.value)}
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
                 />
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Producto</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Unidad</TableHead>
-                  <TableHead>Proveedor</TableHead>
-                  <TableHead>Precio</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acción</TableHead>
+                  <TableHead className="w-[92px]">Código</TableHead>
+                  <TableHead className="w-[34%]">Producto</TableHead>
+                  <TableHead className="w-[28%]">Clasificación</TableHead>
+                  <TableHead className="w-[72px]">Unidad</TableHead>
+                  <TableHead className="w-[124px]">Venta</TableHead>
+                  <TableHead className="w-[92px] text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {catalog.products.map((product) => (
                   <TableRow key={product.id}>
-                    <TableCell className="font-mono text-xs">{product.internalCode}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="font-medium text-foreground">{product.commercialName}</p>
-                        <p className="text-xs text-muted-foreground">{productTypeLabels[product.type]}</p>
+                    <TableCell className="min-w-0 font-mono text-xs">
+                      <span className="block truncate" title={product.internalCode}>
+                        {product.internalCode}
+                      </span>
+                    </TableCell>
+                    <TableCell className="min-w-0 whitespace-normal">
+                      <div className="min-w-0 space-y-1">
+                        <p className="truncate font-medium text-foreground" title={product.commercialName}>
+                          {product.commercialName}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground" title={productTypeLabels[product.type]}>
+                          {productTypeLabels[product.type]}
+                        </p>
                       </div>
                     </TableCell>
-                    <TableCell>{product.category.name}</TableCell>
-                    <TableCell>{product.baseUnit.abbreviation}</TableCell>
-                    <TableCell>{product.supplier.businessName}</TableCell>
-                    <TableCell>Bs {product.salePrice.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant={product.status === "active" ? "default" : "secondary"}>
-                        {productStatusLabels[product.status]}
-                      </Badge>
+                    <TableCell className="min-w-0 whitespace-normal">
+                      <div className="min-w-0 space-y-1">
+                        <p className="truncate text-foreground" title={product.category.name}>
+                          {product.category.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground" title={product.supplier.businessName}>
+                          {product.supplier.businessName}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-0">
+                      <span className="block truncate" title={product.baseUnit.abbreviation}>
+                        {product.baseUnit.abbreviation}
+                      </span>
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="font-medium text-foreground">Bs {product.salePrice.toFixed(2)}</span>
+                        <Badge variant={product.status === "active" ? "default" : "secondary"}>
+                          {productStatusLabels[product.status]}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" variant="outline" onClick={() => setSelectedProductId(product.id)}>
@@ -222,7 +246,7 @@ export function ProductsPage() {
                 ))}
                 {catalog.products.length === 0 ? (
                   <TableRow>
-                    <TableCell className="h-32 text-center text-muted-foreground" colSpan={8}>
+                    <TableCell className="h-32 text-center text-muted-foreground" colSpan={6}>
                       {catalog.status === "loading" ? "Cargando productos..." : "Todavía no hay productos registrados."}
                     </TableCell>
                   </TableRow>
@@ -256,7 +280,7 @@ export function ProductsPage() {
                     <Input
                       disabled={!catalog.canManage}
                       value={form.barcode ?? ""}
-                      onChange={(event) => setForm({ ...form, barcode: event.target.value || undefined })}
+                      onChange={(event) => setProductFormField("barcode", event.target.value || undefined)}
                     />
                   </Field>
                 </div>
@@ -267,7 +291,7 @@ export function ProductsPage() {
                     required
                     disabled={!catalog.canManage}
                     value={form.commercialName}
-                    onChange={(event) => setForm({ ...form, commercialName: event.target.value })}
+                    onChange={(event) => setProductFormField("commercialName", event.target.value)}
                   />
                 </Field>
 
@@ -276,7 +300,7 @@ export function ProductsPage() {
                   <Input
                     disabled={!catalog.canManage}
                     value={form.genericName ?? ""}
-                    onChange={(event) => setForm({ ...form, genericName: event.target.value || undefined })}
+                    onChange={(event) => setProductFormField("genericName", event.target.value || undefined)}
                   />
                 </Field>
 
@@ -288,7 +312,7 @@ export function ProductsPage() {
                       className="w-full"
                       disabled={!catalog.canManage || catalog.categories.length === 0}
                       value={form.categoryId}
-                      onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
+                      onChange={(event) => setProductFormField("categoryId", event.target.value)}
                     >
                       {catalog.categories.map((category) => (
                         <NativeSelectOption key={category.id} value={category.id}>
@@ -304,7 +328,7 @@ export function ProductsPage() {
                       className="w-full"
                       disabled={!catalog.canManage || catalog.units.length === 0}
                       value={form.baseUnitId}
-                      onChange={(event) => setForm({ ...form, baseUnitId: event.target.value })}
+                      onChange={(event) => setProductFormField("baseUnitId", event.target.value)}
                     >
                       {catalog.units.map((unit) => (
                         <NativeSelectOption key={unit.id} value={unit.id}>
@@ -322,7 +346,7 @@ export function ProductsPage() {
                     className="w-full"
                     disabled={!catalog.canManage || catalog.suppliers.length === 0}
                     value={form.supplierId}
-                    onChange={(event) => setForm({ ...form, supplierId: event.target.value })}
+                    onChange={(event) => setProductFormField("supplierId", event.target.value)}
                   >
                     {catalog.suppliers.map((supplier) => (
                       <NativeSelectOption key={supplier.id} value={supplier.id}>
@@ -339,7 +363,7 @@ export function ProductsPage() {
                       className="w-full"
                       disabled={!catalog.canManage}
                       value={form.type}
-                      onChange={(event) => setForm({ ...form, type: event.target.value as ProductType })}
+                      onChange={(event) => setProductFormField("type", event.target.value as ProductType)}
                     >
                       {productTypes.map((type) => (
                         <NativeSelectOption key={type} value={type}>
@@ -357,7 +381,7 @@ export function ProductsPage() {
                       type="number"
                       disabled={!catalog.canManage}
                       value={form.salePrice}
-                      onChange={(event) => setForm({ ...form, salePrice: Number(event.target.value) })}
+                      onChange={(event) => setProductFormField("salePrice", getNumberInputValue(event.currentTarget))}
                     />
                   </Field>
                 </div>
@@ -367,25 +391,25 @@ export function ProductsPage() {
                     disabled={!catalog.canManage}
                     label="Inventariable"
                     value={form.isInventoryTracked}
-                    onChange={(value) => setForm({ ...form, isInventoryTracked: value })}
+                    onChange={(value) => setProductFormField("isInventoryTracked", value)}
                   />
                   <BooleanField
                     disabled={!catalog.canManage}
                     label="Exige lote"
                     value={form.requiresBatch}
-                    onChange={(value) => setForm({ ...form, requiresBatch: value })}
+                    onChange={(value) => setProductFormField("requiresBatch", value)}
                   />
                   <BooleanField
                     disabled={!catalog.canManage}
                     label="Exige vencimiento"
                     value={form.requiresExpiration}
-                    onChange={(value) => setForm({ ...form, requiresExpiration: value })}
+                    onChange={(value) => setProductFormField("requiresExpiration", value)}
                   />
                   <BooleanField
                     disabled={!catalog.canManage}
                     label="Requiere receta"
                     value={form.requiresPrescription}
-                    onChange={(value) => setForm({ ...form, requiresPrescription: value })}
+                    onChange={(value) => setProductFormField("requiresPrescription", value)}
                   />
                 </FieldGroup>
 
@@ -401,12 +425,8 @@ export function ProductsPage() {
                     variant="outline"
                     onClick={() => {
                       setSelectedProductId(null);
-                      setForm({
-                        ...emptyProductForm,
-                        categoryId: catalog.categories[0]?.id || "",
-                        baseUnitId: catalog.units[0]?.id || "",
-                        supplierId: catalog.suppliers[0]?.id || ""
-                      });
+                      setEditProductForm(createEmptyProductForm());
+                      resetNewProductForm(defaultProductReferences);
                     }}
                   >
                     <PackagePlus aria-hidden="true" />
@@ -431,13 +451,15 @@ export function ProductsPage() {
                         className="w-full"
                         disabled={!catalog.canManage}
                         value={row.unitId}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          const unitId = event.target.value;
+
                           setConversionRows((rows) =>
                             rows.map((currentRow, currentIndex) =>
-                              currentIndex === index ? { ...currentRow, unitId: event.target.value } : currentRow
+                              currentIndex === index ? { ...currentRow, unitId } : currentRow
                             )
-                          )
-                        }
+                          );
+                        }}
                       >
                         {catalog.units.map((unit) => (
                           <NativeSelectOption key={unit.id} value={unit.id}>
@@ -451,13 +473,15 @@ export function ProductsPage() {
                         type="number"
                         disabled={!catalog.canManage || row.unitId === selectedProduct.baseUnitId}
                         value={row.unitId === selectedProduct.baseUnitId ? 1 : row.conversionFactor}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          const conversionFactor = getPositiveNumberInputValue(event.currentTarget);
+
                           setConversionRows((rows) =>
                             rows.map((currentRow, currentIndex) =>
-                              currentIndex === index ? { ...currentRow, conversionFactor: Number(event.target.value) } : currentRow
+                              currentIndex === index ? { ...currentRow, conversionFactor } : currentRow
                             )
-                          )
-                        }
+                          );
+                        }}
                       />
                     </div>
                   ))}
@@ -485,6 +509,18 @@ export function ProductsPage() {
       </div>
     </section>
   );
+
+  function setProductFormField<Field extends keyof CreateProduct>(field: Field, value: CreateProduct[Field]) {
+    if (selectedProduct) {
+      setEditProductForm((currentForm) => ({
+        ...currentForm,
+        [field]: value
+      }));
+      return;
+    }
+
+    setNewProductField(field, value);
+  }
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
@@ -523,4 +559,38 @@ function ensureBaseUnit(rows: Array<{ unitId: string; conversionFactor: number }
   }
 
   return normalizedRows.map((row) => (row.unitId === baseUnitId ? { ...row, conversionFactor: 1 } : row));
+}
+
+function getNumberInputValue(input: HTMLInputElement) {
+  return Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : 0;
+}
+
+function getPositiveNumberInputValue(input: HTMLInputElement) {
+  return Number.isFinite(input.valueAsNumber) && input.valueAsNumber > 0 ? input.valueAsNumber : 1;
+}
+
+function buildProductSubmitPayload(form: CreateProduct): CreateProduct {
+  return {
+    ...form,
+    barcode: normalizeOptionalText(form.barcode),
+    genericName: normalizeOptionalText(form.genericName),
+    description: normalizeOptionalText(form.description),
+    laboratoryName: normalizeOptionalText(form.laboratoryName),
+    sanitaryRegistration: normalizeOptionalText(form.sanitaryRegistration),
+    internalCode: normalizeOptionalText(form.internalCode),
+    minimumStock: normalizeNonNegativeNumber(form.minimumStock),
+    salePrice: normalizeNonNegativeNumber(form.salePrice)
+  };
+}
+
+function normalizeOptionalText(value: string | undefined) {
+  const normalizedValue = value?.trim();
+
+  return normalizedValue || undefined;
+}
+
+function normalizeNonNegativeNumber(value: unknown) {
+  const numericValue = typeof value === "number" ? value : Number(value);
+
+  return Number.isFinite(numericValue) && numericValue >= 0 ? numericValue : 0;
 }

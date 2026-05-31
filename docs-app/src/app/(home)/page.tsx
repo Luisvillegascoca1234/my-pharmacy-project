@@ -5,7 +5,7 @@ export default function HomePage() {
     <main className="flex flex-1 flex-col justify-center px-6 py-16 text-center">
       <p className="mb-3 text-sm font-medium text-fd-muted-foreground">Pharmacy POS</p>
       <h1 className="mx-auto max-w-3xl text-3xl font-semibold tracking-normal sm:text-5xl">
-        Documentacion tecnica y operativa para farmacia
+        Documentacion operativa y farmacéutica para farmacia
       </h1>
       <p className="mx-auto mt-5 max-w-2xl text-base text-fd-muted-foreground sm:text-lg">
         Guias para procesos de dispensacion, inventario, ventas, facturacion, auditoria y

@@ -46,6 +46,7 @@ enum InventoryBatchStatus {
 enum InventoryMovementType {
   purchase_received
   purchase_cancelled
+  inventory_adjustment
 }
 
 model User {
@@ -60,9 +61,10 @@ model User {
   auditLogs          AuditLog[]          @relation("AuditActor")
   createdPurchases   Purchase[]          @relation("PurchaseCreatedBy")
   receivedPurchases  Purchase[]          @relation("PurchaseReceivedBy")
-  inventoryMovements InventoryMovement[] @relation("InventoryMovementActor")
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  inventoryMovements  InventoryMovement[]  @relation("InventoryMovementActor")
+  inventoryAdjustments InventoryAdjustment[] @relation("InventoryAdjustmentActor")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Role {
@@ -160,6 +162,7 @@ model Product {
   purchaseItems        PurchaseItem[]
   inventoryBatches     InventoryBatch[]
   inventoryMovements   InventoryMovement[]
+  inventoryAdjustments InventoryAdjustment[]
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
@@ -274,6 +277,7 @@ model InventoryBatch {
   expirationDate    DateTime?            @db.Date
   status            InventoryBatchStatus @default(active)
   movements         InventoryMovement[]
+  adjustments       InventoryAdjustment[]
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
@@ -285,6 +289,26 @@ model InventoryBatch {
   @@index([productId, batchNumber])
   @@index([productId, expirationDate])
   @@index([status, expirationDate])
+}
+
+model InventoryAdjustment {
+  id                 String         @id @default(cuid())
+  batchId            String
+  batch              InventoryBatch @relation(fields: [batchId], references: [id])
+  productId          String
+  product            Product        @relation(fields: [productId], references: [id])
+  previousQuantity   Decimal        @db.Decimal(12, 4)
+  countedQuantity    Decimal        @db.Decimal(12, 4)
+  differenceQuantity Decimal        @db.Decimal(12, 4)
+  reason             String
+  actorUserId        String?
+  actorUser          User?          @relation("InventoryAdjustmentActor", fields: [actorUserId], references: [id])
+  createdAt          DateTime       @default(now())
+
+  @@index([batchId])
+  @@index([productId])
+  @@index([actorUserId])
+  @@index([createdAt])
 }
 
 model InventoryMovement {

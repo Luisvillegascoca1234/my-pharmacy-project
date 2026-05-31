@@ -66,3 +66,21 @@
 
 - [ ] Definir `documentNumber` de compras cuando se implemente SIAT.
 - [ ] Validar si el documento del proveedor debe ser obligatorio y unico por proveedor.
+
+## Pendientes detectados en flujo normal de trabajo
+
+- [ ] Implementar pantalla operativa de **Punto de venta**: busqueda de productos, carrito, seleccion FEFO por lote, calculo de totales, registro de venta y emision de comprobante/factura.
+- [ ] Implementar **Caja**: apertura, ingresos por venta, pagos, diferencias y cierre diario con responsable.
+- [ ] Implementar **Lotes y stock**: consulta real de existencias por lote, vencimiento, costo, estado operativo y cantidad disponible despues de recepciones.
+- [ ] Implementar **Movimientos**: trazabilidad de entradas, salidas, ajustes, devoluciones, anulaciones y mermas.
+- [ ] Implementar **Ajustes manuales** de inventario con motivo obligatorio, auditoria y efecto controlado en stock.
+- [ ] Implementar **Devoluciones y anulaciones** conectadas a ventas, caja, inventario y documentos fiscales.
+- [ ] Implementar **Alertas operativas**: stock bajo, lotes proximos a vencer, caja abierta y observaciones SIAT.
+- [ ] Implementar **Facturas SIAT**: estado fiscal, respuesta del SIN, validacion, observaciones, contingencia y anulaciones permitidas.
+- [ ] Implementar **Configuracion SIAT**: CUIS, CUFD, punto de venta, actividad economica y parametros de contingencia.
+- [ ] Implementar **Reportes**: ventas, margen, rotacion, vencimientos, compras y caja.
+- [ ] Implementar **Exportaciones CSV** con fechas ISO, IDs estables y filtros operativos.
+- [ ] Implementar **Auditoria** consultable por usuario, modulo, accion sensible y rango de fechas.
+- [ ] Implementar **Roles y permisos** administrables desde UI; actualmente la navegacion reconoce roles base, pero la pantalla operativa esta pendiente.
+- [ ] Implementar **Configuracion** global de parametros de farmacia y operacion.
+- [ ] Conectar metricas del **Dashboard** a datos reales de ventas, stock critico, compras abiertas y facturas observadas.

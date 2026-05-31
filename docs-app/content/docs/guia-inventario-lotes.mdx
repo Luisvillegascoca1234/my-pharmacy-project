@@ -1,0 +1,47 @@
+---
+title: Guia de lotes y stock
+description: Como consultar existencias por lote, filtrar estados y simular salida FEFO.
+---
+
+## Ruta
+
+Abrir **Inventario > Lotes y stock**.
+
+## Para que sirve
+
+La pantalla **Lotes y stock** muestra la disponibilidad real de inventario agrupada por producto, lote y vencimiento. Sirve para revisar stock apto, productos agotados, lotes próximos a vencer y el valor operativo de las existencias.
+
+## Consultar stock
+
+1. Entrar a **Inventario > Lotes y stock**.
+2. Revisar la tabla **Stock actual**.
+3. Identificar **Producto**, **Lote**, **Vencimiento**, **Estado**, **Disponible**, **Valor** y **Capas**.
+4. Usar **Buscar producto, código o lote** para encontrar una existencia específica.
+5. Usar **Estado** para filtrar por disponibilidad, stock bajo, agotado, próximo a vencer o vencido.
+
+## Interpretar la tabla
+
+- **Producto:** nombre comercial y código interno.
+- **Lote:** número de lote recibido.
+- **Vencimiento:** fecha límite del lote.
+- **Estado:** situación operativa del stock.
+- **Disponible:** cantidad en unidad base.
+- **Valor:** cantidad disponible multiplicada por el costo base.
+- **Capas:** recepciones internas agrupadas bajo el mismo lote visible.
+
+## Simular salida FEFO
+
+1. En **FEFO visible**, seleccionar **Producto**.
+2. Escribir **Cantidad a simular**.
+3. Revisar si la cantidad puede cubrirse.
+4. Observar qué lote se tomaría primero y cuánta cantidad aportaría.
+
+La simulación FEFO no descuenta inventario. Solo ayuda a anticipar el orden recomendado de salida.
+
+## Resultado esperado
+
+El usuario puede saber cuánto stock existe, en qué lote se encuentra, cuándo vence y qué lote debería rotar primero según FEFO.
+
+## Consejo
+
+Si un producto aparece agotado o vencido, revisar **Alertas** y **Movimientos** antes de tomar una decisión administrativa.

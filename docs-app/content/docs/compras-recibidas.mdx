@@ -25,7 +25,7 @@ Una compra puede encontrarse en tres estados principales:
 
 ## Datos del item de compra
 
-Cada item debe indicar producto, unidad de compra, cantidad, costo, conversión hacia unidad base y total calculado. Si el producto es inventariable, también debe incluir lote y fecha de vencimiento.
+Cada item debe indicar producto, unidad de compra, cantidad, costo y total calculado. Si se compra en una presentacion distinta a la unidad base, se usa la conversion configurada para calcular la cantidad real de inventario. Si el producto es inventariable, también debe incluir lote y fecha de vencimiento.
 
 Los productos seleccionados deben pertenecer al proveedor de la compra. Por ejemplo, si Mentisan está asociado a Inti, no corresponde registrarlo en una compra de otro proveedor.
 
@@ -41,6 +41,7 @@ Una compra en borrador puede anularse con motivo para conservar evidencia admini
 
 - Una compra debe tener al menos un item.
 - Todos los items deben corresponder al proveedor seleccionado.
+- La unidad base del producto siempre debe poder usarse para comprar.
 - El total debe calcularse desde los items, no escribirse manualmente.
 - La fecha de vencimiento no debe estar vencida al momento de recibir.
 - El lote debe normalizarse para evitar duplicados visuales.

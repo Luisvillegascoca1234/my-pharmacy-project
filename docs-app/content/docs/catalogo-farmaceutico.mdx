@@ -36,9 +36,10 @@ Un producto inactivo no debe incorporarse a nuevas compras ni ventas. Sin embarg
 1. El usuario administrativo registra el producto con su identificación comercial y sanitaria.
 2. Selecciona el proveedor que lo suministra.
 3. Define la unidad base para inventario.
-4. Asocia unidades comerciales mediante conversiones.
-5. Establece precio de venta y stock mínimo.
-6. Mantiene el producto activo mientras sea comercializable.
+4. El sistema conserva esa unidad base como equivalencia principal de factor `1`.
+5. Asocia unidades comerciales mediante conversiones cuando compra o vende en otra presentacion.
+6. Establece precio de venta y stock mínimo.
+7. Mantiene el producto activo mientras sea comercializable.
 
 ## Casos especiales
 
@@ -46,4 +47,4 @@ Un producto puede no tener código de barras, especialmente si se trata de un in
 
 ## Resultado esperado
 
-El catálogo debe permitir identificar productos de forma confiable, sostener ventas correctas, recibir compras con control de lote y generar reportes útiles para decisiones administrativas.
+El catálogo debe permitir identificar productos de forma confiable, sostener ventas correctas, recibir compras con control de lote y generar reportes útiles para decisiones administrativas. Un producto guardado debe quedar preparado para recibir inventario en su unidad base sin pasos adicionales.

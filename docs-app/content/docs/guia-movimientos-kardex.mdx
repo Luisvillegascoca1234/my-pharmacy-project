@@ -1,0 +1,41 @@
+---
+title: Guia de movimientos y kardex
+description: Como revisar entradas, ajustes y trazabilidad de inventario.
+---
+
+## Ruta
+
+Abrir **Inventario > Movimientos**.
+
+## Para que sirve
+
+La pantalla **Movimientos** muestra el kardex operativo: la lista cronológica de cambios de stock. Cada fila explica qué producto cambió, qué lote fue afectado, qué tipo de operación ocurrió, quién la realizó, qué cantidad movió y con qué costo base.
+
+## Revisar movimientos
+
+1. Entrar a **Inventario > Movimientos**.
+2. Revisar la tabla **Kardex de inventario**.
+3. Identificar **Fecha**, **Producto**, **Lote**, **Tipo**, **Usuario**, **Cantidad** y **Costo base**.
+4. Usar **Buscar producto, lote o motivo** para ubicar una operación.
+5. Usar **Tipo** para filtrar por compra recibida, anulación de compra o ajuste manual.
+
+## Leer cantidades
+
+- Una cantidad positiva aumenta inventario.
+- Una cantidad negativa reduce inventario.
+- El costo base ayuda a valorar el impacto del movimiento.
+- El motivo explica ajustes o reversas administrativas.
+
+## Casos frecuentes
+
+- **Compra recibida:** aparece cuando una compra pasa a recibida y crea stock.
+- **Anulación de compra:** aparece cuando una operación válida revierte inventario.
+- **Ajuste manual:** aparece cuando se corrige el saldo final contado de una capa.
+
+## Resultado esperado
+
+El usuario puede reconstruir la historia de un producto o lote sin depender solo del stock actual. Si existe una diferencia, el kardex debe mostrar qué operación la generó.
+
+## Consejo
+
+Antes de corregir inventario, buscar el lote en movimientos para confirmar si la diferencia proviene de recepción, anulación o ajuste previo.

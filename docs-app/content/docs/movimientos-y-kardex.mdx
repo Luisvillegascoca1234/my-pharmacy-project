@@ -15,12 +15,15 @@ En la primera etapa, los movimientos principales son:
 
 - Entrada por compra recibida.
 - Reversa por compra anulada.
+- Ajuste manual positivo o negativo.
 
-En etapas posteriores, el mismo criterio se extiende a ventas, devoluciones, ajustes manuales, mermas, vencimientos y correcciones.
+En etapas posteriores, el mismo criterio se extiende a ventas, devoluciones, mermas, vencimientos y correcciones adicionales.
 
 ## Datos del movimiento
 
 Un movimiento debe identificar producto, lote o capa, tipo de movimiento, cantidad en unidad base, costo unitario base, referencia documental, usuario responsable, fecha y motivo cuando corresponda.
+
+La pantalla **Movimientos** permite buscar por producto, lote o motivo, y filtrar por tipo de movimiento. Esto ayuda a reconstruir rapidamente una recepcion, una anulacion o un ajuste de conteo fisico.
 
 ## Cantidades firmadas
 
@@ -32,6 +35,7 @@ Las entradas aumentan inventario y se registran con cantidad positiva. Las salid
 - El movimiento debe conservar la referencia que explica su origen.
 - El producto indicado debe coincidir con el lote o capa afectada.
 - Las reversas deben explicar el motivo administrativo.
+- Los ajustes manuales deben explicar el motivo de conteo o correccion.
 - Los reportes de inventario deben poder apoyarse en movimientos.
 
 ## Resultado esperado

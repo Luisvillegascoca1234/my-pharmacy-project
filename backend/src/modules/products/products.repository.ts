@@ -133,17 +133,27 @@ export class ProductsRepository {
   }
 
   createProduct(input: Prisma.ProductUncheckedCreateInput): Promise<ProductWithRelations> {
-    return prisma.product.create({
-      data: input,
-      include: productInclude
+    return prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: input
+      });
+
+      await this.upsertBaseProductUnit(product.id, product.baseUnitId, tx);
+
+      return this.findProductByIdOrThrow(product.id, tx);
     });
   }
 
   updateProduct(id: string, input: Prisma.ProductUncheckedUpdateInput): Promise<ProductWithRelations> {
-    return prisma.product.update({
-      where: { id },
-      data: input,
-      include: productInclude
+    return prisma.$transaction(async (tx) => {
+      const product = await tx.product.update({
+        where: { id },
+        data: input
+      });
+
+      await this.upsertBaseProductUnit(product.id, product.baseUnitId, tx);
+
+      return this.findProductByIdOrThrow(product.id, tx);
     });
   }
 
@@ -179,5 +189,34 @@ export class ProductsRepository {
         userAgent: context.userAgent
       }
     });
+  }
+
+  private async upsertBaseProductUnit(productId: string, baseUnitId: string, client: Client) {
+    await client.productUnit.upsert({
+      where: {
+        productId_unitId: {
+          productId,
+          unitId: baseUnitId
+        }
+      },
+      create: {
+        productId,
+        unitId: baseUnitId,
+        conversionFactor: 1
+      },
+      update: {
+        conversionFactor: 1
+      }
+    });
+  }
+
+  private async findProductByIdOrThrow(id: string, client: Client): Promise<ProductWithRelations> {
+    const product = await this.findProductById(id, client);
+
+    if (!product) {
+      throw new Error("Product was not found after write.");
+    }
+
+    return product;
   }
 }

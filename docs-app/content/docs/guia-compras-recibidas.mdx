@@ -29,7 +29,7 @@ La pantalla **Compras** permite preparar una compra en borrador y luego recibirl
 4. Confirmar la **Fecha comercial**.
 5. Escribir **Notas** si existe una observacion interna.
 6. En **Items**, seleccionar **Producto**.
-7. Seleccionar **Unidad**.
+7. Seleccionar **Unidad**. La unidad base del producto siempre debe estar disponible; si existen conversiones, tambien apareceran las presentaciones configuradas.
 8. Completar **Cantidad**.
 9. Completar **Costo unitario**.
 10. Escribir **Lote** si el producto es inventariable.
@@ -81,3 +81,5 @@ Una compra guardada queda como borrador y puede editarse. Una compra recibida pa
 ## Consejo
 
 No recibir la compra hasta revisar proveedor, fecha, productos, cantidades, costos, lotes y vencimientos. La recepción es una accion operativa sensible porque crea stock y movimientos de inventario.
+
+Si una compra no permite guardarse, revisar primero que el producto pertenezca al proveedor seleccionado, que la cantidad sea mayor a cero y que los productos inventariables tengan lote y vencimiento.
