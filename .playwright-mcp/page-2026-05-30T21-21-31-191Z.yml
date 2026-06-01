@@ -1,0 +1,262 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic: Farmacia POS
+                      - generic: Sucursal única
+            - generic:
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Inicio
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /dashboard
+                            - img
+                            - generic: Dashboard
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Operación
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /pos
+                            - img
+                            - generic: Punto de venta
+                        - listitem:
+                          - link:
+                            - /url: /cash
+                            - img
+                            - generic: Caja
+                        - listitem:
+                          - link:
+                            - /url: /returns
+                            - img
+                            - generic: Devoluciones y anulaciones
+                        - listitem:
+                          - link:
+                            - /url: /alerts
+                            - img
+                            - generic: Alertas
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Inventario
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /products
+                            - img
+                            - generic: Productos
+                        - listitem:
+                          - link:
+                            - /url: /units
+                            - img
+                            - generic: Unidades y conversiones
+                        - listitem:
+                          - link:
+                            - /url: /batches
+                            - img
+                            - generic: Lotes y stock
+                        - listitem:
+                          - link:
+                            - /url: /movements
+                            - img
+                            - generic: Movimientos
+                        - listitem:
+                          - link:
+                            - /url: /adjustments
+                            - img
+                            - generic: Ajustes manuales
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Compras
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /suppliers
+                            - img
+                            - generic: Proveedores
+                        - listitem:
+                          - link:
+                            - /url: /purchases
+                            - img
+                            - generic: Compras
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Facturación
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /invoices
+                            - img
+                            - generic: Facturas SIAT
+                        - listitem:
+                          - link:
+                            - /url: /siat-settings
+                            - img
+                            - generic: Configuración SIAT
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Análisis
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /reports
+                            - img
+                            - generic: Reportes
+                        - listitem:
+                          - link:
+                            - /url: /exports
+                            - img
+                            - generic: Exportaciones CSV
+                        - listitem:
+                          - link:
+                            - /url: /audit
+                            - img
+                            - generic: Auditoría
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Administración
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /users
+                            - img
+                            - generic: Usuarios
+                        - listitem:
+                          - link:
+                            - /url: /roles
+                            - img
+                            - generic: Roles y permisos
+                        - listitem:
+                          - link:
+                            - /url: /settings
+                            - img
+                            - generic: Configuración
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - generic: DS
+                    - generic:
+                      - generic: Development Superadmin
+                      - generic: Superadmin
+            - button
+      - main:
+        - generic:
+          - button:
+            - img
+            - generic: Alternar barra lateral
+          - generic:
+            - paragraph: Consola operativa
+            - heading [level=1]: Alertas
+          - generic:
+            - button:
+              - img
+            - button:
+              - img
+            - button:
+              - img
+            - button [expanded]:
+              - img
+              - generic: Development Superadmin
+        - main:
+          - generic:
+            - generic:
+              - generic:
+                - generic: Vigilancia operativa
+                - generic:
+                  - heading [level=1]: Alertas
+                  - paragraph: "Alertas calculadas desde inventario real: stock bajo, agotado, vencido y próximo a vencer."
+              - button:
+                - img
+                - text: Actualizar
+            - generic:
+              - generic:
+                - generic:
+                  - generic: Críticas
+                  - generic: "0"
+              - generic:
+                - generic:
+                  - generic: Preventivas
+                  - generic: "0"
+              - generic:
+                - generic:
+                  - generic: Generadas
+                  - generic: 30/5/26, 5:21 p. m.
+            - generic:
+              - generic:
+                - generic: Panel de alertas
+                - generic: La ventana de próximo vencimiento está fijada en 30 días hasta habilitar configuración global.
+              - generic:
+                - generic:
+                  - generic:
+                    - table:
+                      - rowgroup:
+                        - row:
+                          - columnheader: Prioridad
+                          - columnheader: Producto
+                          - columnheader: Alerta
+                          - columnheader: Lote
+                          - columnheader: Vencimiento
+                          - columnheader: Disponible
+                      - rowgroup:
+                        - row:
+                          - cell:
+                            - generic:
+                              - generic:
+                                - generic:
+                                  - img
+                                - generic: Sin alertas activas
+                                - generic: El inventario no tiene umbrales críticos según los datos disponibles.
+        - generic:
+          - heading [level=2]: Buscar en el sistema
+          - paragraph: Busca un módulo operativo.
+  - menu "Menú de usuario" [active] [ref=e504]:
+    - generic [ref=e505]:
+      - generic [ref=e506]: Development Superadmin
+      - generic [ref=e507]: admin@admin.com
+    - separator [ref=e508]
+    - menuitem "Superadmin" [disabled]
+    - separator [ref=e509]
+    - menuitem "Cerrar sesión" [ref=e510]:
+      - img
+      - text: Cerrar sesión

@@ -1,0 +1,160 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - link "Pharmacy POS Docs" [ref=e6] [cursor=pointer]:
+          - /url: /
+        - button "Collapse Sidebar" [ref=e7]:
+          - img [ref=e8]
+      - button "Search ⌘ K" [ref=e10]:
+        - img [ref=e11]
+        - text: Search
+        - generic [ref=e14]:
+          - generic [ref=e15]: ⌘
+          - generic [ref=e16]: K
+    - generic [ref=e19]:
+      - paragraph [ref=e20]: Introducción
+      - link "Inicio" [ref=e21] [cursor=pointer]:
+        - /url: /docs
+      - link "Primeros pasos" [ref=e22] [cursor=pointer]:
+        - /url: /docs/primeros-pasos
+      - link "Consejos operativos" [ref=e23] [cursor=pointer]:
+        - /url: /docs/consejos-operativos
+      - paragraph [ref=e24]: Guías
+      - link "Guias de uso" [ref=e25] [cursor=pointer]:
+        - /url: /docs/guias-de-uso
+      - link "Guia de navegacion general" [ref=e26] [cursor=pointer]:
+        - /url: /docs/guia-navegacion-general
+      - link "Guia de unidades y categorias" [ref=e27] [cursor=pointer]:
+        - /url: /docs/guia-unidades-y-categorias
+      - link "Guia de productos" [ref=e28] [cursor=pointer]:
+        - /url: /docs/guia-productos
+      - link "Guia de proveedores" [ref=e29] [cursor=pointer]:
+        - /url: /docs/guia-proveedores
+      - link "Guia de compras recibidas" [ref=e30] [cursor=pointer]:
+        - /url: /docs/guia-compras-recibidas
+      - link "Guia de lotes y stock" [ref=e31] [cursor=pointer]:
+        - /url: /docs/guia-inventario-lotes
+      - link "Guia de movimientos y kardex" [ref=e32] [cursor=pointer]:
+        - /url: /docs/guia-movimientos-kardex
+      - link "Guia de ajustes manuales" [ref=e33] [cursor=pointer]:
+        - /url: /docs/guia-ajustes-manuales
+      - link "Guia de alertas operativas" [ref=e34] [cursor=pointer]:
+        - /url: /docs/guia-alertas-operativas
+      - link "Guia de usuarios" [ref=e35] [cursor=pointer]:
+        - /url: /docs/guia-usuarios
+      - link "Guia de modulos iniciales" [ref=e36] [cursor=pointer]:
+        - /url: /docs/guia-modulos-iniciales
+      - paragraph [ref=e37]: Conceptos
+      - link "Conceptos" [ref=e38] [cursor=pointer]:
+        - /url: /docs/conceptos
+      - link "Glosario farmaceutico" [ref=e39] [cursor=pointer]:
+        - /url: /docs/glosario-farmaceutico
+      - link "Roles y responsabilidades" [ref=e40] [cursor=pointer]:
+        - /url: /docs/roles-y-responsabilidades
+      - link "Catalogo farmaceutico" [ref=e41] [cursor=pointer]:
+        - /url: /docs/catalogo-farmaceutico
+      - link "Unidades y conversiones" [ref=e42] [cursor=pointer]:
+        - /url: /docs/unidades-y-conversiones
+      - link "Proveedores" [ref=e43] [cursor=pointer]:
+        - /url: /docs/proveedores
+      - link "Compras recibidas" [ref=e44] [cursor=pointer]:
+        - /url: /docs/compras-recibidas
+      - link "Inventario por lote" [ref=e45] [cursor=pointer]:
+        - /url: /docs/inventario-por-lote
+      - link "Movimientos y kardex" [ref=e46] [cursor=pointer]:
+        - /url: /docs/movimientos-y-kardex
+      - link "Ventas POS" [ref=e47] [cursor=pointer]:
+        - /url: /docs/ventas-pos
+      - link "Caja y pagos" [ref=e48] [cursor=pointer]:
+        - /url: /docs/caja-y-pagos
+      - link "Facturacion SIAT" [ref=e49] [cursor=pointer]:
+        - /url: /docs/facturacion-siat
+      - link "Devoluciones y anulaciones" [ref=e50] [cursor=pointer]:
+        - /url: /docs/devoluciones-y-anulaciones
+      - link "Alertas operativas" [ref=e51] [cursor=pointer]:
+        - /url: /docs/alertas-operativas
+      - link "Reportes y exportaciones" [ref=e52] [cursor=pointer]:
+        - /url: /docs/reportes-y-exportaciones
+      - link "Reglas transversales" [ref=e53] [cursor=pointer]:
+        - /url: /docs/reglas-transversales
+    - button "Toggle Theme" [ref=e56]:
+      - img [ref=e57]
+      - img [ref=e63]
+  - generic:
+    - button "Collapse Sidebar":
+      - img
+    - button "Open Search":
+      - img
+  - banner [ref=e66]:
+    - button "0 Inicio" [ref=e67]:
+      - progressbar [ref=e68]
+      - generic [ref=e72]: Inicio
+      - img [ref=e73]
+  - article [ref=e75]:
+    - heading "Inicio" [level=1] [ref=e76]
+    - paragraph [ref=e77]: Guia de uso, conceptos y flujos de trabajo del sistema POS para farmacia.
+    - generic [ref=e78]:
+      - button "Copy Markdown" [ref=e79]:
+        - img [ref=e80]
+        - text: Copy Markdown
+      - button "Open" [ref=e83]:
+        - text: Open
+        - img [ref=e84]
+    - generic [ref=e86]:
+      - paragraph [ref=e87]:
+        - text: Esta documentacion explica
+        - strong [ref=e88]: como usar el software
+        - text: y tambien conserva los conceptos necesarios para entender las decisiones operativas del sistema. La informacion esta separada en primeros pasos, guias de uso, conceptos y consejos para que el usuario pueda consultar lo que necesita sin mezclar teoria con instrucciones de pantalla.
+      - heading "Secciones principales Copy Anchor Link" [level=2] [ref=e89]:
+        - link "Secciones principales" [ref=e90] [cursor=pointer]:
+          - /url: "#secciones-principales"
+        - button "Copy Anchor Link" [ref=e91]:
+          - img [ref=e92]
+      - generic [ref=e95]:
+        - link "Primeros pasos" [ref=e96] [cursor=pointer]:
+          - /url: /docs/primeros-pasos
+          - heading "Primeros pasos" [level=3] [ref=e97]
+        - link "Guias de uso" [ref=e98] [cursor=pointer]:
+          - /url: /docs/guias-de-uso
+          - heading "Guias de uso" [level=3] [ref=e99]
+        - link "Conceptos" [ref=e100] [cursor=pointer]:
+          - /url: /docs/conceptos
+          - heading "Conceptos" [level=3] [ref=e101]
+        - link "Consejos operativos" [ref=e102] [cursor=pointer]:
+          - /url: /docs/consejos-operativos
+          - heading "Consejos operativos" [level=3] [ref=e103]
+      - heading "Flujo recomendado de aprendizaje Copy Anchor Link" [level=2] [ref=e104]:
+        - link "Flujo recomendado de aprendizaje" [ref=e105] [cursor=pointer]:
+          - /url: "#flujo-recomendado-de-aprendizaje"
+        - button "Copy Anchor Link" [ref=e106]:
+          - img [ref=e107]
+      - list [ref=e110]:
+        - listitem [ref=e111]:
+          - text: Leer
+          - strong [ref=e112]: Primeros pasos
+          - text: para entender login, navegacion y pantalla principal.
+        - listitem [ref=e113]:
+          - text: Revisar
+          - strong [ref=e114]: Guias de uso
+          - text: para operar unidades, productos, proveedores, compras y usuarios.
+        - listitem [ref=e115]:
+          - text: Consultar
+          - strong [ref=e116]: Conceptos
+          - text: cuando aparezcan terminos como lote, FEFO, kardex, unidad base o SIAT.
+        - listitem [ref=e117]:
+          - text: Usar
+          - strong [ref=e118]: Consejos operativos
+          - text: como lista de buenas practicas antes de registrar informacion sensible.
+      - heading "Estado de la guia Copy Anchor Link" [level=2] [ref=e119]:
+        - link "Estado de la guia" [ref=e120] [cursor=pointer]:
+          - /url: "#estado-de-la-guia"
+        - button "Copy Anchor Link" [ref=e121]:
+          - img [ref=e122]
+      - paragraph [ref=e125]: Las guias fueron redactadas a partir de la interfaz actual. Ya existen flujos operativos para catalogos, proveedores, compras recibidas, stock por lote, movimientos, ajustes manuales y alertas de inventario. Algunas pantallas, como punto de venta, caja, facturacion, reportes y auditoria, aparecen como modulos iniciales; por eso se documenta su navegacion y proposito, pero no se inventan acciones que todavia no se muestran en la pantalla.
+    - link "Primeros pasos Acceso inicial, navegacion principal y reconocimiento de la pantalla." [ref=e127] [cursor=pointer]:
+      - /url: /docs/primeros-pasos
+      - generic [ref=e128]:
+        - img [ref=e129]
+        - paragraph [ref=e131]: Primeros pasos
+      - paragraph [ref=e132]: Acceso inicial, navegacion principal y reconocimiento de la pantalla.

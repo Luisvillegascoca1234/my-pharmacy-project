@@ -1,0 +1,17 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e6]:
+      - button "Punto de venta" [ref=e7]:
+        - img
+      - generic [ref=e8]:
+        - generic [ref=e9]: Iniciar sesión
+        - generic [ref=e10]: Accede al espacio de trabajo del punto de venta.
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - group [ref=e14]:
+          - generic [ref=e15]: Correo electrónico
+          - textbox "Correo electrónico" [ref=e16]: admin@admin.com
+        - group [ref=e17]:
+          - generic [ref=e18]: Contraseña
+          - textbox "Contraseña" [ref=e19]: admin
+      - button "Iniciar sesión" [ref=e20]

@@ -1,6 +1,6 @@
 # Ticket 06 - Document Cancellation Pending Cart OpenAPI And Integration Wiring
 
-- Status: TODO
+- Status: DONE
 - Category: INFRA
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 03, 05
@@ -33,3 +33,7 @@ Documentar la API minima de anulaciones y carritos pendientes, y conectar sus ru
 - Los schemas documentados coinciden con contratos compartidos.
 - La API principal registra los prefijos esperados.
 - Los errores principales quedan representados o descritos: caja cerrada, venta ya anulada, motivo invalido, pendiente expirado, pendiente ajeno y conversion rechazada.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: Sprint 08 dejo documentada la API minima de anulacion, pendientes y supervision sin ampliar el alcance a SIAT, medios de pago adicionales, devoluciones o reportes.

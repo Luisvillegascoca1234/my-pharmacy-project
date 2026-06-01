@@ -39,5 +39,5 @@ Limpiar codigo muerto, referencias obsoletas, duplicacion de wiring, notas de br
 
 - Se inspeccionaron rutas backend, OpenAPI, contratos compartidos y clientes frontend de caja, POS, pendientes, anulacion de ventas y supervision administrativa; no se detectaron imports, exports o wiring duplicado con fallo de typecheck dentro del alcance correctivo.
 - Se limpiaron referencias documentales que todavia presentaban carritos pendientes, anulacion y supervision como deuda de disponibilidad o ausencia de API despues del correctivo backend.
-- La deuda diferida queda acotada al guardrail final de cierre y a diferencias funcionales que se descubran en una validacion posterior; no bloquea este ticket de limpieza.
+- Nota historica posterior al Sprint 09: el guardrail tecnico del Sprint 08 no registro bloqueos externos para pendientes, anulacion ni supervision. La tarea vigente de cierre queda acotada a reconciliacion documental y limpieza final de referencias.
 - No se agregaron cambios funcionales ni QA manual.

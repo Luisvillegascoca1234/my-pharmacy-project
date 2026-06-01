@@ -4,7 +4,7 @@
 
 Este documento describe como debe operar el mostrador de farmacia en el flujo V1 de ventas POS, caja y pagos. La guia se centra en lo que debe lograr cada usuario y en las reglas farmaceuticas que gobiernan la atencion, sin explicar detalles internos del sistema.
 
-El flujo cubre apertura de caja, busqueda de productos vendibles, cobro efectivo, descuento de inventario por FEFO, comprobante interno, carritos pendientes, anulacion controlada y supervision administrativa. Las brechas de rutas ausentes registradas al cierre del Sprint 07 quedan reconciliadas por el correctivo backend; la validacion final del epic debe confirmar el comportamiento completo antes del cierre documental definitivo.
+El flujo cubre apertura de caja, busqueda de productos vendibles, cobro efectivo, descuento de inventario por FEFO, comprobante interno, carritos pendientes, anulacion controlada y supervision administrativa. Pendientes POS, anulacion y supervision forman parte del comportamiento operativo V1 aprobado y se describen como capacidades disponibles.
 
 ## Responsabilidades por rol
 
@@ -31,15 +31,19 @@ El flujo cubre apertura de caja, busqueda de productos vendibles, cobro efectivo
 - Tiene las mismas capacidades operativas de supervision que admin.
 - Interviene en cierres sensibles, diferencias relevantes y control global del flujo de mostrador.
 
-## Estado de integracion V1
+## Navegacion operativa
 
-El flujo disponible para integracion operativa cubre apertura de caja, consulta de caja actual, cierre de caja propia o seleccionada, busqueda de productos vendibles, venta anonima en efectivo, calculo de cambio, comprobante interno, descuento automatico por FEFO, ciclo de carritos pendientes, anulacion controlada y listados paginados de supervision.
+- El vendedor trabaja desde el mostrador POS para buscar productos, armar carrito, guardar pendientes, retomar atenciones y cobrar en efectivo.
+- El estado de caja debe estar visible para saber si puede cobrar, abrir caja o cerrar su turno.
+- Las ventas confirmadas deben poder consultarse por el responsable operativo para revisar comprobante interno, lotes consumidos y estado de anulacion.
+- Admin y superadmin acceden a supervision de cajas, ventas y pendientes para revisar operaciones de vendedores, cerrar caja ajena, descartar pendientes permitidos y anular ventas habilitadas por regla.
+- Las acciones visibles deben coincidir con el rol y el estado operativo: caja abierta, caja cerrada, pendiente activo, pendiente expirado, venta confirmada o venta anulada.
 
-El correctivo backend resuelve la deuda de disponibilidad registrada para carritos pendientes, anulacion de ventas y listados administrativos de supervision. La guia conserva esas reglas como parte del flujo V1 y deja como deuda no bloqueante la validacion final de cierre, no la ausencia de endpoints.
+## Estado operativo V1
 
-### Deuda operativa no bloqueante
+El flujo aprobado cubre apertura de caja, consulta de caja actual, cierre de caja propia o seleccionada, busqueda de productos vendibles, venta anonima en efectivo, calculo de cambio, comprobante interno, descuento automatico por FEFO, ciclo de carritos pendientes, anulacion controlada y supervision administrativa.
 
-- Cierre final del epic: impacto, pendientes, anulacion y supervision ya cuentan con contrato operativo reconciliado, pero deben pasar el guardrail final antes de marcar el epic completo como cerrado. Motivo, ese paso consolida evidencia tecnica y documenta cualquier diferencia residual.
+La documentacion operativa trata carritos pendientes, anulacion de ventas y supervision como reglas disponibles del flujo V1. El cierre documental posterior debe conservar esta lectura salvo que una validacion funcional futura registre una diferencia concreta.
 
 ## Apertura de caja
 

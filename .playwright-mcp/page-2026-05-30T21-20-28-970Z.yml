@@ -1,0 +1,421 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic: Farmacia POS
+                      - generic: Sucursal única
+            - generic:
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Inicio
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /dashboard
+                            - img
+                            - generic: Dashboard
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Operación
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /pos
+                            - img
+                            - generic: Punto de venta
+                        - listitem:
+                          - link:
+                            - /url: /cash
+                            - img
+                            - generic: Caja
+                        - listitem:
+                          - link:
+                            - /url: /returns
+                            - img
+                            - generic: Devoluciones y anulaciones
+                        - listitem:
+                          - link:
+                            - /url: /alerts
+                            - img
+                            - generic: Alertas
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Inventario
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /products
+                            - img
+                            - generic: Productos
+                        - listitem:
+                          - link:
+                            - /url: /units
+                            - img
+                            - generic: Unidades y conversiones
+                        - listitem:
+                          - link:
+                            - /url: /batches
+                            - img
+                            - generic: Lotes y stock
+                        - listitem:
+                          - link:
+                            - /url: /movements
+                            - img
+                            - generic: Movimientos
+                        - listitem:
+                          - link:
+                            - /url: /adjustments
+                            - img
+                            - generic: Ajustes manuales
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Compras
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /suppliers
+                            - img
+                            - generic: Proveedores
+                        - listitem:
+                          - link:
+                            - /url: /purchases
+                            - img
+                            - generic: Compras
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Facturación
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /invoices
+                            - img
+                            - generic: Facturas SIAT
+                        - listitem:
+                          - link:
+                            - /url: /siat-settings
+                            - img
+                            - generic: Configuración SIAT
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Análisis
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /reports
+                            - img
+                            - generic: Reportes
+                        - listitem:
+                          - link:
+                            - /url: /exports
+                            - img
+                            - generic: Exportaciones CSV
+                        - listitem:
+                          - link:
+                            - /url: /audit
+                            - img
+                            - generic: Auditoría
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Administración
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /users
+                            - img
+                            - generic: Usuarios
+                        - listitem:
+                          - link:
+                            - /url: /roles
+                            - img
+                            - generic: Roles y permisos
+                        - listitem:
+                          - link:
+                            - /url: /settings
+                            - img
+                            - generic: Configuración
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - generic: DS
+                    - generic:
+                      - generic: Development Superadmin
+                      - generic: Superadmin
+            - button
+      - main:
+        - generic:
+          - button:
+            - img
+            - generic: Alternar barra lateral
+          - generic:
+            - paragraph: Consola operativa
+            - heading [level=1]: Dashboard
+          - generic:
+            - button:
+              - img
+            - button:
+              - img
+            - button:
+              - img
+            - button:
+              - img
+              - generic: Development Superadmin
+        - main:
+          - generic:
+            - generic:
+              - generic: Consola de farmacia
+              - generic:
+                - heading [level=1]: Dashboard operativo
+                - paragraph: Vista inicial para ventas, inventario, compras, caja, facturación y alertas de una sola sucursal.
+            - generic:
+              - generic:
+                - generic:
+                  - generic: Ventas de hoy
+                  - img
+                - generic:
+                  - paragraph: "0"
+                  - paragraph: Listo para conectar el POS
+              - generic:
+                - generic:
+                  - generic: Stock crítico
+                  - img
+                - generic:
+                  - paragraph: "0"
+                  - paragraph: Pendiente de inventario
+              - generic:
+                - generic:
+                  - generic: Compras abiertas
+                  - img
+                - generic:
+                  - paragraph: "0"
+                  - paragraph: Borradores y recepción
+              - generic:
+                - generic:
+                  - generic: Facturas observadas
+                  - img
+                - generic:
+                  - paragraph: "0"
+                  - paragraph: Estados SIAT iniciales
+            - generic:
+              - generic:
+                - generic:
+                  - generic: Preparación del sistema
+                  - generic: Estado base para conectar módulos funcionales.
+                - generic:
+                  - alert:
+                    - img
+                    - generic: Servidor en línea
+                    - generic: La interfaz está recibiendo una respuesta válida del servicio.
+                  - generic:
+                    - generic:
+                      - generic: Preparación técnica
+                      - generic: 100%
+                    - progressbar
+                  - generic:
+                    - generic:
+                      - img
+                      - text: Contratos compartidos
+                    - generic:
+                      - img
+                      - text: Autenticación
+                    - generic:
+                      - img
+                      - text: Sidebar modular
+              - generic:
+                - generic:
+                  - generic: Alertas operativas
+                  - generic: Se conectarán al inventario, caja y SIAT.
+                - generic:
+                  - list:
+                    - listitem:
+                      - img
+                      - generic: Lotes próximos a vencer
+                    - listitem:
+                      - img
+                      - generic: Productos sin precio
+                    - listitem:
+                      - img
+                      - generic: Caja abierta sin cerrar
+        - generic:
+          - heading [level=2]: Buscar en el sistema
+          - paragraph: Busca un módulo operativo.
+  - dialog "Buscar en el sistema" [ref=e370]:
+    - generic [ref=e371]:
+      - group [ref=e374]:
+        - combobox [expanded] [active] [ref=e375]
+        - group [ref=e376]:
+          - img [ref=e377]
+      - listbox "Suggestions" [ref=e380]:
+        - generic [ref=e381]:
+          - generic [ref=e382]: Inicio
+          - group "Inicio" [ref=e383]:
+            - option "Dashboard Indicadores operativos, alertas y salud del sistema." [selected] [ref=e384]:
+              - img
+              - generic [ref=e385]:
+                - paragraph [ref=e386]: Dashboard
+                - paragraph [ref=e387]: Indicadores operativos, alertas y salud del sistema.
+              - img
+          - generic [ref=e388]: Operación
+          - group "Operación" [ref=e389]:
+            - option "Punto de venta Registro de ventas, selección FEFO y cobro al contado." [ref=e390]:
+              - img
+              - generic [ref=e391]:
+                - paragraph [ref=e392]: Punto de venta
+                - paragraph [ref=e393]: Registro de ventas, selección FEFO y cobro al contado.
+              - img
+            - option "Caja Apertura, cierre, pagos y diferencias de caja." [ref=e394]:
+              - img
+              - generic [ref=e395]:
+                - paragraph [ref=e396]: Caja
+                - paragraph [ref=e397]: Apertura, cierre, pagos y diferencias de caja.
+              - img
+            - option "Devoluciones y anulaciones Flujos controlados para devoluciones, ventas anuladas y documentos fiscales." [ref=e398]:
+              - img
+              - generic [ref=e399]:
+                - paragraph [ref=e400]: Devoluciones y anulaciones
+                - paragraph [ref=e401]: Flujos controlados para devoluciones, ventas anuladas y documentos fiscales.
+              - img
+            - option "Alertas Stock bajo, vencimientos, caja abierta y observaciones SIAT." [ref=e402]:
+              - img
+              - generic [ref=e403]:
+                - paragraph [ref=e404]: Alertas
+                - paragraph [ref=e405]: Stock bajo, vencimientos, caja abierta y observaciones SIAT.
+              - img
+          - generic [ref=e406]: Inventario
+          - group "Inventario" [ref=e407]:
+            - option "Productos Catálogo farmacéutico, precios, categorías y requisitos sanitarios." [ref=e408]:
+              - img
+              - generic [ref=e409]:
+                - paragraph [ref=e410]: Productos
+                - paragraph [ref=e411]: Catálogo farmacéutico, precios, categorías y requisitos sanitarios.
+              - img
+            - option "Unidades y conversiones Presentaciones comerciales y equivalencias hacia unidad base." [ref=e412]:
+              - img
+              - generic [ref=e413]:
+                - paragraph [ref=e414]: Unidades y conversiones
+                - paragraph [ref=e415]: Presentaciones comerciales y equivalencias hacia unidad base.
+              - img
+            - option "Lotes y stock Existencias por lote, vencimiento, costo y estado operativo." [ref=e416]:
+              - img
+              - generic [ref=e417]:
+                - paragraph [ref=e418]: Lotes y stock
+                - paragraph [ref=e419]: Existencias por lote, vencimiento, costo y estado operativo.
+              - img
+            - option "Movimientos Trazabilidad de entradas, salidas, ajustes, devoluciones y mermas." [ref=e420]:
+              - img
+              - generic [ref=e421]:
+                - paragraph [ref=e422]: Movimientos
+                - paragraph [ref=e423]: Trazabilidad de entradas, salidas, ajustes, devoluciones y mermas.
+              - img
+            - option "Ajustes manuales Correcciones justificadas con auditoría y motivo obligatorio." [ref=e424]:
+              - img
+              - generic [ref=e425]:
+                - paragraph [ref=e426]: Ajustes manuales
+                - paragraph [ref=e427]: Correcciones justificadas con auditoría y motivo obligatorio.
+              - img
+          - generic [ref=e428]: Compras
+          - group "Compras" [ref=e429]:
+            - option "Proveedores Datos comerciales, NIT, contacto y estado de proveedores." [ref=e430]:
+              - img
+              - generic [ref=e431]:
+                - paragraph [ref=e432]: Proveedores
+                - paragraph [ref=e433]: Datos comerciales, NIT, contacto y estado de proveedores.
+              - img
+            - option "Compras Compras en borrador, recepción, lotes generados y anulaciones." [ref=e434]:
+              - img
+              - generic [ref=e435]:
+                - paragraph [ref=e436]: Compras
+                - paragraph [ref=e437]: Compras en borrador, recepción, lotes generados y anulaciones.
+              - img
+          - generic [ref=e438]: Facturación
+          - group "Facturación" [ref=e439]:
+            - option "Facturas SIAT Estados fiscales, respuestas del SIN, validación y anulaciones permitidas." [ref=e440]:
+              - img
+              - generic [ref=e441]:
+                - paragraph [ref=e442]: Facturas SIAT
+                - paragraph [ref=e443]: Estados fiscales, respuestas del SIN, validación y anulaciones permitidas.
+              - img
+            - option "Configuración SIAT CUIS, CUFD, punto de venta, actividad económica y contingencia." [ref=e444]:
+              - img
+              - generic [ref=e445]:
+                - paragraph [ref=e446]: Configuración SIAT
+                - paragraph [ref=e447]: CUIS, CUFD, punto de venta, actividad económica y contingencia.
+              - img
+          - generic [ref=e448]: Análisis
+          - group "Análisis" [ref=e449]:
+            - option "Reportes Ventas, margen, rotación, vencimientos, compras y caja." [ref=e450]:
+              - img
+              - generic [ref=e451]:
+                - paragraph [ref=e452]: Reportes
+                - paragraph [ref=e453]: Ventas, margen, rotación, vencimientos, compras y caja.
+              - img
+            - option "Exportaciones CSV Datos normalizados para análisis externo con fechas ISO e IDs estables." [ref=e454]:
+              - img
+              - generic [ref=e455]:
+                - paragraph [ref=e456]: Exportaciones CSV
+                - paragraph [ref=e457]: Datos normalizados para análisis externo con fechas ISO e IDs estables.
+              - img
+            - option "Auditoría Registro de acciones sensibles, cambios de datos y respuestas fiscales." [ref=e458]:
+              - img
+              - generic [ref=e459]:
+                - paragraph [ref=e460]: Auditoría
+                - paragraph [ref=e461]: Registro de acciones sensibles, cambios de datos y respuestas fiscales.
+              - img
+          - generic [ref=e462]: Administración
+          - group "Administración" [ref=e463]:
+            - option "Usuarios Cuentas, estado de acceso y asignación inicial de roles." [ref=e464]:
+              - img
+              - generic [ref=e465]:
+                - paragraph [ref=e466]: Usuarios
+                - paragraph [ref=e467]: Cuentas, estado de acceso y asignación inicial de roles.
+              - img
+            - option "Roles y permisos Permisos para superadmin, admin y vendedor." [ref=e468]:
+              - img
+              - generic [ref=e469]:
+                - paragraph [ref=e470]: Roles y permisos
+                - paragraph [ref=e471]: Permisos para superadmin, admin y vendedor.
+              - img
+            - option "Configuración Parámetros globales de operación de la farmacia." [ref=e472]:
+              - img
+              - generic [ref=e473]:
+                - paragraph [ref=e474]: Configuración
+                - paragraph [ref=e475]: Parámetros globales de operación de la farmacia.
+              - img

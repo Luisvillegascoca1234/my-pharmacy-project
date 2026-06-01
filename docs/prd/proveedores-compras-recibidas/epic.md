@@ -4,6 +4,12 @@
 - Status: TODO
 - Slug: proveedores-compras-recibidas
 
+## Closure Validation Status
+
+El epic permanece abierto porque la validacion final del Sprint 08 no paso. El ticket 02 registro bloqueo de infraestructura local: `http://localhost:5173/`, `http://localhost:5174/` y `http://localhost:4000/api/health` rechazaron conexion, por lo que no se pudo ejercitar el circuito farmaceutico de proveedores, compras, recepcion, anulacion ni restricciones por rol.
+
+Accion siguiente: exponer frontend y backend locales, confirmar `GET /api/health` y repetir la validacion final antes de cambiar este estado a `DONE`.
+
 ## Goal
 
 Implementar el flujo operativo de proveedores y compras recibidas para que una compra en borrador pueda convertirse en capas de inventario y movimientos de entrada dentro de una transacción auditada.

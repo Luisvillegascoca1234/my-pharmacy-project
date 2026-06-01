@@ -20,18 +20,36 @@ Construir el flujo operativo de mostrador para farmacia: abrir caja, buscar prod
 - Anulacion controlada de ventas mientras la caja asociada siga abierta.
 - Supervision administrativa de cajas, ventas y pendientes.
 
+## Estado aprobado V1
+
+El flujo de mostrador aprobado incluye pendientes POS, anulacion de ventas y supervision administrativa como capacidades operativas. El vendedor puede pausar atenciones con carritos pendientes propios, anular ventas propias permitidas mientras su caja siga abierta y cerrar su turno; admin y superadmin pueden revisar operaciones, descartar pendientes permitidos, anular ventas habilitadas por regla y cerrar caja ajena.
+
 ## Flujo del vendedor
 
 1. Abrir caja propia con monto inicial cero o mayor.
 2. Buscar productos por nombre comercial, principio activo, codigo interno o codigo de barras.
 3. Agregar productos al carrito y ajustar cantidades enteras.
 4. Revisar advertencias de proximo vencimiento cuando aparezcan.
-5. Cobrar en efectivo registrando el monto recibido.
-6. Entregar el cambio calculado.
-7. Revisar el comprobante interno de la venta.
-8. Cerrar caja al final del turno con el monto contado final.
+5. Guardar un carrito pendiente si la atencion debe pausarse.
+6. Retomar pendientes propios y corregirlos si cambio precio, stock o estado del producto.
+7. Cobrar en efectivo registrando el monto recibido.
+8. Entregar el cambio calculado.
+9. Revisar el comprobante interno de la venta.
+10. Anular ventas propias permitidas del dia, con motivo, mientras la caja asociada siga abierta.
+11. Cerrar caja al final del turno con el monto contado final.
 
 El vendedor puede preparar o retomar una atencion sin caja abierta, pero no puede confirmar el cobro sin una caja propia abierta.
+
+## Flujo administrativo
+
+Admin y superadmin supervisan la operacion de mostrador sin cambiar las reglas comerciales del vendedor.
+
+- Revisan cajas abiertas, cajas cerradas, diferencias y responsable de apertura o cierre.
+- Pueden cerrar caja ajena ingresando monto contado final y nota opcional.
+- Revisan ventas de vendedores, incluyendo estado, comprobante interno, caja asociada y elegibilidad de anulacion.
+- Pueden anular ventas permitidas de cualquier vendedor mientras la caja asociada siga abierta y exista motivo.
+- Revisan carritos pendientes de todos los vendedores y descartan los que correspondan.
+- No reasignan pendientes, no reabren cajas cerradas y no convierten el comprobante interno en factura fiscal.
 
 ## Reglas de caja
 
@@ -94,13 +112,19 @@ La anulacion V1 es una correccion operativa mientras la caja asociada sigue abie
 - El inventario se repone a los mismos lotes consumidos.
 - La caja refleja ventas efectivas netas.
 
-El correctivo backend reconcilia pendientes, anulacion de ventas y listados administrativos de supervision como flujo operativo V1. La deuda residual ya no es ausencia de disponibilidad para estas reglas, sino completar el guardrail final de cierre y documentar cualquier diferencia funcional que aparezca en una validacion posterior.
+## Reglas transversales
+
+- Toda operacion de caja, venta, pendiente y anulacion conserva trazabilidad de usuario, fecha y estado.
+- Las salidas y reposiciones de inventario mantienen lote, vencimiento y cantidad para auditoria farmaceutica.
+- El efectivo esperado de caja se calcula con ventas efectivas netas: las anulaciones autorizadas reducen el esperado.
+- La supervision administrativa no habilita pagos mixtos, credito, tarjeta, QR real, factura fiscal ni reapertura de caja cerrada.
+- Las diferencias de caja se registran al cierre; no bloquean el cierre del turno.
 
 ## Comprobante interno y factura fiscal
 
 El comprobante interno documenta la venta POS, el vendedor, la caja, los productos, el monto recibido, el cambio y el consumo FEFO. Sirve para atencion, consulta y auditoria interna.
 
-La factura fiscal es un documento tributario separado. En V1 no hay SIAT real, QR fiscal ni emision fiscal en linea. El comprobante interno no reemplaza factura fiscal.
+La factura fiscal es un documento tributario separado. En V1 no hay SIAT real, QR fiscal ni emision fiscal en linea. El comprobante interno no reemplaza factura fiscal ni debe presentarse como documento tributario.
 
 ## Fuera de alcance V1
 

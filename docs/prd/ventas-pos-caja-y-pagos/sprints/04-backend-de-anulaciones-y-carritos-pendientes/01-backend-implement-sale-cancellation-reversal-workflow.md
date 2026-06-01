@@ -1,6 +1,6 @@
 # Ticket 01 - Implement Sale Cancellation Reversal Workflow
 
-- Status: TODO
+- Status: DONE
 - Category: BACKEND
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 05
@@ -43,3 +43,7 @@ Implementar la anulacion transaccional de ventas confirmadas mientras la caja as
 - El pago original queda marcado como revertido/cancelado y conserva evidencia.
 - El esperado de caja descuenta el total de la venta anulada.
 - La venta queda en estado cancelado con motivo, usuario y fecha de anulacion.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: la anulacion transaccional quedo cubierta por el correctivo backend del Sprint 08, con motivo obligatorio, permisos por rol, caja abierta, pago revertido, reposicion por lote, movimientos inversos y caja neta.

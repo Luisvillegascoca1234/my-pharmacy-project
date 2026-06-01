@@ -16,7 +16,7 @@ By the end of this sprint:
 
 - Las reglas de caja, venta, pago efectivo, FEFO, pendientes, anulacion y supervision quedan reconciliadas entre experiencia de usuario, contratos y documentacion minima de API.
 - La documentacion operativa explica el flujo de mostrador con terminologia farmaceutica, limites de V1 y responsabilidades por rol.
-- La tesis incorpora evidencia de ventas, caja, FEFO, trazabilidad, anulacion y validacion tecnica a nivel conceptual, y el epic queda listo para cerrarse si no quedan brechas.
+- La tesis incorpora evidencia de ventas, caja, FEFO, trazabilidad, anulacion y validacion tecnica a nivel conceptual. Las brechas historicas de pendientes, anulacion y supervision quedaron resueltas por el correctivo posterior y reconciliadas en el cierre documental.
 
 ## Execution Order
 
@@ -39,3 +39,5 @@ By the end of this sprint:
 ## Sprint Rule
 
 Este sprint cierra el epic de ventas POS, caja y pagos sobre el trabajo ya completado en los sprints 01 a 06. Debe reconciliar permisos visibles, estados operativos, contratos, OpenAPI, pruebas de dominio, documentacion operativa farmaceutica y sintesis academica. No debe agregar nuevos medios de pago, facturacion SIAT, cliente formal con NIT, descuentos, cantidades decimales, reportes analiticos, reapertura de caja cerrada, devoluciones posteriores a cierre ni reglas comerciales fuera del PRD aceptado.
+
+Nota historica posterior al Sprint 09: este sprint quedo complementado por el correctivo backend del Sprint 08 y por el cierre documental del Sprint 09; el epic ya no mantiene brechas vigentes sobre API ejecutable de pendientes, anulacion ni supervision.

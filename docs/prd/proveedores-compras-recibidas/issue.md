@@ -39,6 +39,10 @@ Crear módulos backend y frontend para proveedores y compras. Una compra en `dra
 
 `proveedores-compras-recibidas`: entregar el flujo completo desde gestión de proveedores hasta recepción que genera inventario y movimientos.
 
+## Estado de cierre
+
+El epic sigue en `TODO`. La validacion final registrada en el Sprint 08 quedo bloqueada porque los puntos locales de frontend y backend rechazaron conexion; no hay evidencia exitosa para cerrar el circuito de proveedores, compras recibidas, recepcion, anulacion y permisos. El cierre debe reintentarse cuando el entorno local responda y `GET /api/health` confirme disponibilidad.
+
 ## Fuera de alcance
 
 - SIAT y `documentNumber`.

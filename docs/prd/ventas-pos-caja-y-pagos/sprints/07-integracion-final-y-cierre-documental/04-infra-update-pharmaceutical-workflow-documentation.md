@@ -44,5 +44,5 @@ Actualizar la documentacion operativa del flujo de mostrador para que explique v
 - Se agrego `docs/prd/ventas-pos-caja-y-pagos/flujo-operativo-farmaceutico.md` como guia operativa de mostrador para vendedor, admin y superadmin.
 - Se actualizo `docs/chunks/09-ventas-pos-caja-y-pagos.md` para reemplazar referencias tecnicas por reglas operativas de caja, POS, pago efectivo, FEFO, pendientes, anulacion, supervision y limites V1.
 - Se enlazo la guia operativa desde `docs/prd/ventas-pos-caja-y-pagos/issue.md`.
-- Estado posterior al correctivo backend: la documentacion debe tratar pendientes, anulacion y listados completos de supervision como reglas V1 con contrato operativo reconciliado. La deuda restante es validar el cierre final del epic y documentar cualquier diferencia residual.
+- Nota historica posterior al Sprint 08: la documentacion trata pendientes, anulacion y listados completos de supervision como reglas V1 con contrato operativo reconciliado. El cierre formal del epic queda condicionado solamente a completar los tickets documentales del Sprint 09.
 - No se ejecuto QA manual ni pruebas de navegador.

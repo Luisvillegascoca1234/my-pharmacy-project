@@ -1,6 +1,6 @@
 # Ticket 02 - Implement Pending Cart Lifecycle Rules
 
-- Status: TODO
+- Status: DONE
 - Category: BACKEND
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 05
@@ -43,3 +43,7 @@ Implementar el ciclo de vida de carritos pendientes sin reserva de stock ni cong
 - Convertir pendiente exige caja abierta del usuario que cobra.
 - Si la conversion falla, el pendiente permanece activo.
 - Si la conversion funciona, el pendiente queda convertido y relacionado con la venta.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: el ciclo de carritos pendientes quedo cubierto por el correctivo backend del Sprint 08, con guardado, edicion, listado, descarte, expiracion a 3 dias, revalidacion y conversion sin reserva de stock ni precio congelado.

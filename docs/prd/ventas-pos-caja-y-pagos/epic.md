@@ -1,7 +1,7 @@
 # Epic - Ventas POS, Caja y Pagos
 
 - PRD: ./PRD.md
-- Status: TODO
+- Status: DONE
 - Slug: ventas-pos-caja-y-pagos
 
 ## Goal
@@ -29,6 +29,12 @@ Un usuario `admin` o `superadmin` podra:
 - Cerrar caja ajena con monto contado final.
 - Ver carritos pendientes de todos y descartarlos.
 - Anular ventas permitidas de cualquier vendedor mientras la caja asociada siga abierta.
+
+## Closure Evidence
+
+El cierre documental posterior al correctivo confirma que los sprints 01 a 08 dejaron cubierto el alcance V1 de caja, venta POS en efectivo, descuento FEFO, comprobante interno, carritos pendientes, anulacion controlada y supervision administrativa. Sprint 08 resolvio la brecha que quedaba sobre API ejecutable para pendientes POS, anulacion de ventas y supervision: el flujo permite guardar, editar, listar, descartar, expirar y convertir pendientes; anular ventas permitidas con motivo, pago revertido, reposicion por lote, movimientos inversos y caja neta; y revisar ventas, cajas y pendientes con permisos administrativos.
+
+Con la limpieza final de referencias del Sprint 09 completada, el epic queda en `DONE`. El cierre no agrega reglas comerciales nuevas ni amplia los limites V1 aceptados: pago efectivo, comprobante interno, FEFO, caja abierta para anulacion, carritos pendientes sin reserva ni precio congelado, supervision administrativa y exclusiones de SIAT, medios de pago ampliados, devoluciones posteriores al cierre y reapertura de caja.
 
 ## Product Scope
 

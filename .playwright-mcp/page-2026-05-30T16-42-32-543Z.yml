@@ -1,0 +1,360 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - img
+                    - generic:
+                      - generic: Farmacia POS
+                      - generic: Sucursal única
+            - generic:
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Inicio
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /dashboard
+                            - img
+                            - generic: Dashboard
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Operación
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /pos
+                            - img
+                            - generic: Punto de venta
+                        - listitem:
+                          - link:
+                            - /url: /cash
+                            - img
+                            - generic: Caja
+                        - listitem:
+                          - link:
+                            - /url: /returns
+                            - img
+                            - generic: Devoluciones y anulaciones
+                        - listitem:
+                          - link:
+                            - /url: /alerts
+                            - img
+                            - generic: Alertas
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Inventario
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /products
+                            - img
+                            - generic: Productos
+                        - listitem:
+                          - link:
+                            - /url: /units
+                            - img
+                            - generic: Unidades y conversiones
+                        - listitem:
+                          - link:
+                            - /url: /batches
+                            - img
+                            - generic: Lotes y stock
+                        - listitem:
+                          - link:
+                            - /url: /movements
+                            - img
+                            - generic: Movimientos
+                        - listitem:
+                          - link:
+                            - /url: /adjustments
+                            - img
+                            - generic: Ajustes manuales
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Compras
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /suppliers
+                            - img
+                            - generic: Proveedores
+                        - listitem:
+                          - link:
+                            - /url: /purchases
+                            - img
+                            - generic: Compras
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Facturación
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /invoices
+                            - img
+                            - generic: Facturas SIAT
+                        - listitem:
+                          - link:
+                            - /url: /siat-settings
+                            - img
+                            - generic: Configuración SIAT
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Análisis
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /reports
+                            - img
+                            - generic: Reportes
+                        - listitem:
+                          - link:
+                            - /url: /exports
+                            - img
+                            - generic: Exportaciones CSV
+                        - listitem:
+                          - link:
+                            - /url: /audit
+                            - img
+                            - generic: Auditoría
+              - generic:
+                - generic:
+                  - button [expanded]:
+                    - text: Administración
+                    - img
+                  - generic:
+                    - generic:
+                      - list:
+                        - listitem:
+                          - link:
+                            - /url: /users
+                            - img
+                            - generic: Usuarios
+                        - listitem:
+                          - link:
+                            - /url: /roles
+                            - img
+                            - generic: Roles y permisos
+                        - listitem:
+                          - link:
+                            - /url: /settings
+                            - img
+                            - generic: Configuración
+            - generic:
+              - list:
+                - listitem:
+                  - button:
+                    - generic:
+                      - generic: DS
+                    - generic:
+                      - generic: Development Superadmin
+                      - generic: Superadmin
+            - button
+      - main:
+        - generic:
+          - button:
+            - img
+            - generic: Alternar barra lateral
+          - generic:
+            - paragraph: Consola operativa
+            - heading [level=1]: Detalle de compra
+          - generic:
+            - button:
+              - img
+            - button:
+              - img
+            - button:
+              - img
+        - main:
+          - generic:
+            - generic:
+              - generic:
+                - link:
+                  - /url: /purchases
+                  - img
+                  - text: Volver
+                - generic:
+                  - heading [level=1]: Detalle de compra
+                  - generic: Borrador
+                - paragraph: Prepara proveedor, fecha comercial e items del borrador antes de recibir inventario.
+              - generic:
+                - button:
+                  - img
+                  - text: Guardar borrador
+                - button:
+                  - img
+                  - text: Recibir
+                - button:
+                  - img
+                  - text: Anular
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic: Encabezado
+                    - generic: El proveedor debe estar activo para nuevas compras.
+                  - generic:
+                    - group:
+                      - generic: Proveedor
+                      - generic:
+                        - combobox
+                        - img
+                    - group:
+                      - generic: Fecha comercial
+                      - textbox: 2026-05-30
+                    - group:
+                      - generic: Notas
+                      - textbox:
+                        - /placeholder: Notas internas de compra
+                        - text: QA recepción inventario chunks 7 y 8
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic: Items
+                        - generic: Selecciona productos activos asociados al proveedor del encabezado.
+                      - button:
+                        - img
+                        - text: Agregar item
+                  - generic:
+                    - generic:
+                      - generic:
+                        - table:
+                          - rowgroup:
+                            - row:
+                              - columnheader: Producto
+                              - columnheader: Unidad
+                              - columnheader: Cantidad
+                              - columnheader: Costo unitario
+                              - columnheader: Lote
+                              - columnheader: Vencimiento
+                              - columnheader: Subtotal
+                              - columnheader: Quitar
+                          - rowgroup:
+                            - row:
+                              - cell:
+                                - group:
+                                  - generic: Producto
+                                  - generic:
+                                    - combobox
+                                    - img
+                              - cell:
+                                - generic:
+                                  - combobox
+                                  - img
+                              - cell:
+                                - spinbutton: "20"
+                              - cell:
+                                - spinbutton: "8.5"
+                              - cell:
+                                - textbox:
+                                  - /placeholder: LOT-001
+                                  - text: LQA-055758
+                              - cell:
+                                - textbox: 2027-12-31
+                              - cell: Bs 170,00
+                              - cell:
+                                - button [disabled]:
+                                  - img
+              - generic:
+                - generic:
+                  - generic: Resumen
+                  - generic: El total final se recalcula y confirma en backend al guardar.
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic: Fecha
+                      - generic: 30/05/2026
+                    - generic:
+                      - generic: Items
+                      - generic: "1"
+                    - generic:
+                      - generic: Total visual
+                      - generic: Bs 170,00
+                  - alert:
+                    - generic: Borrador sincronizado
+                    - generic: La información visible coincide con el último guardado exitoso.
+                  - button:
+                    - img
+                    - text: Guardar borrador
+                  - generic:
+                    - button:
+                      - img
+                      - text: Recibir compra
+                    - button:
+                      - img
+                      - text: Anular compra
+                  - generic:
+                    - generic:
+                      - paragraph: Proveedor
+                      - paragraph: Proveedor QA 055758
+                      - paragraph: "NIT: 900055758"
+                    - generic:
+                      - paragraph: Creada por
+                      - paragraph: Development Superadmin
+                      - paragraph: admin@admin.com
+                    - generic:
+                      - generic:
+                        - paragraph: Creación
+                        - paragraph: 30/5/26, 12:42 p. m.
+                      - generic:
+                        - paragraph: Actualización
+                        - paragraph: 30/5/26, 12:42 p. m.
+                    - generic:
+                      - paragraph: Recepción
+                      - paragraph: Pendiente
+                      - paragraph: Sin usuario receptor
+                    - generic:
+                      - paragraph: Notas de recepción
+                      - paragraph: Sin registrar
+                    - generic:
+                      - paragraph: Anulación
+                      - paragraph: Pendiente
+                      - paragraph: Sin registrar
+  - dialog "Recibir compra" [ref=e448]:
+    - generic [ref=e449]:
+      - generic [ref=e450]:
+        - heading "Recibir compra" [level=2] [ref=e451]
+        - paragraph [ref=e452]: Confirma que los items del borrador ingresarán al inventario con los datos guardados.
+      - group [ref=e453]:
+        - generic [ref=e454]: Notas de recepción
+        - textbox "Opcional" [active] [ref=e455]
+        - paragraph [ref=e456]: Opcional, máximo 240 caracteres.
+      - generic [ref=e457]:
+        - button "Cancelar" [ref=e458]
+        - button "Confirmar recepción" [ref=e459]:
+          - img
+          - text: Confirmar recepción
+    - button "Cerrar" [ref=e460]:
+      - img
+      - generic [ref=e461]: Cerrar

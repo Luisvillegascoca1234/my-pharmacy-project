@@ -1,6 +1,6 @@
 # Ticket 05 - Add Shared Sale Cancellation And Pending Cart Contracts
 
-- Status: TODO
+- Status: DONE
 - Category: INFRA
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: none
@@ -40,3 +40,7 @@ Agregar los contratos compartidos faltantes para anular ventas y gestionar carri
 - `DiscardPendingCartSchema` permite motivo opcional.
 - `ConvertPendingCartSchema` reutiliza pago efectivo y no incluye precio congelado.
 - Los tipos derivados quedan exportados sin romper contratos de venta confirmada.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: Sprint 08 dejo alineados los contratos de venta cancelada, pago revertido/cancelado y carritos pendientes con estados activo, convertido, descartado y expirado.

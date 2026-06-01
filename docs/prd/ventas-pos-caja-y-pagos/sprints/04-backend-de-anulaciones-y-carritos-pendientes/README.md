@@ -16,7 +16,7 @@ By the end of this sprint:
 
 - Las ventas confirmadas pueden anularse con motivo bajo reglas de rol, fecha y caja abierta, reponiendo inventario, revirtiendo pago y ajustando caja.
 - Los carritos pendientes pueden guardarse, editarse, descartarse, expirar a 3 dias y convertirse en venta sin reservar stock ni congelar precio.
-- La API, contratos, pruebas automatizadas y OpenAPI cubren anulaciones y pendientes sin implementar todavia UI.
+- La API, contratos, pruebas automatizadas y OpenAPI cubren anulaciones y pendientes. La UI quedo fuera de este sprint y fue abordada en sprints posteriores.
 
 ## Execution Order
 
@@ -40,3 +40,5 @@ By the end of this sprint:
 ## Sprint Rule
 
 Este sprint implementa solamente el backend de anulaciones y carritos pendientes: contratos, reglas transaccionales, permisos, API, pruebas automatizadas y OpenAPI minima. No implementa UI, navegacion, reportes, SIAT, QR, tarjeta, credito, reapertura de caja cerrada ni documentacion final de tesis.
+
+Nota historica posterior al Sprint 09: la ausencia de UI en este sprint no es deuda vigente del epic; el cierre documental considera pendientes, anulacion y supervision como capacidades V1 reconciliadas dentro de los limites aprobados.

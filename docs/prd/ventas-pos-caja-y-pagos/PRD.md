@@ -1,6 +1,6 @@
 ## Problem Statement
 
-La farmacia necesita un flujo de venta de mostrador que permita cobrar rapido, descontar inventario por lote de forma confiable y cuadrar caja al final del turno. El inventario ya nace desde compras recibidas y movimientos, pero todavia falta convertir ese stock disponible en ventas pagadas con trazabilidad sobre producto, lote, costo real, vendedor, pago y sesion de caja.
+El punto de partida del PRD fue la necesidad de un flujo de venta de mostrador que permita cobrar rapido, descontar inventario por lote de forma confiable y cuadrar caja al final del turno. El inventario ya nace desde compras recibidas y movimientos, por lo que el flujo POS V1 completa la salida trazable de ese stock mediante ventas pagadas con evidencia sobre producto, lote, costo real, vendedor, pago y sesion de caja.
 
 El problema operativo no es solo registrar una venta. En farmacia, la salida debe respetar FEFO para reducir riesgo de vencimiento, debe bloquear stock insuficiente, debe dejar movimientos de salida por cada lote consumido y debe calcular margen real usando el costo de las capas vendidas. Al mismo tiempo, el vendedor necesita una pantalla rapida de POS, con busqueda por nombre o codigo, carrito editable, pago efectivo con cambio y la posibilidad de guardar carritos pendientes sin reservar stock.
 
@@ -8,13 +8,17 @@ Tambien se necesita caja simple. Cada vendedor debe operar con una caja abierta,
 
 ## Solution
 
-Se implementara el flujo V1 de ventas POS, caja y pagos para una farmacia de una sucursal. El vendedor abrira caja con monto inicial, vendera productos activos con stock disponible, cobrara en efectivo y cerrara caja ingresando el monto contado final. El sistema calculara el esperado, la diferencia y dejara evidencia de apertura, ventas, anulaciones y cierre.
+El flujo V1 de ventas POS, caja y pagos queda definido para una farmacia de una sucursal. El vendedor abre caja con monto inicial, vende productos activos con stock disponible, cobra en efectivo y cierra caja ingresando el monto contado final. El sistema calcula el esperado, la diferencia y deja evidencia de apertura, ventas, anulaciones y cierre.
 
 El POS sera una pantalla rapida de mostrador: busqueda/listado de productos a la izquierda, carrito y cobro a la derecha, estado de caja siempre visible y confirmacion de pago en efectivo. La venta se creara recien al confirmar el pago; mientras tanto, el carrito no afecta inventario. Si el vendedor guarda un carrito pendiente, este tampoco reserva stock ni congela precio: al retomarlo se revalidan precio y disponibilidad, y al cobrar se usan las condiciones actuales.
 
-La salida de inventario se hara por FEFO automaticamente. El vendedor no elegira lotes. Si el primer lote no alcanza, el sistema completara con los siguientes lotes disponibles. Si el total vendible no alcanza, la venta completa se rechazara. Cada consumo de lote generara un movimiento de inventario y cada item conservara el costo usado para calcular margen real.
+La salida de inventario se realiza por FEFO automaticamente. El vendedor no elige lotes. Si el primer lote no alcanza, el sistema completa con los siguientes lotes disponibles. Si el total vendible no alcanza, la venta completa se rechaza. Cada consumo de lote genera un movimiento de inventario y cada item conserva el costo usado para calcular margen real.
 
-La venta tendra un comprobante interno con correlativo global, productos, cantidades, precios, total, efectivo recibido, cambio, vendedor y caja asociada. No sera factura fiscal. La facturacion SIAT queda como modulo separado para una fase posterior.
+La venta tiene un comprobante interno con correlativo global, productos, cantidades, precios, total, efectivo recibido, cambio, vendedor y caja asociada. No es factura fiscal. La facturacion SIAT queda como modulo separado para una fase posterior.
+
+## Estado de cierre documental
+
+La evidencia de cierre confirma que pendientes POS, anulacion de ventas y supervision administrativa son capacidades V1 ejecutables y validadas tecnicamente dentro del alcance aprobado. Las brechas historicas sobre API ejecutable, pago revertido, reposicion por lote, movimientos inversos, ajuste neto de caja, listado administrativo y ciclo de pendientes quedaron resueltas por el correctivo del Sprint 08 y reconciliadas documentalmente en el Sprint 09.
 
 ## User Stories
 
@@ -237,4 +241,4 @@ Dependencias:
 - La anulacion se incluye en V1 por necesidad operativa, pero queda limitada a cajas abiertas para no alterar cierres consolidados.
 - El modulo fiscal futuro debe bloquear o restringir anulaciones cuando exista factura asociada.
 - El comprobante interno ayuda a atencion y auditoria, pero debe diferenciarse claramente de una factura.
-- El epic probablemente requiere un cierre de documentacion y tesis, porque introduce el flujo comercial principal de salida de inventario, caja, pagos y margen.
+- El epic requirio cierre de documentacion y tesis porque introduce el flujo comercial principal de salida de inventario, caja, pagos y margen.

@@ -41,7 +41,7 @@ Verificar que contratos compartidos, rutas de API, documentacion OpenAPI y consu
 
 - Se consolidaron los contratos compartidos de supervision de caja, venta anulable, anulacion, listado de ventas y carritos pendientes para que el consumo frontend use las mismas formas de datos y payloads compartidos.
 - La documentacion OpenAPI mantiene la paridad con las rutas ejecutables actuales: apertura de caja, caja actual, cierre por identificador, busqueda vendible POS, creacion de venta y detalle de venta.
-- Estado posterior al correctivo backend: la deuda de rutas ausentes para listado administrativo de cajas, listado de ventas, anulacion de venta y ciclo de carritos pendientes queda reconciliada en contratos y documentacion minima de API.
-- Deuda no bloqueante restante: ejecutar el guardrail final del epic para confirmar que no queda divergencia funcional entre permisos, errores de dominio y experiencia operativa.
+- Nota historica posterior al Sprint 08: la deuda de rutas ausentes para listado administrativo de cajas, listado de ventas, anulacion de venta y ciclo de carritos pendientes quedo reconciliada en contratos y documentacion minima de API.
+- La validacion tecnica posterior no registro divergencias bloqueantes entre permisos, errores de dominio y experiencia operativa V1.
 - Los contratos de pendientes dejan explicito que un pendiente es preparacion operativa: no reserva stock ni congela precio; debe revalidarse al convertirlo en venta.
 - Validacion tecnica ejecutada: `pnpm --filter @pharmacy-pos/shared typecheck`, `pnpm --filter @pharmacy-pos/frontend typecheck` y `pnpm --filter @pharmacy-pos/backend typecheck`.

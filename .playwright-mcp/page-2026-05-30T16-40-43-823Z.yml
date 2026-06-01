@@ -1,0 +1,273 @@
+- generic [ref=e6]:
+  - generic [ref=e9]:
+    - list [ref=e11]:
+      - listitem [ref=e12]:
+        - button "Farmacia POS Sucursal única" [ref=e13]:
+          - img [ref=e15]
+          - generic [ref=e19]:
+            - generic [ref=e20]: Farmacia POS
+            - generic [ref=e21]: Sucursal única
+    - generic [ref=e22]:
+      - generic [ref=e24]:
+        - button "Inicio" [expanded] [ref=e25]:
+          - text: Inicio
+          - img [ref=e26]
+        - list [ref=e30]:
+          - listitem [ref=e31]:
+            - link "Dashboard" [ref=e32] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e33]
+              - generic [ref=e36]: Dashboard
+      - generic [ref=e38]:
+        - button "Operación" [expanded] [ref=e39]:
+          - text: Operación
+          - img [ref=e40]
+        - list [ref=e44]:
+          - listitem [ref=e45]:
+            - link "Punto de venta" [ref=e46] [cursor=pointer]:
+              - /url: /pos
+              - img [ref=e47]
+              - generic [ref=e52]: Punto de venta
+          - listitem [ref=e53]:
+            - link "Caja" [ref=e54] [cursor=pointer]:
+              - /url: /cash
+              - img [ref=e55]
+              - generic [ref=e59]: Caja
+          - listitem [ref=e60]:
+            - link "Devoluciones y anulaciones" [ref=e61] [cursor=pointer]:
+              - /url: /returns
+              - img [ref=e62]
+              - generic [ref=e67]: Devoluciones y anulaciones
+          - listitem [ref=e68]:
+            - link "Alertas" [ref=e69] [cursor=pointer]:
+              - /url: /alerts
+              - img [ref=e70]
+              - generic [ref=e72]: Alertas
+      - generic [ref=e74]:
+        - button "Inventario" [expanded] [ref=e75]:
+          - text: Inventario
+          - img [ref=e76]
+        - list [ref=e80]:
+          - listitem [ref=e81]:
+            - link "Productos" [ref=e82] [cursor=pointer]:
+              - /url: /products
+              - img [ref=e83]
+              - generic [ref=e87]: Productos
+          - listitem [ref=e88]:
+            - link "Unidades y conversiones" [ref=e89] [cursor=pointer]:
+              - /url: /units
+              - img [ref=e90]
+              - generic [ref=e96]: Unidades y conversiones
+          - listitem [ref=e97]:
+            - link "Lotes y stock" [ref=e98] [cursor=pointer]:
+              - /url: /batches
+              - img [ref=e99]
+              - generic [ref=e109]: Lotes y stock
+          - listitem [ref=e110]:
+            - link "Movimientos" [ref=e111] [cursor=pointer]:
+              - /url: /movements
+              - img [ref=e112]
+              - generic [ref=e116]: Movimientos
+          - listitem [ref=e117]:
+            - link "Ajustes manuales" [ref=e118] [cursor=pointer]:
+              - /url: /adjustments
+              - img [ref=e119]
+              - generic [ref=e122]: Ajustes manuales
+      - generic [ref=e124]:
+        - button "Compras" [expanded] [ref=e125]:
+          - text: Compras
+          - img [ref=e126]
+        - list [ref=e130]:
+          - listitem [ref=e131]:
+            - link "Proveedores" [ref=e132] [cursor=pointer]:
+              - /url: /suppliers
+              - img [ref=e133]
+              - generic [ref=e138]: Proveedores
+          - listitem [ref=e139]:
+            - link "Compras" [ref=e140] [cursor=pointer]:
+              - /url: /purchases
+              - img [ref=e141]
+              - generic [ref=e145]: Compras
+      - generic [ref=e147]:
+        - button "Facturación" [expanded] [ref=e148]:
+          - text: Facturación
+          - img [ref=e149]
+        - list [ref=e153]:
+          - listitem [ref=e154]:
+            - link "Facturas SIAT" [ref=e155] [cursor=pointer]:
+              - /url: /invoices
+              - img [ref=e156]
+              - generic [ref=e158]: Facturas SIAT
+          - listitem [ref=e159]:
+            - link "Configuración SIAT" [ref=e160] [cursor=pointer]:
+              - /url: /siat-settings
+              - img [ref=e161]
+              - generic [ref=e173]: Configuración SIAT
+      - generic [ref=e175]:
+        - button "Análisis" [expanded] [ref=e176]:
+          - text: Análisis
+          - img [ref=e177]
+        - list [ref=e181]:
+          - listitem [ref=e182]:
+            - link "Reportes" [ref=e183] [cursor=pointer]:
+              - /url: /reports
+              - img [ref=e184]
+              - generic [ref=e186]: Reportes
+          - listitem [ref=e187]:
+            - link "Exportaciones CSV" [ref=e188] [cursor=pointer]:
+              - /url: /exports
+              - img [ref=e189]
+              - generic [ref=e192]: Exportaciones CSV
+          - listitem [ref=e193]:
+            - link "Auditoría" [ref=e194] [cursor=pointer]:
+              - /url: /audit
+              - img [ref=e195]
+              - generic [ref=e198]: Auditoría
+      - generic [ref=e200]:
+        - button "Administración" [expanded] [ref=e201]:
+          - text: Administración
+          - img [ref=e202]
+        - list [ref=e206]:
+          - listitem [ref=e207]:
+            - link "Usuarios" [ref=e208] [cursor=pointer]:
+              - /url: /users
+              - img [ref=e209]
+              - generic [ref=e214]: Usuarios
+          - listitem [ref=e215]:
+            - link "Roles y permisos" [ref=e216] [cursor=pointer]:
+              - /url: /roles
+              - img [ref=e217]
+              - generic [ref=e219]: Roles y permisos
+          - listitem [ref=e220]:
+            - link "Configuración" [ref=e221] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e222]
+              - generic [ref=e225]: Configuración
+    - list [ref=e227]:
+      - listitem [ref=e228]:
+        - button "DS Development Superadmin Superadmin" [ref=e229]:
+          - generic [ref=e231]: DS
+          - generic [ref=e232]:
+            - generic [ref=e233]: Development Superadmin
+            - generic [ref=e234]: Superadmin
+    - button "Alternar barra lateral" [ref=e235]
+  - main [ref=e236]:
+    - generic [ref=e237]:
+      - button "Alternar navegación" [ref=e238]:
+        - img
+        - generic [ref=e239]: Alternar barra lateral
+      - generic [ref=e240]:
+        - paragraph [ref=e241]: Consola operativa
+        - heading "Nueva compra" [level=1] [ref=e242]
+      - generic [ref=e243]:
+        - button "Cambiar tema" [ref=e244]:
+          - img
+        - button "Buscar en el sistema" [ref=e245]:
+          - img
+        - button "Alertas operativas" [ref=e246]:
+          - img
+    - main [ref=e247]:
+      - generic [ref=e248]:
+        - generic [ref=e249]:
+          - generic [ref=e250]:
+            - link "Volver" [ref=e251] [cursor=pointer]:
+              - /url: /purchases
+              - img
+              - text: Volver
+            - generic [ref=e252]:
+              - heading "Nueva compra" [level=1] [ref=e253]
+              - generic [ref=e254]: Borrador
+              - generic [ref=e332]: Cambios pendientes
+            - paragraph [ref=e255]: Prepara proveedor, fecha comercial e items del borrador antes de recibir inventario.
+          - generic [ref=e256]:
+            - button "Guardar borrador" [disabled]:
+              - img
+              - text: Guardar borrador
+        - generic [ref=e257]:
+          - generic [ref=e258]:
+            - generic [ref=e259]:
+              - generic [ref=e260]:
+                - generic [ref=e261]: Encabezado
+                - generic [ref=e262]: El proveedor debe estar activo para nuevas compras.
+              - generic [ref=e263]:
+                - group [ref=e264]:
+                  - generic [ref=e265]: Proveedor
+                  - generic [ref=e266]:
+                    - combobox [ref=e267]:
+                      - option "Seleccionar proveedor"
+                      - option "Proveedor QA 055758" [selected]
+                    - img
+                - group [ref=e268]:
+                  - generic [ref=e269]: Fecha comercial
+                  - textbox [ref=e270]: 2026-05-30
+                - group [ref=e271]:
+                  - generic [ref=e272]: Notas
+                  - textbox "Notas internas de compra" [ref=e273]
+            - generic [ref=e274]:
+              - generic [ref=e276]:
+                - generic [ref=e277]:
+                  - generic [ref=e278]: Items
+                  - generic [ref=e279]: Selecciona productos activos asociados al proveedor del encabezado.
+                - button "Agregar item" [ref=e280]:
+                  - img
+                  - text: Agregar item
+              - table [ref=e284]:
+                - rowgroup [ref=e285]:
+                  - row "Producto Unidad Cantidad Costo unitario Lote Vencimiento Subtotal Quitar" [ref=e286]:
+                    - columnheader "Producto" [ref=e287]
+                    - columnheader "Unidad" [ref=e288]
+                    - columnheader "Cantidad" [ref=e289]
+                    - columnheader "Costo unitario" [ref=e290]
+                    - columnheader "Lote" [ref=e291]
+                    - columnheader "Vencimiento" [ref=e292]
+                    - columnheader "Subtotal" [ref=e293]
+                    - columnheader "Quitar" [ref=e294]
+                - rowgroup [ref=e295]:
+                  - row "Unidad 1 0 Bs 0,00 Quitar item" [ref=e296]:
+                    - cell [ref=e297]:
+                      - group [ref=e298]:
+                        - generic [ref=e299]: Producto
+                        - generic [ref=e300]:
+                          - combobox [ref=e333]:
+                            - option "Seleccionar producto" [selected]
+                            - option "Paracetamol QA 055758"
+                          - img
+                        - alert [ref=e301]: Selecciona producto y unidad.
+                    - cell "Unidad" [ref=e302]:
+                      - generic [ref=e303]:
+                        - combobox [disabled]:
+                          - option "Unidad" [selected]
+                        - img
+                    - cell "1" [ref=e304]:
+                      - spinbutton [ref=e305]: "1"
+                    - cell "0" [ref=e306]:
+                      - spinbutton [ref=e307]: "0"
+                    - cell [ref=e308]:
+                      - textbox "LOT-001" [ref=e309]
+                    - cell [ref=e310]:
+                      - textbox [ref=e311]
+                    - cell "Bs 0,00" [ref=e312]
+                    - cell "Quitar item" [ref=e313]:
+                      - button "Quitar item" [disabled]:
+                        - img
+          - generic [ref=e314]:
+            - generic [ref=e315]:
+              - generic [ref=e316]: Resumen
+              - generic [ref=e317]: El total final se recalcula y confirma en backend al guardar.
+            - generic [ref=e318]:
+              - generic [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]: Fecha
+                  - generic [ref=e322]: 30/05/2026
+                - generic [ref=e323]:
+                  - generic [ref=e324]: Items
+                  - generic [ref=e325]: "1"
+                - generic [ref=e326]:
+                  - generic [ref=e327]: Total visual
+                  - generic [ref=e328]: Bs 0,00
+              - alert [ref=e329]:
+                - generic [ref=e330]: Hay cambios pendientes
+                - generic [ref=e331]: Guarda el borrador antes de continuar con recepción o revisión operativa.
+              - button "Guardar borrador" [disabled]:
+                - img
+                - text: Guardar borrador

@@ -1,6 +1,6 @@
 # Ticket 03 - Add Cancellation And Pending Cart API Authorization
 
-- Status: TODO
+- Status: DONE
 - Category: BACKEND
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 02
@@ -38,3 +38,7 @@ Exponer la API para anulacion de ventas y gestion de carritos pendientes con aut
 - Vendedor no ve, edita ni convierte pendientes ajenos.
 - Admin/superadmin pueden supervisar y descartar pendientes ajenos.
 - Errores de pendiente expirado, stock insuficiente, producto inactivo y caja faltante son consistentes.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: Sprint 08 dejo ejecutable la API de anulacion, pendientes y supervision con autorizacion para seller, admin y superadmin dentro de las reglas V1 aceptadas.

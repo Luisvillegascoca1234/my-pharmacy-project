@@ -1,6 +1,6 @@
 # Ticket 04 - Cover Cancellation And Pending Cart Domain Rules
 
-- Status: TODO
+- Status: DONE
 - Category: BACKEND
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 03
@@ -39,3 +39,7 @@ Agregar pruebas automatizadas para anulacion de ventas y ciclo de vida de carrit
 - Hay prueba para pendiente expirado no convertible.
 - Hay prueba para conversion exitosa a venta y marcado como convertido.
 - Hay prueba para fallo de conversion que conserva el pendiente activo.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: Sprint 08 registro regresion automatizada para pendientes, anulacion y supervision, incluyendo permisos, caja cerrada, reversa de pago, movimientos inversos, expiracion, revalidacion y conversion.

@@ -14,7 +14,7 @@ El stack base sera:
 - Frontend: React con Tailwind CSS y shadcn/ui.
 - Base de datos: PostgreSQL.
 - ORM: Prisma.
-- Modelos compartidos: TypeScript y Zod en `packages`.
+- Modelos compartidos: TypeScript y Zod.
 
 La recomendacion principal es usar PostgreSQL porque el dominio requiere consistencia transaccional, relaciones claras, integridad referencial, auditoria, reportes y consultas analiticas. Inventario por lote, facturacion, compras, ventas, devoluciones y movimientos de stock son procesos naturalmente relacionales.
 
@@ -279,7 +279,9 @@ Detalle de compra:
 
 ## 12. Ventas POS
 
-La venta sera pagada al momento. No se incluira credito ni cuentas por cobrar.
+La venta POS V1 sera pagada al momento en efectivo. No se incluira credito, cuentas por cobrar, pagos mixtos, tarjeta ni QR real en esta version.
+
+La venta operativa interna se confirma recien al cobrar. Antes del cobro, el carrito activo o pendiente no descuenta inventario, no reserva stock y no congela precio. Al cobrar, se revalidan disponibilidad, precio vigente y estado del producto.
 
 Una venta debe registrar:
 
@@ -287,10 +289,10 @@ Una venta debe registrar:
 - Fecha y hora.
 - Estado.
 - Subtotal.
-- Descuentos, si se habilitan.
 - Total.
-- Datos de facturacion.
-- Relacion con factura.
+- Monto recibido y cambio.
+- Caja asociada.
+- Comprobante interno.
 - Relacion con pago.
 
 Detalle de venta:
@@ -305,43 +307,37 @@ Detalle de venta:
 - Subtotal.
 - Margen calculado.
 
-El vendedor atiende y cobra. No se requiere separar roles de cajero y vendedor.
+El vendedor atiende y cobra. No se requiere separar roles de cajero y vendedor. Admin y superadmin pueden supervisar ventas de todos los vendedores y anular ventas permitidas mientras la caja asociada siga abierta.
 
 ## 13. Caja y pagos
 
 El sistema tendra caja simple.
 
-En V1 se usara pago en efectivo. El modelo debe quedar preparado para soportar QR boliviano en una fase posterior.
-
-Metodos de pago conceptuales:
-
-- Efectivo.
-- QR.
-- Tarjeta.
-- Transferencia.
-
-QR queda previsto como metodo futuro, sin integracion inicial.
+En V1 se usara pago unico en efectivo. QR boliviano, tarjeta, transferencia, credito y pagos mixtos quedan como medios futuros, no como capacidades disponibles.
 
 La caja debe permitir:
 
 - Apertura.
 - Cierre.
 - Monto inicial.
-- Total esperado.
+- Total esperado por ventas efectivas netas.
 - Monto contado.
 - Diferencia.
 - Usuario responsable.
+- Usuario que cierra.
 - Estado abierta/cerrada.
 
-Los pagos deben relacionarse con ventas y caja.
+El vendedor cierra su propia caja. Admin y superadmin pueden cerrar una caja ajena ingresando monto contado final. Una caja cerrada no se reabre en V1.
+
+Los pagos deben relacionarse con ventas y caja. Si una venta se anula bajo regla, el pago queda con evidencia de reversa y el esperado de caja se ajusta de forma neta.
 
 ## 14. Facturacion SIAT Bolivia
 
-El sistema debe contemplar facturacion integrada con el sistema tributario boliviano SIAT.
+El sistema debe contemplar facturacion integrada con el sistema tributario boliviano SIAT como modulo fiscal separado.
 
-La recomendacion conceptual para V1 es apuntar a Facturacion Computarizada en Linea. La integracion puede quedar preparada si el tiempo del proyecto no permite completarla.
+La recomendacion conceptual futura es apuntar a Facturacion Computarizada en Linea. En el flujo POS V1 no hay SIAT real, QR fiscal ni emision fiscal en linea.
 
-La facturacion no debe mezclarse como simples campos dentro de ventas. Debe existir un modulo fiscal separado.
+La venta POS V1 emite comprobante interno. Ese comprobante sirve para atencion, caja, inventario y auditoria operativa, pero no reemplaza factura fiscal ni debe presentarse como documento SIAT.
 
 Conceptos principales:
 
@@ -384,7 +380,13 @@ Referencias SIAT consultadas:
 
 ## 15. Devoluciones y anulaciones
 
-El sistema debe permitir devoluciones controladas.
+El sistema debe distinguir anulacion operativa V1 y devolucion posterior.
+
+La anulacion operativa V1 corrige una venta reciente mientras la caja asociada sigue abierta. Debe exigir motivo, conservar la venta como registro historico, revertir el pago, reponer inventario a los mismos lotes consumidos y ajustar el esperado de caja.
+
+El vendedor puede anular solo ventas propias permitidas del dia. Admin y superadmin pueden anular ventas permitidas de cualquier vendedor mientras la caja asociada siga abierta.
+
+Las devoluciones posteriores al cierre de caja quedan fuera de V1. Cuando se habiliten, deberan manejarse con cuidado por razones sanitarias, fiscales y de trazabilidad.
 
 Una devolucion debe registrar:
 
@@ -398,12 +400,13 @@ Una devolucion debe registrar:
 - Impacto en caja.
 - Impacto fiscal, si la venta fue facturada.
 
-Las devoluciones no deben ser libres. En farmacia deben manejarse con cuidado por razones sanitarias, fiscales y de trazabilidad.
+Las devoluciones no deben ser libres.
 
 Se distinguen dos acciones:
 
-- Anular venta interna: aplica antes de consolidacion fiscal o bajo reglas controladas.
-- Anular factura: accion fiscal ante SIAT, restringida a `admin` y `superadmin`.
+- Anular venta interna: aplica bajo reglas controladas mientras la caja asociada siga abierta.
+- Devolucion posterior: queda fuera de V1 y requerira control sanitario, fiscal y de caja.
+- Anular factura: accion fiscal ante SIAT, restringida a `admin` y `superadmin` cuando exista facturacion fiscal.
 
 ## 16. Ajustes manuales de inventario
 
@@ -536,7 +539,7 @@ Exportaciones recomendadas:
 
 ## 21. Modelos compartidos
 
-Los modelos y validaciones compartidas viviran conceptualmente en `packages`.
+Los modelos y validaciones compartidas deben mantener un vocabulario comun para datos de negocio usados por la experiencia operativa y administrativa.
 
 El objetivo es que frontend y backend usen contratos comunes para:
 
@@ -549,9 +552,7 @@ El objetivo es que frontend y backend usen contratos comunes para:
 - Facturacion.
 - Reportes.
 
-La recomendacion es definir schemas con Zod y derivar tipos TypeScript desde ellos. Esto evita duplicar validaciones y reduce inconsistencias entre formularios, API y reglas de negocio.
-
-La estructura tecnica del backend queda definida en `.agents/skills/backend-architecture/references/lineamientos-arquitectura-backend.md`, usando arquitectura por capas adaptada a Express, TypeScript, Prisma y PostgreSQL.
+La recomendacion es definir validaciones consistentes y derivar tipos TypeScript desde ellas. Esto evita duplicar reglas y reduce inconsistencias entre formularios, operaciones y reglas de negocio.
 
 ## 22. Esquema conceptual principal
 
@@ -610,7 +611,7 @@ Relaciones clave:
 - Se usara Prisma.
 - Se usara Node.js con Express.
 - Se usara React con Tailwind CSS y shadcn/ui.
-- Se compartiran modelos con TypeScript y Zod en `packages`.
+- Se compartiran modelos con TypeScript y Zod.
 - El inventario sera por producto, lote y vencimiento.
 - Se usaran unidades de medida y conversiones.
 - Se usara costo por lote.
@@ -619,10 +620,11 @@ Relaciones clave:
 - Las compras tendran estados borrador, recibida y anulada.
 - Se tendra caja simple.
 - En V1 el pago sera en efectivo.
+- En V1 no habra pagos mixtos, tarjeta, credito ni QR real.
 - QR queda previsto para una fase posterior.
 - No se manejara credito a clientes.
 - No se manejara modulo de pacientes.
-- Si se manejara facturacion.
+- En V1 la venta POS emitira comprobante interno, no factura fiscal.
 - La facturacion se disena para integracion SIAT Bolivia.
 - La recomendacion fiscal base es Facturacion Computarizada en Linea.
 - La integracion SIAT puede quedar preparada si no se completa en V1.
@@ -630,9 +632,12 @@ Relaciones clave:
 - Se exigira lote y vencimiento para los productos de inventario.
 - El vendedor no puede anular facturas.
 - Solo admin y superadmin pueden anular facturas.
+- La anulacion interna V1 exige caja abierta, motivo obligatorio, reversa de pago y reposicion al mismo lote.
+- Admin y superadmin pueden cerrar caja ajena y descartar pendientes permitidos.
+- Los carritos pendientes expiran a los 3 dias, no reservan stock y no congelan precio.
 - Se tendra auditoria completa.
 - Se permitiran ajustes manuales solo a admin y superadmin.
-- Se permitiran devoluciones controladas.
+- Las devoluciones posteriores al cierre de caja quedan fuera de V1.
 - Se incluiran alertas automaticas.
 - El analisis iniciara con PostgreSQL y vistas analiticas.
 - Se exportaran datos a CSV para analisis con pandas u otras herramientas.
@@ -650,7 +655,7 @@ Queda fuera del alcance conceptual inicial:
 - Integracion QR completa.
 - Venta de productos de micromercado.
 - Diseno visual del frontend.
-- Implementacion tecnica de endpoints.
+- Detalle tecnico de integraciones.
 
 ## 25. Criterio rector
 

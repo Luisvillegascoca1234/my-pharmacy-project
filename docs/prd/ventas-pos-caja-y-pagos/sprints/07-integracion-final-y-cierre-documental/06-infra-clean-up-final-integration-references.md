@@ -39,5 +39,5 @@ Limpiar referencias obsoletas, duplicacion de integracion, nombres temporales y 
 - Se inspeccionaron rutas reales, contratos compartidos y superficies frontend de caja, POS, pendientes, ventas/anulaciones y supervision para reconciliar disponibilidad ejecutable contra documentacion.
 - Se limpiaron referencias obsoletas en la app de docs que todavia presentaban punto de venta y caja como modulos iniciales.
 - Se ajusto la terminologia documental para pago efectivo V1, comprobante interno, caja abierta, FEFO, pendientes sin reserva ni precio congelado, anulacion controlada y limites fiscales.
-- Estado posterior al correctivo backend: la deuda de cierre sobre carritos pendientes, anulacion de ventas y supervision administrativa completa queda reemplazada por deuda no bloqueante de guardrail final y validacion residual.
+- Nota historica posterior al Sprint 08: la deuda de cierre sobre carritos pendientes, anulacion de ventas y supervision administrativa completa quedo resuelta por el correctivo backend y su validacion tecnica. El cierre formal queda pendiente solo por reconciliacion y limpieza documental del Sprint 09.
 - No se agregaron cambios funcionales.

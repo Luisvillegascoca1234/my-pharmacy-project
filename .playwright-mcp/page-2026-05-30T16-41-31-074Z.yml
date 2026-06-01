@@ -1,0 +1,291 @@
+- generic [ref=e3]:
+  - generic [ref=e6]:
+    - list [ref=e8]:
+      - listitem [ref=e9]:
+        - button "Farmacia POS Sucursal única" [ref=e10]:
+          - img [ref=e12]
+          - generic [ref=e16]:
+            - generic [ref=e17]: Farmacia POS
+            - generic [ref=e18]: Sucursal única
+    - generic [ref=e19]:
+      - generic [ref=e21]:
+        - button "Inicio" [expanded] [ref=e22]:
+          - text: Inicio
+          - img [ref=e23]
+        - list [ref=e27]:
+          - listitem [ref=e28]:
+            - link "Dashboard" [ref=e29] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e30]
+              - generic [ref=e33]: Dashboard
+      - generic [ref=e35]:
+        - button "Operación" [expanded] [ref=e36]:
+          - text: Operación
+          - img [ref=e37]
+        - list [ref=e41]:
+          - listitem [ref=e42]:
+            - link "Punto de venta" [ref=e43] [cursor=pointer]:
+              - /url: /pos
+              - img [ref=e44]
+              - generic [ref=e49]: Punto de venta
+          - listitem [ref=e50]:
+            - link "Caja" [ref=e51] [cursor=pointer]:
+              - /url: /cash
+              - img [ref=e52]
+              - generic [ref=e56]: Caja
+          - listitem [ref=e57]:
+            - link "Devoluciones y anulaciones" [ref=e58] [cursor=pointer]:
+              - /url: /returns
+              - img [ref=e59]
+              - generic [ref=e64]: Devoluciones y anulaciones
+          - listitem [ref=e65]:
+            - link "Alertas" [ref=e66] [cursor=pointer]:
+              - /url: /alerts
+              - img [ref=e67]
+              - generic [ref=e69]: Alertas
+      - generic [ref=e71]:
+        - button "Inventario" [expanded] [ref=e72]:
+          - text: Inventario
+          - img [ref=e73]
+        - list [ref=e77]:
+          - listitem [ref=e78]:
+            - link "Productos" [ref=e79] [cursor=pointer]:
+              - /url: /products
+              - img [ref=e80]
+              - generic [ref=e84]: Productos
+          - listitem [ref=e85]:
+            - link "Unidades y conversiones" [ref=e86] [cursor=pointer]:
+              - /url: /units
+              - img [ref=e87]
+              - generic [ref=e93]: Unidades y conversiones
+          - listitem [ref=e94]:
+            - link "Lotes y stock" [ref=e95] [cursor=pointer]:
+              - /url: /batches
+              - img [ref=e96]
+              - generic [ref=e106]: Lotes y stock
+          - listitem [ref=e107]:
+            - link "Movimientos" [ref=e108] [cursor=pointer]:
+              - /url: /movements
+              - img [ref=e109]
+              - generic [ref=e113]: Movimientos
+          - listitem [ref=e114]:
+            - link "Ajustes manuales" [ref=e115] [cursor=pointer]:
+              - /url: /adjustments
+              - img [ref=e116]
+              - generic [ref=e119]: Ajustes manuales
+      - generic [ref=e121]:
+        - button "Compras" [expanded] [ref=e122]:
+          - text: Compras
+          - img [ref=e123]
+        - list [ref=e127]:
+          - listitem [ref=e128]:
+            - link "Proveedores" [ref=e129] [cursor=pointer]:
+              - /url: /suppliers
+              - img [ref=e130]
+              - generic [ref=e135]: Proveedores
+          - listitem [ref=e136]:
+            - link "Compras" [ref=e137] [cursor=pointer]:
+              - /url: /purchases
+              - img [ref=e138]
+              - generic [ref=e142]: Compras
+      - generic [ref=e144]:
+        - button "Facturación" [expanded] [ref=e145]:
+          - text: Facturación
+          - img [ref=e146]
+        - list [ref=e150]:
+          - listitem [ref=e151]:
+            - link "Facturas SIAT" [ref=e152] [cursor=pointer]:
+              - /url: /invoices
+              - img [ref=e153]
+              - generic [ref=e155]: Facturas SIAT
+          - listitem [ref=e156]:
+            - link "Configuración SIAT" [ref=e157] [cursor=pointer]:
+              - /url: /siat-settings
+              - img [ref=e158]
+              - generic [ref=e170]: Configuración SIAT
+      - generic [ref=e172]:
+        - button "Análisis" [expanded] [ref=e173]:
+          - text: Análisis
+          - img [ref=e174]
+        - list [ref=e178]:
+          - listitem [ref=e179]:
+            - link "Reportes" [ref=e180] [cursor=pointer]:
+              - /url: /reports
+              - img [ref=e181]
+              - generic [ref=e183]: Reportes
+          - listitem [ref=e184]:
+            - link "Exportaciones CSV" [ref=e185] [cursor=pointer]:
+              - /url: /exports
+              - img [ref=e186]
+              - generic [ref=e189]: Exportaciones CSV
+          - listitem [ref=e190]:
+            - link "Auditoría" [ref=e191] [cursor=pointer]:
+              - /url: /audit
+              - img [ref=e192]
+              - generic [ref=e195]: Auditoría
+      - generic [ref=e197]:
+        - button "Administración" [expanded] [ref=e198]:
+          - text: Administración
+          - img [ref=e199]
+        - list [ref=e203]:
+          - listitem [ref=e204]:
+            - link "Usuarios" [ref=e205] [cursor=pointer]:
+              - /url: /users
+              - img [ref=e206]
+              - generic [ref=e211]: Usuarios
+          - listitem [ref=e212]:
+            - link "Roles y permisos" [ref=e213] [cursor=pointer]:
+              - /url: /roles
+              - img [ref=e214]
+              - generic [ref=e216]: Roles y permisos
+          - listitem [ref=e217]:
+            - link "Configuración" [ref=e218] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e219]
+              - generic [ref=e222]: Configuración
+    - list [ref=e224]:
+      - listitem [ref=e225]:
+        - button "DS Development Superadmin Superadmin" [ref=e226]:
+          - generic [ref=e228]: DS
+          - generic [ref=e229]:
+            - generic [ref=e230]: Development Superadmin
+            - generic [ref=e231]: Superadmin
+    - button "Alternar barra lateral" [ref=e232]
+  - main [ref=e233]:
+    - generic [ref=e234]:
+      - button "Alternar navegación" [ref=e235]:
+        - img
+        - generic [ref=e236]: Alternar barra lateral
+      - generic [ref=e237]:
+        - paragraph [ref=e238]: Consola operativa
+        - heading "Productos" [level=1] [ref=e239]
+      - generic [ref=e240]:
+        - button "Cambiar tema" [ref=e241]:
+          - img
+        - button "Buscar en el sistema" [ref=e242]:
+          - img
+        - button "Alertas operativas" [ref=e243]:
+          - img
+    - main [ref=e244]:
+      - generic [ref=e245]:
+        - generic [ref=e246]:
+          - generic [ref=e247]:
+            - generic [ref=e248]: Catálogo farmacéutico
+            - generic [ref=e249]:
+              - heading "Productos" [level=1] [ref=e250]
+              - paragraph [ref=e251]: Base comercial y sanitaria para compras, lotes, FEFO y ventas. El costo real se definirá por lote.
+          - generic [ref=e252]:
+            - generic [ref=e253]:
+              - paragraph [ref=e254]: Total
+              - paragraph [ref=e255]: "0"
+            - generic [ref=e256]:
+              - paragraph [ref=e257]: Activos
+              - paragraph [ref=e258]: "0"
+            - generic [ref=e259]:
+              - paragraph [ref=e260]: Con receta
+              - paragraph [ref=e261]: "0"
+        - generic [ref=e262]:
+          - generic [ref=e263]:
+            - generic [ref=e265]:
+              - generic [ref=e266]:
+                - generic [ref=e267]: Lista de productos
+                - generic [ref=e268]: Consulta rápida por código, nombre comercial, genérico o código de barras.
+              - generic [ref=e269]:
+                - img [ref=e270]
+                - textbox "Buscar producto" [ref=e273]
+            - table [ref=e276]:
+              - rowgroup [ref=e277]:
+                - row "Código Producto Clasificación Unidad Venta Acción" [ref=e278]:
+                  - columnheader "Código" [ref=e279]
+                  - columnheader "Producto" [ref=e280]
+                  - columnheader "Clasificación" [ref=e281]
+                  - columnheader "Unidad" [ref=e282]
+                  - columnheader "Venta" [ref=e283]
+                  - columnheader "Acción" [ref=e284]
+              - rowgroup [ref=e285]:
+                - row "Cargando productos..." [ref=e286]:
+                  - cell "Cargando productos..." [ref=e287]
+          - generic [ref=e288]:
+            - generic [ref=e289]:
+              - generic [ref=e290]:
+                - generic [ref=e291]: Nuevo producto
+                - generic [ref=e292]: Registra datos sanitarios y comerciales mínimos.
+              - generic [ref=e294]:
+                - generic [ref=e295]:
+                  - group [ref=e296]:
+                    - generic [ref=e297]: Código interno
+                    - textbox [disabled]: Automático al guardar
+                  - group [ref=e298]:
+                    - generic [ref=e299]: Código de barras
+                    - textbox [ref=e300]
+                - group [ref=e301]:
+                  - generic [ref=e302]: Nombre comercial
+                  - textbox [ref=e303]
+                - group [ref=e304]:
+                  - generic [ref=e305]: Principio activo
+                  - textbox [ref=e306]
+                - generic [ref=e307]:
+                  - group [ref=e308]:
+                    - generic [ref=e309]: Categoría
+                    - generic [ref=e310]:
+                      - combobox [disabled]
+                      - img
+                  - group [ref=e311]:
+                    - generic [ref=e312]: Unidad base
+                    - generic [ref=e313]:
+                      - combobox [disabled]
+                      - img
+                - group [ref=e314]:
+                  - generic [ref=e315]: Proveedor
+                  - generic [ref=e316]:
+                    - combobox [disabled]
+                    - img
+                - generic [ref=e317]:
+                  - group [ref=e318]:
+                    - generic [ref=e319]: Tipo
+                    - generic [ref=e320]:
+                      - combobox [ref=e321]:
+                        - option "Medicamento" [selected]
+                        - option "Venta libre"
+                        - option "Insumo médico"
+                        - option "Higiene y desinfección"
+                        - option "Relacionado"
+                      - img
+                  - group [ref=e322]:
+                    - generic [ref=e323]: Precio de venta
+                    - spinbutton [ref=e324]: "0"
+                - generic [ref=e325]:
+                  - generic [ref=e326]:
+                    - checkbox "Inventariable" [checked] [ref=e327]:
+                      - generic:
+                        - img
+                    - checkbox [checked]
+                    - text: Inventariable
+                  - generic [ref=e328]:
+                    - checkbox "Exige lote" [checked] [ref=e329]:
+                      - generic:
+                        - img
+                    - checkbox [checked]
+                    - text: Exige lote
+                  - generic [ref=e330]:
+                    - checkbox "Exige vencimiento" [checked] [ref=e331]:
+                      - generic:
+                        - img
+                    - checkbox [checked]
+                    - text: Exige vencimiento
+                  - generic [ref=e332]:
+                    - checkbox "Requiere receta" [ref=e333]
+                    - checkbox
+                    - text: Requiere receta
+                - generic [ref=e334]:
+                  - button "Guardar" [disabled]:
+                    - img
+                    - text: Guardar
+                  - button "Nuevo" [ref=e335]:
+                    - img
+                    - text: Nuevo
+            - generic [ref=e336]:
+              - generic [ref=e337]:
+                - generic [ref=e338]: Conversiones
+                - generic [ref=e339]: Define presentaciones comerciales hacia la unidad base.
+              - paragraph [ref=e341]: Selecciona un producto para editar sus presentaciones.

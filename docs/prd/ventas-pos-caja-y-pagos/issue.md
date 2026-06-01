@@ -19,17 +19,22 @@ La farmacia necesita vender productos disponibles sin perder trazabilidad de inv
 
 Crear el flujo V1 de POS y caja. El vendedor abre caja, busca productos activos con stock vendible, arma carrito, cobra en efectivo y el sistema crea la venta transaccionalmente. FEFO descuenta automaticamente los lotes correctos, se registra pago, se genera comprobante interno y caja acumula ventas netas. Admin/superadmin pueden supervisar, cerrar caja ajena y anular ventas permitidas.
 
-## Estado de cierre V1
+## Estado operativo V1
 
-El flujo disponible para integracion operativa cubre apertura de caja, caja actual, cierre de caja por identificador, busqueda de productos vendibles, venta anonima con pago efectivo, comprobante interno, cambio calculado, descuento automatico por FEFO, detalle de venta, ciclo de carritos pendientes, anulacion controlada y listados paginados de supervision.
+El flujo operativo V1 cubre apertura de caja, caja actual, cierre de caja propia o ajena permitida, busqueda de productos vendibles, venta anonima con pago efectivo, comprobante interno, cambio calculado, descuento automatico por FEFO, detalle de venta, ciclo de carritos pendientes, anulacion controlada y supervision administrativa.
 
-La deuda registrada en el cierre del Sprint 07 sobre rutas ausentes de pendientes, anulacion y supervision queda reconciliada por el correctivo backend. El guardrail correctivo de validacion tecnica fue ejecutado sin bloqueos externos; la deuda restante queda acotada a cualquier ajuste de experiencia que derive de pruebas funcionales posteriores.
+Carritos pendientes, anulacion de ventas y supervision se documentan como comportamiento aprobado del flujo de mostrador: pendientes sin reserva de stock ni precio congelado, anulacion con motivo mientras la caja asociada siga abierta y supervision administrativa para revisar operaciones, descartar pendientes permitidos y cerrar caja ajena.
 
-Impacto: las superficies de caja, POS efectivo, comprobante interno, consumo FEFO, pendientes, anulacion y supervision ya tienen contrato operativo alineado para continuar el cierre del epic. Motivo: el correctivo incorpora los estados y errores de dominio necesarios para diferenciar pendiente expirado, venta no anulable, caja cerrada, acceso denegado y stock insuficiente.
+Los limites V1 siguen vigentes: pago unico en efectivo, comprobante interno no fiscal, sin SIAT real, sin QR real, sin tarjeta, sin credito, sin pagos mixtos, sin devoluciones posteriores al cierre y sin reapertura de caja cerrada.
 
-## Implementacion
+## Evidencia de cierre
 
-- Contratos compartidos para caja, venta, pago, anulacion, busqueda POS y carritos pendientes.
+La evidencia acumulada hasta Sprint 08 confirma que las brechas de API ejecutable para carritos pendientes, anulacion y supervision administrativa quedaron resueltas dentro del alcance V1 aprobado. El registro de cierre mantiene esas capacidades como parte del flujo operativo validado tecnicamente y no como deuda actual de integracion.
+
+Con la reconciliacion documental y la limpieza final de referencias del Sprint 09 completadas, el epic queda cerrado como `DONE`. El cierre no suma SIAT, medios de pago ampliados, devoluciones posteriores al cierre, reportes avanzados ni nuevas reglas comerciales.
+
+## Capacidades operativas aprobadas
+
 - Estados operativos para caja, venta, pago y pendiente.
 - Apertura/cierre de caja con correlativo global, esperado, contado y diferencia.
 - Venta anonima con correlativo global y pago unico en efectivo.

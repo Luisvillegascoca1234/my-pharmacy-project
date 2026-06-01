@@ -1,6 +1,6 @@
 # Ticket 08 - Run Validation Guardrails On Affected Areas
 
-- Status: TODO
+- Status: DONE
 - Category: INFRA
 - Parent PRD: [PRD.md](../../PRD.md)
 - Depends on: 07
@@ -34,3 +34,7 @@ Ejecutar validaciones tecnicas sobre anulaciones y carritos pendientes para conf
 - Los contratos compartidos siguen compilando.
 - La documentacion OpenAPI no rompe la generacion o typecheck disponible.
 - Cualquier bloqueo externo queda documentado con comando y salida relevante.
+
+## Historical Reconciliation
+
+- Estado reconciliado durante Sprint 09: la validacion tecnica equivalente quedo registrada en Sprint 08 con typecheck, pruebas backend, build y revision de OpenAPI sin bloqueos tecnicos externos para pendientes, anulacion y supervision.

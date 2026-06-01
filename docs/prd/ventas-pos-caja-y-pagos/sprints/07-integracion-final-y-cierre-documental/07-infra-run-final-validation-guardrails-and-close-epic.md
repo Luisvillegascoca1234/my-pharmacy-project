@@ -45,11 +45,11 @@ Ejecutar las validaciones tecnicas finales del epic y cerrar `epic.md` con `- St
 - Build ejecutado sin errores: `pnpm --filter @pharmacy-pos/shared build`, `pnpm --filter @pharmacy-pos/backend build`, `pnpm --filter @pharmacy-pos/frontend build` y `pnpm --filter @pharmacy-pos/docs build`. El build frontend emitio solo advertencia de chunk mayor a 500 kB, sin fallo de compilacion.
 - Pruebas backend ejecutadas sin errores: `pnpm --filter @pharmacy-pos/backend test -- src/modules/cash/cash.service.spec.ts src/modules/sales/sales.service.spec.ts src/modules/sales/sales.repository.spec.ts src/modules/pos/pos.service.spec.ts src/modules/pos/pos.repository.spec.ts`. Resultado: 5 archivos y 25 pruebas pasadas.
 - La revision de contratos compartidos, rutas backend y OpenAPI confirma paridad para caja actual, apertura/cierre de caja, busqueda POS, venta efectiva en efectivo, detalle de venta, pago, comprobante interno y consumo FEFO.
-- La documentacion operativa y la tesis registran la evolucion del cierre: caja, POS efectivo y FEFO quedaron disponibles en el Sprint 07, y el correctivo backend posterior reemplazo la deuda de ausencia de API para pendientes, anulacion y supervision por deuda no bloqueante de guardrail final.
+- La documentacion operativa y la tesis registran la evolucion del cierre: caja, POS efectivo y FEFO quedaron disponibles en el Sprint 07, y el correctivo backend posterior resolvio la ausencia de API ejecutable para pendientes, anulacion y supervision.
 - No se ejecuto QA manual, navegador ni Playwright, porque el ticket lo excluye.
 
 ## Closure Decision
 
 - `epic.md` permanece en `- Status: TODO`.
-- Estado posterior al correctivo backend: el bloqueo por ausencia de API ejecutable para carritos pendientes, anulacion de ventas, pago revertido, movimientos inversos y listados administrativos paginados de supervision queda resuelto.
-- Siguiente accion concreta: ejecutar regresion backend especifica para esas reglas y repetir este guardrail de cierre para decidir si el epic puede pasar a DONE.
+- Nota historica posterior al Sprint 08: el bloqueo por ausencia de API ejecutable para carritos pendientes, anulacion de ventas, pago revertido, movimientos inversos y listados administrativos paginados de supervision quedo resuelto y validado tecnicamente.
+- Siguiente accion vigente: completar el cierre documental del Sprint 09 antes de cambiar el epic a `DONE`.

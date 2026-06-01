@@ -1,0 +1,243 @@
+- generic [ref=e24]:
+  - generic [ref=e27]:
+    - list [ref=e29]:
+      - listitem [ref=e30]:
+        - button "Farmacia POS Sucursal única" [ref=e31]:
+          - img [ref=e33]
+          - generic [ref=e37]:
+            - generic [ref=e38]: Farmacia POS
+            - generic [ref=e39]: Sucursal única
+    - generic [ref=e40]:
+      - generic [ref=e42]:
+        - button "Inicio" [expanded] [ref=e43]:
+          - text: Inicio
+          - img [ref=e44]
+        - list [ref=e48]:
+          - listitem [ref=e49]:
+            - link "Dashboard" [ref=e50] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e51]
+              - generic [ref=e54]: Dashboard
+      - generic [ref=e56]:
+        - button "Operación" [expanded] [ref=e57]:
+          - text: Operación
+          - img [ref=e58]
+        - list [ref=e62]:
+          - listitem [ref=e63]:
+            - link "Punto de venta" [ref=e64] [cursor=pointer]:
+              - /url: /pos
+              - img [ref=e65]
+              - generic [ref=e70]: Punto de venta
+          - listitem [ref=e71]:
+            - link "Caja" [ref=e72] [cursor=pointer]:
+              - /url: /cash
+              - img [ref=e73]
+              - generic [ref=e77]: Caja
+          - listitem [ref=e78]:
+            - link "Devoluciones y anulaciones" [ref=e79] [cursor=pointer]:
+              - /url: /returns
+              - img [ref=e80]
+              - generic [ref=e85]: Devoluciones y anulaciones
+          - listitem [ref=e86]:
+            - link "Alertas" [ref=e87] [cursor=pointer]:
+              - /url: /alerts
+              - img [ref=e88]
+              - generic [ref=e90]: Alertas
+      - generic [ref=e92]:
+        - button "Inventario" [expanded] [ref=e93]:
+          - text: Inventario
+          - img [ref=e94]
+        - list [ref=e98]:
+          - listitem [ref=e99]:
+            - link "Productos" [ref=e100] [cursor=pointer]:
+              - /url: /products
+              - img [ref=e101]
+              - generic [ref=e105]: Productos
+          - listitem [ref=e106]:
+            - link "Unidades y conversiones" [ref=e107] [cursor=pointer]:
+              - /url: /units
+              - img [ref=e108]
+              - generic [ref=e114]: Unidades y conversiones
+          - listitem [ref=e115]:
+            - link "Lotes y stock" [ref=e116] [cursor=pointer]:
+              - /url: /batches
+              - img [ref=e117]
+              - generic [ref=e127]: Lotes y stock
+          - listitem [ref=e128]:
+            - link "Movimientos" [ref=e129] [cursor=pointer]:
+              - /url: /movements
+              - img [ref=e130]
+              - generic [ref=e134]: Movimientos
+          - listitem [ref=e135]:
+            - link "Ajustes manuales" [ref=e136] [cursor=pointer]:
+              - /url: /adjustments
+              - img [ref=e137]
+              - generic [ref=e140]: Ajustes manuales
+      - generic [ref=e142]:
+        - button "Compras" [expanded] [ref=e143]:
+          - text: Compras
+          - img [ref=e144]
+        - list [ref=e148]:
+          - listitem [ref=e149]:
+            - link "Proveedores" [ref=e150] [cursor=pointer]:
+              - /url: /suppliers
+              - img [ref=e151]
+              - generic [ref=e156]: Proveedores
+          - listitem [ref=e157]:
+            - link "Compras" [ref=e158] [cursor=pointer]:
+              - /url: /purchases
+              - img [ref=e159]
+              - generic [ref=e163]: Compras
+      - generic [ref=e165]:
+        - button "Facturación" [expanded] [ref=e166]:
+          - text: Facturación
+          - img [ref=e167]
+        - list [ref=e171]:
+          - listitem [ref=e172]:
+            - link "Facturas SIAT" [ref=e173] [cursor=pointer]:
+              - /url: /invoices
+              - img [ref=e174]
+              - generic [ref=e176]: Facturas SIAT
+          - listitem [ref=e177]:
+            - link "Configuración SIAT" [ref=e178] [cursor=pointer]:
+              - /url: /siat-settings
+              - img [ref=e179]
+              - generic [ref=e191]: Configuración SIAT
+      - generic [ref=e193]:
+        - button "Análisis" [expanded] [ref=e194]:
+          - text: Análisis
+          - img [ref=e195]
+        - list [ref=e199]:
+          - listitem [ref=e200]:
+            - link "Reportes" [ref=e201] [cursor=pointer]:
+              - /url: /reports
+              - img [ref=e202]
+              - generic [ref=e204]: Reportes
+          - listitem [ref=e205]:
+            - link "Exportaciones CSV" [ref=e206] [cursor=pointer]:
+              - /url: /exports
+              - img [ref=e207]
+              - generic [ref=e210]: Exportaciones CSV
+          - listitem [ref=e211]:
+            - link "Auditoría" [ref=e212] [cursor=pointer]:
+              - /url: /audit
+              - img [ref=e213]
+              - generic [ref=e216]: Auditoría
+      - generic [ref=e218]:
+        - button "Administración" [expanded] [ref=e219]:
+          - text: Administración
+          - img [ref=e220]
+        - list [ref=e224]:
+          - listitem [ref=e225]:
+            - link "Usuarios" [ref=e226] [cursor=pointer]:
+              - /url: /users
+              - img [ref=e227]
+              - generic [ref=e232]: Usuarios
+          - listitem [ref=e233]:
+            - link "Roles y permisos" [ref=e234] [cursor=pointer]:
+              - /url: /roles
+              - img [ref=e235]
+              - generic [ref=e237]: Roles y permisos
+          - listitem [ref=e238]:
+            - link "Configuración" [ref=e239] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e240]
+              - generic [ref=e243]: Configuración
+    - list [ref=e245]:
+      - listitem [ref=e246]:
+        - button "DS Development Superadmin Superadmin" [ref=e247]:
+          - generic [ref=e249]: DS
+          - generic [ref=e250]:
+            - generic [ref=e251]: Development Superadmin
+            - generic [ref=e252]: Superadmin
+    - button "Alternar barra lateral" [ref=e253]
+  - main [ref=e254]:
+    - generic [ref=e255]:
+      - button "Alternar navegación" [ref=e256]:
+        - img
+        - generic [ref=e257]: Alternar barra lateral
+      - generic [ref=e258]:
+        - paragraph [ref=e259]: Consola operativa
+        - heading "Dashboard" [level=1] [ref=e260]
+      - generic [ref=e261]:
+        - button "Cambiar tema" [ref=e262]:
+          - img
+        - button "Buscar en el sistema" [ref=e263]:
+          - img
+        - button "Alertas operativas" [ref=e264]:
+          - img
+    - main [ref=e265]:
+      - generic [ref=e266]:
+        - generic [ref=e267]:
+          - generic [ref=e268]: Consola de farmacia
+          - generic [ref=e269]:
+            - heading "Dashboard operativo" [level=1] [ref=e270]
+            - paragraph [ref=e271]: Vista inicial para ventas, inventario, compras, caja, facturación y alertas de una sola sucursal.
+        - generic [ref=e272]:
+          - generic [ref=e273]:
+            - generic [ref=e274]:
+              - generic [ref=e275]: Ventas de hoy
+              - img [ref=e276]
+            - generic [ref=e281]:
+              - paragraph [ref=e282]: "0"
+              - paragraph [ref=e283]: Listo para conectar el POS
+          - generic [ref=e284]:
+            - generic [ref=e285]:
+              - generic [ref=e286]: Stock crítico
+              - img [ref=e287]
+            - generic [ref=e297]:
+              - paragraph [ref=e298]: "0"
+              - paragraph [ref=e299]: Pendiente de inventario
+          - generic [ref=e300]:
+            - generic [ref=e301]:
+              - generic [ref=e302]: Compras abiertas
+              - img [ref=e303]
+            - generic [ref=e307]:
+              - paragraph [ref=e308]: "0"
+              - paragraph [ref=e309]: Borradores y recepción
+          - generic [ref=e310]:
+            - generic [ref=e311]:
+              - generic [ref=e312]: Facturas observadas
+              - img [ref=e313]
+            - generic [ref=e315]:
+              - paragraph [ref=e316]: "0"
+              - paragraph [ref=e317]: Estados SIAT iniciales
+        - generic [ref=e318]:
+          - generic [ref=e319]:
+            - generic [ref=e320]:
+              - generic [ref=e321]: Preparación del sistema
+              - generic [ref=e322]: Estado base para conectar módulos funcionales.
+            - generic [ref=e323]:
+              - alert [ref=e324]:
+                - img [ref=e325]
+                - generic [ref=e328]: Servidor en línea
+                - generic [ref=e329]: La interfaz está recibiendo una respuesta válida del servicio.
+              - generic [ref=e330]:
+                - generic [ref=e331]:
+                  - generic [ref=e332]: Preparación técnica
+                  - generic [ref=e333]: 100%
+                - progressbar [ref=e334]
+              - generic [ref=e336]:
+                - generic [ref=e337]:
+                  - img [ref=e338]
+                  - text: Contratos compartidos
+                - generic [ref=e341]:
+                  - img [ref=e342]
+                  - text: Autenticación
+                - generic [ref=e345]:
+                  - img [ref=e346]
+                  - text: Sidebar modular
+          - generic [ref=e349]:
+            - generic [ref=e350]:
+              - generic [ref=e351]: Alertas operativas
+              - generic [ref=e352]: Se conectarán al inventario, caja y SIAT.
+            - list [ref=e354]:
+              - listitem [ref=e355]:
+                - img [ref=e356]
+                - generic [ref=e358]: Lotes próximos a vencer
+              - listitem [ref=e359]:
+                - img [ref=e360]
+                - generic [ref=e362]: Productos sin precio
+              - listitem [ref=e363]:
+                - img [ref=e364]
+                - generic [ref=e366]: Caja abierta sin cerrar

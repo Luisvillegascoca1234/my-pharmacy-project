@@ -35,4 +35,6 @@ By the end of this sprint:
 
 ## Sprint Rule
 
-Este sprint implementa solamente la experiencia base de mostrador para caja y POS: estado de caja, apertura, cierre propio simple, busqueda de productos vendibles, carrito activo, cobro en efectivo, cambio, comprobante interno y errores principales. No implementa todavia carritos pendientes visibles, anulacion desde UI, cierre de caja ajena, supervision administrativa, reportes, SIAT, QR, tarjeta, credito, descuentos ni documentacion final de tesis.
+Este sprint implementa solamente la experiencia base de mostrador para caja y POS: estado de caja, apertura, cierre propio simple, busqueda de productos vendibles, carrito activo, cobro en efectivo, cambio, comprobante interno y errores principales. Carritos pendientes visibles, anulacion desde UI, cierre de caja ajena y supervision administrativa quedaron fuera de este sprint base y fueron tratados en el cierre posterior del epic. Reportes, SIAT, QR, tarjeta, credito, descuentos y documentacion final de tesis no pertenecian a este corte.
+
+Nota historica posterior al Sprint 09: pendientes POS, anulacion y supervision administrativa ya no se leen como deuda actual; forman parte del alcance V1 cerrado y reconciliado.
