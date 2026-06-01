@@ -2,90 +2,116 @@
 
 ## Objetivo
 
-Construir el flujo operativo del vendedor: abrir caja, registrar venta pagada en efectivo, descontar inventario por FEFO y dejar movimientos, pago y auditoria.
+Construir el flujo operativo de mostrador para farmacia: abrir caja, buscar productos vendibles, cobrar en efectivo, descontar inventario por FEFO, emitir comprobante interno y cerrar caja con diferencia calculada.
 
-## Alcance
+## Alcance operativo
 
-- Apertura y cierre de caja simple.
-- Busqueda de productos disponibles.
-- Carrito POS.
-- Venta pagada al momento.
-- Pago en efectivo V1.
-- Descuento de lotes por FEFO.
-- Movimiento de salida por venta.
-- Margen por item usando costo del lote.
+- Apertura y cierre de caja simple por usuario.
+- Cierre de caja ajena por admin o superadmin.
+- Busqueda de productos activos con stock vendible.
+- Carrito POS con cantidades enteras.
+- Venta anonima o consumidor final.
+- Pago unico en efectivo.
+- Registro de monto recibido y cambio.
+- Descuento automatico de lotes por FEFO.
+- Advertencia por productos proximos a vencer.
+- Comprobante interno de venta.
+- Carritos pendientes sin reserva de stock ni precio congelado.
+- Anulacion controlada de ventas mientras la caja asociada siga abierta.
+- Supervision administrativa de cajas, ventas y pendientes.
 
-## Backend
+## Flujo del vendedor
 
-Modulos:
+1. Abrir caja propia con monto inicial cero o mayor.
+2. Buscar productos por nombre comercial, principio activo, codigo interno o codigo de barras.
+3. Agregar productos al carrito y ajustar cantidades enteras.
+4. Revisar advertencias de proximo vencimiento cuando aparezcan.
+5. Cobrar en efectivo registrando el monto recibido.
+6. Entregar el cambio calculado.
+7. Revisar el comprobante interno de la venta.
+8. Cerrar caja al final del turno con el monto contado final.
 
-```text
-backend/src/modules/cash/
-backend/src/modules/sales/
-backend/src/modules/inventory/
-```
+El vendedor puede preparar o retomar una atencion sin caja abierta, pero no puede confirmar el cobro sin una caja propia abierta.
 
-Endpoints minimos:
+## Reglas de caja
 
-- `POST /api/cash-sessions/open`
-- `POST /api/cash-sessions/:id/close`
-- `GET /api/cash-sessions/current`
-- `GET /api/pos/products`
-- `POST /api/sales`
-- `GET /api/sales/:id`
+- El monto inicial puede ser cero o mayor.
+- No se aceptan montos negativos.
+- Un usuario no debe tener dos cajas abiertas al mismo tiempo.
+- El esperado de caja se calcula con monto inicial mas ventas efectivas netas.
+- El cierre permite diferencia positiva, negativa o cero.
+- La nota de cierre es opcional y sirve para explicar diferencias.
+- Admin y superadmin pueden cerrar caja ajena.
+- Una caja cerrada no se reabre en V1.
 
-Reglas:
+## Reglas de venta y pago
 
-- Vendedor debe tener caja abierta para vender si se habilita esa restriccion.
-- Venta se ejecuta en transaccion.
-- FEFO descuenta primero vencimiento mas cercano disponible.
-- Stock insuficiente cancela toda la venta.
-- Cada salida genera movimiento de inventario.
-- Pago queda relacionado con venta y caja.
-- No hay credito ni cuentas por cobrar.
+- La venta se crea recien al confirmar el pago.
+- El carrito no descuenta inventario.
+- El pago V1 es solo efectivo.
+- El monto recibido debe cubrir el total de venta.
+- El cambio se calcula automaticamente.
+- La caja suma el total de venta, no el efectivo bruto recibido.
+- El precio se toma del precio vigente del producto.
+- No hay descuentos, promociones, pagos mixtos ni credito en V1.
+- No se exige cliente, NIT ni razon social.
+- Solo se aceptan cantidades enteras.
 
-## Frontend
+## FEFO y vencimientos
 
-Modulos:
+FEFO es la regla farmaceutica de salida que consume primero el lote vigente con vencimiento mas cercano.
 
-```text
-frontend/src/modules/cash/
-frontend/src/modules/pos/
-frontend/src/modules/sales/
-```
+- El vendedor no elige lote manualmente.
+- Los lotes vencidos, bloqueados, cancelados o agotados no cuentan como vendibles.
+- Si un lote no alcanza, la venta puede consumir varios lotes en orden FEFO.
+- Si el stock total vendible no alcanza, se rechaza toda la venta.
+- Los productos proximos a vencer pueden venderse con advertencia mientras sigan vigentes.
+- La venta conserva evidencia de lote, vencimiento, cantidad y costo para trazabilidad y margen.
 
-Pantallas:
+## Carritos pendientes
 
-- Apertura de caja.
-- POS de venta.
-- Confirmacion de pago efectivo.
-- Cierre de caja.
-- Detalle de venta.
+Un carrito pendiente es una atencion pausada, no una venta.
 
-## Contratos compartidos
+- No reserva stock.
+- No congela precio.
+- Expira a los 3 dias.
+- Al retomarlo se revalidan precio, stock y estado de producto.
+- Si el precio cambio, se informa y se cobra el precio vigente.
+- Si el stock ya no alcanza, el carrito debe corregirse antes de cobrar.
+- El vendedor opera sus propios pendientes.
+- Admin y superadmin pueden revisar y descartar pendientes de todos.
 
-Schemas:
+## Anulacion y supervision
 
-- `CashSessionSchema`
-- `OpenCashSessionSchema`
-- `CloseCashSessionSchema`
-- `SaleSchema`
-- `CreateSaleSchema`
-- `PaymentSchema`
+La anulacion V1 es una correccion operativa mientras la caja asociada sigue abierta.
 
-## Verificacion
+- Toda anulacion requiere motivo.
+- El vendedor anula solo ventas propias permitidas del dia.
+- Admin y superadmin pueden anular ventas permitidas de cualquier vendedor.
+- No se anulan ventas de cajas cerradas.
+- La venta anulada no se borra.
+- El pago queda con evidencia de reversa.
+- El inventario se repone a los mismos lotes consumidos.
+- La caja refleja ventas efectivas netas.
 
-- Vendedor abre caja.
-- Vendedor busca producto con stock.
-- Venta descuenta lote correcto por FEFO.
-- Venta crea pago efectivo.
-- Caja muestra total esperado.
-- Cierre calcula diferencia entre esperado y contado.
+El correctivo backend reconcilia pendientes, anulacion de ventas y listados administrativos de supervision como flujo operativo V1. La deuda residual ya no es ausencia de disponibilidad para estas reglas, sino completar el guardrail final de cierre y documentar cualquier diferencia funcional que aparezca en una validacion posterior.
 
-## Fuera de alcance
+## Comprobante interno y factura fiscal
 
+El comprobante interno documenta la venta POS, el vendedor, la caja, los productos, el monto recibido, el cambio y el consumo FEFO. Sirve para atencion, consulta y auditoria interna.
+
+La factura fiscal es un documento tributario separado. En V1 no hay SIAT real, QR fiscal ni emision fiscal en linea. El comprobante interno no reemplaza factura fiscal.
+
+## Fuera de alcance V1
+
+- SIAT real.
 - QR real.
 - Tarjeta.
-- Credito.
-- Factura SIAT real.
-- Devoluciones.
+- Pagos mixtos.
+- Credito o cuentas por cobrar.
+- Cliente formal con NIT o razon social.
+- Descuentos y promociones.
+- Cantidades decimales.
+- Reapertura de caja cerrada.
+- Devoluciones posteriores al cierre.
+- Reportes analiticos completos.

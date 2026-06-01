@@ -1,19 +1,19 @@
 ---
 title: Ventas POS
-description: Flujo conceptual de venta, descuento de stock y trazabilidad comercial.
+description: Flujo operativo de mostrador, pago efectivo, FEFO y comprobante interno.
 ---
 
-La venta POS representa la operación de mostrador de la farmacia. Su objetivo es registrar la entrega del producto, calcular el total, cobrar al cliente y descontar inventario de manera trazable.
+La venta POS representa la operacion de mostrador de la farmacia. Su objetivo es preparar un carrito, cobrar en efectivo, generar un comprobante interno y descontar inventario de manera trazable por FEFO.
 
 ## Flujo normal
 
 1. El vendedor busca el producto por nombre, código, código de barras o criterio disponible.
 2. Verifica stock apto para venta.
-3. Selecciona la presentación comercial y cantidad.
-4. El sistema identifica los lotes disponibles según FEFO.
-5. Se confirma el total.
-6. Se registra el pago.
-7. Se descuenta inventario y se genera evidencia de la venta.
+3. Agrega productos al carrito con cantidades enteras.
+4. Revisa el total y las advertencias de proximo vencimiento.
+5. Registra el monto recibido en efectivo.
+6. El sistema calcula el cambio.
+7. Al confirmar el cobro, descuenta inventario por FEFO y emite comprobante interno.
 
 ## Stock apto para venta
 
@@ -25,7 +25,7 @@ Cuando existen varios lotes disponibles, el sistema debe priorizar los de vencim
 
 ## Datos de venta
 
-Una venta debe conservar vendedor, fecha y hora, productos, cantidades, unidad vendida, precio unitario, subtotal, total, pago asociado y, cuando aplique, relación con factura.
+Una venta debe conservar vendedor, caja, fecha y hora, productos, cantidades, precio unitario, subtotal, total, pago efectivo, cambio y evidencia de los lotes consumidos. En V1 la venta es anonima o de consumidor final y el comprobante interno no reemplaza una factura fiscal.
 
 ## Margen comercial
 
@@ -34,9 +34,13 @@ El margen no se calcula solamente con el precio de venta. Debe considerar el cos
 ## Reglas de negocio
 
 - No debe venderse stock vencido, cancelado o no disponible.
-- La cantidad vendida debe convertirse a unidad base para descontar inventario.
-- La venta debe relacionarse con pagos.
-- Si existe facturación, la venta y la factura deben mantenerse como conceptos relacionados pero distintos.
+- Las cantidades de POS son enteras.
+- La venta nace recien al confirmar el pago.
+- El carrito activo no reserva stock.
+- El pago V1 es unico y en efectivo.
+- El monto recibido debe cubrir el total.
+- El comprobante interno y la factura fiscal son conceptos distintos.
+- Carritos pendientes y anulacion controlada pertenecen al alcance V1 operativo: el pendiente no reserva stock ni congela precio, y la anulacion conserva evidencia de reversa, reposicion por lote y venta neta de caja mientras la caja asociada siga abierta.
 
 ## Resultado esperado
 

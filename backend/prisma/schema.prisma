@@ -47,24 +47,58 @@ enum InventoryMovementType {
   purchase_received
   purchase_cancelled
   inventory_adjustment
+  sale_confirmed
+  sale_cancelled
+}
+
+enum CashSessionStatus {
+  open
+  closed
+}
+
+enum SaleStatus {
+  confirmed
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+}
+
+enum PaymentStatus {
+  paid
+  reverted
+  cancelled
+}
+
+enum PendingCartStatus {
+  active
+  converted
+  discarded
+  expired
 }
 
 model User {
-  id                 String              @id @default(cuid())
-  email              String              @unique
-  passwordHash       String
-  fullName           String
-  roleId             String
-  role               Role                @relation(fields: [roleId], references: [id])
-  status             UserStatus          @default(active)
-  lastLoginAt        DateTime?
-  auditLogs          AuditLog[]          @relation("AuditActor")
-  createdPurchases   Purchase[]          @relation("PurchaseCreatedBy")
-  receivedPurchases  Purchase[]          @relation("PurchaseReceivedBy")
-  inventoryMovements  InventoryMovement[]  @relation("InventoryMovementActor")
+  id                   String                @id @default(cuid())
+  email                String                @unique
+  passwordHash         String
+  fullName             String
+  roleId               String
+  role                 Role                  @relation(fields: [roleId], references: [id])
+  status               UserStatus            @default(active)
+  lastLoginAt          DateTime?
+  auditLogs            AuditLog[]            @relation("AuditActor")
+  createdPurchases     Purchase[]            @relation("PurchaseCreatedBy")
+  receivedPurchases    Purchase[]            @relation("PurchaseReceivedBy")
+  inventoryMovements   InventoryMovement[]   @relation("InventoryMovementActor")
   inventoryAdjustments InventoryAdjustment[] @relation("InventoryAdjustmentActor")
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  openedCashSessions   CashSession[]         @relation("CashSessionOpenedBy")
+  closedCashSessions   CashSession[]         @relation("CashSessionClosedBy")
+  soldSales            Sale[]                @relation("SaleSeller")
+  cancelledSales       Sale[]                @relation("SaleCancelledBy")
+  pendingCarts         PendingCart[]         @relation("PendingCartOwner")
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 }
 
 model Role {
@@ -134,37 +168,39 @@ model Unit {
 }
 
 model Product {
-  id                   String              @id @default(cuid())
-  internalCode         String              @unique
-  barcode              String?             @unique
+  id                   String                @id @default(cuid())
+  internalCode         String                @unique
+  barcode              String?               @unique
   commercialName       String
   genericName          String?
   description          String?
   type                 ProductType
   categoryId           String
-  category             ProductCategory     @relation(fields: [categoryId], references: [id])
+  category             ProductCategory       @relation(fields: [categoryId], references: [id])
   baseUnitId           String
-  baseUnit             Unit                @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
+  baseUnit             Unit                  @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
   supplierId           String
-  supplier             Supplier            @relation(fields: [supplierId], references: [id])
+  supplier             Supplier              @relation(fields: [supplierId], references: [id])
   laboratoryName       String?
   sanitaryRegistration String?
-  isMedicine           Boolean             @default(false)
-  isOverTheCounter     Boolean             @default(false)
-  requiresPrescription Boolean             @default(false)
-  isInventoryTracked   Boolean             @default(true)
-  requiresBatch        Boolean             @default(true)
-  requiresExpiration   Boolean             @default(true)
-  minimumStock         Decimal             @default(0) @db.Decimal(12, 4)
-  salePrice            Decimal             @db.Decimal(12, 2)
-  status               ProductStatus       @default(active)
+  isMedicine           Boolean               @default(false)
+  isOverTheCounter     Boolean               @default(false)
+  requiresPrescription Boolean               @default(false)
+  isInventoryTracked   Boolean               @default(true)
+  requiresBatch        Boolean               @default(true)
+  requiresExpiration   Boolean               @default(true)
+  minimumStock         Decimal               @default(0) @db.Decimal(12, 4)
+  salePrice            Decimal               @db.Decimal(12, 2)
+  status               ProductStatus         @default(active)
   units                ProductUnit[]
   purchaseItems        PurchaseItem[]
   inventoryBatches     InventoryBatch[]
   inventoryMovements   InventoryMovement[]
   inventoryAdjustments InventoryAdjustment[]
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
+  saleItems            SaleItem[]
+  pendingCartItems     PendingCartItem[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -234,26 +270,25 @@ model Purchase {
 }
 
 model PurchaseItem {
-  id                 String              @id @default(cuid())
+  id                 String          @id @default(cuid())
   purchaseId         String
-  purchase           Purchase            @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  purchase           Purchase        @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   productId          String
-  product            Product             @relation(fields: [productId], references: [id])
+  product            Product         @relation(fields: [productId], references: [id])
   unitId             String
-  unit               Unit                @relation(fields: [unitId], references: [id])
-  quantity           Decimal             @db.Decimal(12, 4)
-  unitCost           Decimal             @db.Decimal(12, 2)
-  conversionFactor   Decimal             @db.Decimal(12, 4)
-  baseQuantity       Decimal             @db.Decimal(12, 4)
-  baseUnitCost       Decimal             @db.Decimal(12, 4)
-  lineTotal          Decimal             @db.Decimal(12, 2)
-  isInventoryTracked Boolean             @default(true)
+  unit               Unit            @relation(fields: [unitId], references: [id])
+  quantity           Decimal         @db.Decimal(12, 4)
+  unitCost           Decimal         @db.Decimal(12, 2)
+  conversionFactor   Decimal         @db.Decimal(12, 4)
+  baseQuantity       Decimal         @db.Decimal(12, 4)
+  baseUnitCost       Decimal         @db.Decimal(12, 4)
+  lineTotal          Decimal         @db.Decimal(12, 2)
+  isInventoryTracked Boolean         @default(true)
   batchNumber        String?
-  expirationDate     DateTime?           @db.Date
+  expirationDate     DateTime?       @db.Date
   inventoryBatch     InventoryBatch?
-  inventoryMovements InventoryMovement[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   @@index([purchaseId])
   @@index([productId])
@@ -265,21 +300,22 @@ model PurchaseItem {
 }
 
 model InventoryBatch {
-  id                String               @id @default(cuid())
-  purchaseItemId    String               @unique
-  purchaseItem      PurchaseItem         @relation(fields: [purchaseItemId], references: [id])
+  id                String                @id @default(cuid())
+  purchaseItemId    String                @unique
+  purchaseItem      PurchaseItem          @relation(fields: [purchaseItemId], references: [id])
   productId         String
-  product           Product              @relation(fields: [productId], references: [id])
-  originalQuantity  Decimal              @db.Decimal(12, 4)
-  availableQuantity Decimal              @db.Decimal(12, 4)
-  baseUnitCost      Decimal              @db.Decimal(12, 4)
+  product           Product               @relation(fields: [productId], references: [id])
+  originalQuantity  Decimal               @db.Decimal(12, 4)
+  availableQuantity Decimal               @db.Decimal(12, 4)
+  baseUnitCost      Decimal               @db.Decimal(12, 4)
   batchNumber       String?
-  expirationDate    DateTime?            @db.Date
-  status            InventoryBatchStatus @default(active)
+  expirationDate    DateTime?             @db.Date
+  status            InventoryBatchStatus  @default(active)
   movements         InventoryMovement[]
   adjustments       InventoryAdjustment[]
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
+  saleItemBatches   SaleItemBatch[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
 
   @@index([productId])
   @@index([batchNumber])
@@ -323,7 +359,7 @@ model InventoryMovement {
   referenceType   String
   referenceId     String
   referenceItemId String?
-  referenceItem   PurchaseItem?         @relation(fields: [referenceItemId], references: [id])
+  saleItemBatch   SaleItemBatch?
   actorUserId     String?
   actorUser       User?                 @relation("InventoryMovementActor", fields: [actorUserId], references: [id])
   reason          String?
@@ -339,4 +375,184 @@ model InventoryMovement {
   @@index([productId, createdAt])
   @@index([productId, type])
   @@index([batchId, createdAt])
+}
+
+model CashSession {
+  id                String            @id @default(cuid())
+  correlativeNumber Int               @unique
+  correlativeCode   String            @unique
+  openedByUserId    String
+  openedByUser      User              @relation("CashSessionOpenedBy", fields: [openedByUserId], references: [id])
+  closedByUserId    String?
+  closedByUser      User?             @relation("CashSessionClosedBy", fields: [closedByUserId], references: [id])
+  sales             Sale[]
+  payments          Payment[]
+  initialAmount     Decimal           @db.Decimal(12, 2)
+  countedAmount     Decimal?          @db.Decimal(12, 2)
+  expectedAmount    Decimal           @default(0) @db.Decimal(12, 2)
+  differenceAmount  Decimal?          @db.Decimal(12, 2)
+  status            CashSessionStatus @default(open)
+  openingNote       String?
+  closingNote       String?
+  openedAt          DateTime          @default(now())
+  closedAt          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([openedByUserId])
+  @@index([closedByUserId])
+  @@index([status])
+  @@index([openedAt])
+  @@index([closedAt])
+  @@index([openedByUserId, status])
+}
+
+model Sale {
+  id                   String       @id @default(cuid())
+  correlativeNumber    Int          @unique
+  correlativeCode      String       @unique
+  sellerUserId         String
+  sellerUser           User         @relation("SaleSeller", fields: [sellerUserId], references: [id])
+  cancelledByUserId    String?
+  cancelledByUser      User?        @relation("SaleCancelledBy", fields: [cancelledByUserId], references: [id])
+  cashSessionId        String
+  cashSession          CashSession  @relation(fields: [cashSessionId], references: [id])
+  status               SaleStatus   @default(confirmed)
+  totalAmount          Decimal      @default(0) @db.Decimal(12, 2)
+  totalCost            Decimal      @default(0) @db.Decimal(12, 2)
+  totalMargin          Decimal      @default(0) @db.Decimal(12, 2)
+  confirmedAt          DateTime     @default(now())
+  cancelledAt          DateTime?
+  cancelReason         String?
+  items                SaleItem[]
+  payment              Payment?
+  convertedPendingCart PendingCart? @relation("PendingCartConvertedSale")
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([sellerUserId])
+  @@index([cancelledByUserId])
+  @@index([cashSessionId])
+  @@index([status])
+  @@index([confirmedAt])
+  @@index([sellerUserId, confirmedAt])
+  @@index([cashSessionId, confirmedAt])
+}
+
+model SaleItem {
+  id                   String          @id @default(cuid())
+  saleId               String
+  sale                 Sale            @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId            String
+  product              Product         @relation(fields: [productId], references: [id])
+  internalCode         String
+  barcode              String?
+  commercialName       String
+  genericName          String?
+  baseUnitId           String
+  baseUnitName         String
+  baseUnitAbbreviation String
+  unitPrice            Decimal         @db.Decimal(12, 2)
+  quantity             Int
+  subtotal             Decimal         @db.Decimal(12, 2)
+  totalCost            Decimal         @default(0) @db.Decimal(12, 2)
+  margin               Decimal         @default(0) @db.Decimal(12, 2)
+  consumptions         SaleItemBatch[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  @@index([saleId])
+  @@index([productId])
+  @@index([saleId, productId])
+}
+
+model SaleItemBatch {
+  id                  String             @id @default(cuid())
+  saleItemId          String
+  saleItem            SaleItem           @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+  batchId             String
+  batch               InventoryBatch     @relation(fields: [batchId], references: [id])
+  quantity            Decimal            @db.Decimal(12, 4)
+  unitCostBase        Decimal            @db.Decimal(12, 4)
+  totalCost           Decimal            @db.Decimal(12, 2)
+  inventoryMovementId String?            @unique
+  inventoryMovement   InventoryMovement? @relation(fields: [inventoryMovementId], references: [id])
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([saleItemId])
+  @@index([batchId])
+  @@index([saleItemId, batchId])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  saleId         String        @unique
+  sale           Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  cashSessionId  String
+  cashSession    CashSession   @relation(fields: [cashSessionId], references: [id])
+  method         PaymentMethod @default(cash)
+  saleTotal      Decimal       @db.Decimal(12, 2)
+  receivedAmount Decimal       @db.Decimal(12, 2)
+  changeAmount   Decimal       @db.Decimal(12, 2)
+  status         PaymentStatus @default(paid)
+  paidAt         DateTime      @default(now())
+  reversedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([cashSessionId])
+  @@index([status])
+  @@index([paidAt])
+  @@index([cashSessionId, paidAt])
+}
+
+model PendingCart {
+  id                   String            @id @default(cuid())
+  ownerUserId          String
+  ownerUser            User              @relation("PendingCartOwner", fields: [ownerUserId], references: [id])
+  status               PendingCartStatus @default(active)
+  name                 String?
+  note                 String?
+  referenceTotalAmount Decimal           @default(0) @db.Decimal(12, 2)
+  expiresAt            DateTime
+  expiredAt            DateTime?
+  discardedAt          DateTime?
+  discardReason        String?
+  convertedAt          DateTime?
+  convertedSaleId      String?           @unique
+  convertedSale        Sale?             @relation("PendingCartConvertedSale", fields: [convertedSaleId], references: [id])
+  items                PendingCartItem[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([ownerUserId, status])
+  @@index([ownerUserId, expiresAt])
+}
+
+model PendingCartItem {
+  id                   String      @id @default(cuid())
+  pendingCartId        String
+  pendingCart          PendingCart @relation(fields: [pendingCartId], references: [id], onDelete: Cascade)
+  productId            String
+  product              Product     @relation(fields: [productId], references: [id])
+  internalCode         String
+  barcode              String?
+  commercialName       String
+  genericName          String?
+  baseUnitId           String
+  baseUnitName         String
+  baseUnitAbbreviation String
+  referenceUnitPrice   Decimal     @db.Decimal(12, 2)
+  quantity             Int
+  referenceSubtotal    Decimal     @db.Decimal(12, 2)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@unique([pendingCartId, productId])
+  @@index([pendingCartId])
+  @@index([productId])
 }

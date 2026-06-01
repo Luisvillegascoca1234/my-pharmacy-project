@@ -9,7 +9,13 @@ const signedDecimal4 = z.coerce.number().finite();
 export const InventoryBatchStatusSchema = z.enum(["active", "depleted", "cancelled"]);
 export type InventoryBatchStatus = z.infer<typeof InventoryBatchStatusSchema>;
 
-export const InventoryMovementTypeSchema = z.enum(["purchase_received", "purchase_cancelled", "inventory_adjustment"]);
+export const InventoryMovementTypeSchema = z.enum([
+  "purchase_received",
+  "purchase_cancelled",
+  "inventory_adjustment",
+  "sale_confirmed",
+  "sale_cancelled"
+]);
 export type InventoryMovementType = z.infer<typeof InventoryMovementTypeSchema>;
 
 export const InventoryProductSummarySchema = z.object({

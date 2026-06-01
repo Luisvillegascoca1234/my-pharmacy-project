@@ -2,24 +2,24 @@
 
 \section{Conclusiones}
 
-Respecto al primer objetivo específico, se identificaron requerimientos funcionales y no funcionales propios del contexto farmacéutico. La gestión de proveedores, compras recibidas, lotes, vencimientos, unidades, costos, estados de compra y auditoría demuestra que el sistema debe tratar el ingreso de mercadería como una operación trazable, no como un simple registro administrativo.
+Respecto al primer objetivo específico, se identificaron requerimientos funcionales y no funcionales propios del contexto farmacéutico. La gestión de proveedores, compras recibidas, lotes, vencimientos, unidades, costos, estados de compra, ventas POS, caja, pagos y auditoría demuestra que el sistema debe tratar el ingreso y la salida de mercadería como operaciones trazables, no como simples registros administrativos.
 
 Respecto al segundo objetivo específico, se diseñó una arquitectura web modular que separa interfaz, API de aplicación, contratos de datos y persistencia relacional. Esta separación permite conservar reglas críticas en el lugar adecuado, reducir duplicación de validaciones y facilitar la evolución del sistema hacia módulos posteriores como ventas, facturación o reportes.
 
-Respecto al tercer objetivo específico, se implementó el flujo administrativo de proveedores y compras recibidas con estados controlados, recepción, anulación justificada, generación de capas de inventario, movimientos asociados y auditoría. Esta solución permite que el inventario tenga origen verificable en compras recibidas y que las anulaciones respeten la consistencia de existencias.
+Respecto al tercer objetivo específico, se implementó el flujo administrativo de proveedores y compras recibidas con estados controlados, recepción, anulación justificada, generación de capas de inventario, movimientos asociados y auditoría. También se incorporó el flujo disponible de caja y venta POS en efectivo, con apertura de turno, cierre con diferencia calculada, venta anónima, comprobante interno, pago suficiente, cambio y consumo de inventario por FEFO. Esta solución permite que el inventario tenga origen verificable en compras recibidas y salida verificable en ventas de mostrador.
 
-Respecto al cuarto objetivo específico, se definió una estrategia de validación técnica centrada en reglas de dominio, contratos de datos, autorización y transacciones de inventario. Este enfoque permite verificar los riesgos más importantes del sistema antes de depender únicamente de recorridos manuales de interfaz.
+Respecto al cuarto objetivo específico, se definió una estrategia de validación técnica centrada en reglas de dominio, contratos de datos, autorización, caja, pagos y transacciones de inventario. La evidencia disponible cubre compras, caja, venta efectiva, pago en efectivo, cambio, FEFO y rechazo por stock insuficiente. No se presenta como evidencia ejecutada la validación manual de navegador ni la regresión completa de carritos pendientes y anulación de ventas, debido a que esas capacidades permanecen como alcance diferido documentado en la versión analizada.
 
-En conjunto, el caso de estudio demuestra que un sistema de farmacia requiere equilibrio entre facilidad de uso y control técnico. La interfaz debe ser comprensible para usuarios administrativos, pero las reglas de recepción, inventario y auditoría deben permanecer protegidas por validaciones, roles y transacciones consistentes.
+En conjunto, el caso de estudio demuestra que un sistema de farmacia requiere equilibrio entre facilidad de uso y control técnico. La interfaz debe ser comprensible para usuarios administrativos y de mostrador, pero las reglas de recepción, inventario, caja, pago, FEFO y auditoría deben permanecer protegidas por validaciones, roles y transacciones consistentes.
 
 \section{Recomendaciones}
 
-Se recomienda continuar el desarrollo con el módulo completo de ventas y punto de venta, cuidando que la salida de inventario respete las capas, lotes y vencimientos generados por las compras recibidas.
+Se recomienda completar la integración de carritos pendientes, anulación de ventas y supervisión administrativa avanzada, cuidando que la salida y reversa de inventario respeten las capas, lotes y vencimientos generados por las compras recibidas.
 
 Se recomienda incorporar una visualización operativa de kardex y stock por lote, de manera que el personal administrativo pueda consultar existencias disponibles, vencimientos próximos y origen de cada movimiento sin acceder a detalles técnicos internos.
 
 Se recomienda definir políticas de respaldo, restauración y monitoreo antes de un despliegue institucional, debido a que la información de inventario, compras y auditoría constituye evidencia crítica para la operación de la farmacia.
 
-Se recomienda ampliar la validación manual de interfaz en un ambiente estable, cubriendo perfiles administrativos y de venta, restricciones por rol, mensajes de error, navegación y flujos completos de proveedores y compras.
+Se recomienda ampliar la validación manual de interfaz en un ambiente estable, cubriendo perfiles administrativos y de venta, restricciones por rol, mensajes de error, navegación y flujos completos de proveedores, compras, caja, POS, pendientes y anulaciones permitidas.
 
-Se recomienda evaluar en una etapa posterior la integración con facturación fiscal, pagos a proveedores, cuentas por pagar, devoluciones y reportes gerenciales, manteniendo la misma disciplina arquitectónica aplicada al flujo de compras recibidas.
+Se recomienda evaluar en una etapa posterior la integración con facturación fiscal, pagos a proveedores, cuentas por pagar, devoluciones posteriores al cierre, medios de pago ampliados y reportes gerenciales, manteniendo la misma disciplina arquitectónica aplicada a compras recibidas, inventario por lote, caja y ventas POS.

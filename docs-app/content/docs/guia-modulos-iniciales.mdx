@@ -3,31 +3,13 @@ title: Guia de modulos iniciales
 description: Navegacion y uso previsto de pantallas que aun muestran contenido inicial.
 ---
 
-Algunos modulos ya aparecen en la navegacion, pero todavia muestran una pantalla inicial con el mensaje **Contenido operativo pendiente**. Esta guia explica cómo ubicarlos y qué funcion tendrán dentro del flujo completo.
+Algunos modulos ya aparecen en la navegacion, pero todavia muestran una pantalla inicial con el mensaje **Contenido operativo pendiente**. Esta guia explica como ubicarlos y que funcion tendran dentro del flujo completo.
 
-## Punto de venta
+## Flujo de mostrador
 
-Ruta: **Operación > Punto de venta**.
+Las pantallas **Punto de venta**, **Pendientes POS**, **Caja**, **Supervision POS** y **Ventas y anulaciones** ya no se consideran modulos iniciales. Forman parte del flujo V1 de mostrador: caja abierta, venta en efectivo, FEFO, comprobante interno, pendientes sin reserva de stock y anulacion controlada segun disponibilidad de cierre.
 
-Uso previsto: registrar ventas, seleccionar stock por FEFO y cobrar al contado.
-
-Estado actual: la pantalla muestra el objetivo del modulo y una lista de próximos pasos.
-
-## Caja
-
-Ruta: **Operación > Caja**.
-
-Uso previsto: apertura, cierre, pagos y diferencias de caja.
-
-Estado actual: la pantalla muestra el objetivo del modulo y una lista de próximos pasos.
-
-## Devoluciones y anulaciones
-
-Ruta: **Operación > Devoluciones y anulaciones**.
-
-Uso previsto: gestionar devoluciones, anulaciones comerciales y acciones relacionadas con documentos fiscales.
-
-Estado actual: modulo inicial.
+Las devoluciones posteriores al cierre y la facturacion fiscal no forman parte de ese flujo V1.
 
 ## Modulos de inventario ya operativos
 
@@ -36,6 +18,10 @@ Las pantallas **Alertas**, **Lotes y stock**, **Movimientos** y **Ajustes manual
 ## Facturacion y analisis
 
 Las rutas **Facturas SIAT**, **Configuración SIAT**, **Reportes**, **Exportaciones CSV** y **Auditoría** ya aparecen en la barra lateral. Su uso previsto es fiscal, analítico y administrativo. Mientras aparezcan como modulos iniciales, deben considerarse pantallas preparadas para recibir funcionalidad posterior.
+
+## Administracion pendiente
+
+Las rutas **Roles y permisos** y **Configuración** tambien pueden aparecer como modulos iniciales segun el rol. Su proposito es administrar permisos y parametros globales, no operar ventas de mostrador.
 
 ## Consejo
 

@@ -1,62 +1,64 @@
 import type { AuthenticatedUser } from "@pharmacy-pos/shared";
-import { Navigate, Route, Routes } from "react-router-dom";
+import type { ComponentType } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { ShieldAlert } from "lucide-react";
 import { AdjustmentsPage } from "@/pages/adjustments-page";
+import { AdministrativeSupervisionPage } from "@/pages/administrative-supervision-page";
 import { AlertsPage } from "@/pages/alerts-page";
 import { BatchesPage } from "@/pages/batches-page";
+import { CashPage } from "@/pages/cash-page";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { ModulePage } from "@/pages/module-page";
 import { MovementsPage } from "@/pages/movements-page";
+import { PosPage } from "@/pages/pos-page";
 import { ProductsPage } from "@/pages/products-page";
 import { PurchaseFormPage } from "@/pages/purchase-form-page";
 import { PurchasesPage } from "@/pages/purchases-page";
+import { SalesCancellationPage } from "@/pages/sales-cancellation-page";
 import { SupplierFormPage } from "@/pages/supplier-form-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
 import { UnitsPage } from "@/pages/units-page";
 import { UsersPage } from "@/pages/users-page";
-import { getVisibleNavigationItems, navigationItems } from "./navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isRouteAllowedForRole, navigationItems, type AppNavigationItem, type AppRouteKey } from "./navigation";
 
 type AppRoutesProps = {
   user: AuthenticatedUser;
 };
 
+const routePages: Partial<Record<AppRouteKey, ComponentType>> = {
+  adjustments: AdjustmentsPage,
+  alerts: AlertsPage,
+  batches: BatchesPage,
+  cash: CashPage,
+  dashboard: DashboardPage,
+  movements: MovementsPage,
+  pos: PosPage,
+  products: ProductsPage,
+  purchases: PurchasesPage,
+  salesCancellations: SalesCancellationPage,
+  supervision: AdministrativeSupervisionPage,
+  suppliers: SuppliersPage,
+  units: UnitsPage,
+  users: UsersPage
+};
+
 export function AppRoutes({ user }: AppRoutesProps) {
-  const visibleItems = getVisibleNavigationItems(user.role.name);
-  const canAccessSuppliers = visibleItems.some((item) => item.key === "suppliers");
-  const canAccessPurchases = visibleItems.some((item) => item.key === "purchases");
+  const allowedItems = navigationItems.filter((item) => isRouteAllowedForRole(item, user.role.name));
+  const blockedItems = navigationItems.filter((item) => !isRouteAllowedForRole(item, user.role.name));
+  const canAccessSuppliers = allowedItems.some((item) => item.key === "suppliers");
+  const canAccessPurchases = allowedItems.some((item) => item.key === "purchases");
 
   return (
     <Routes>
       <Route element={<Navigate replace to="/dashboard" />} path="/" />
-      {visibleItems.map((item) => (
-        <Route
-          key={item.key}
-          element={
-            item.key === "dashboard" ? (
-              <DashboardPage />
-            ) : item.key === "products" ? (
-              <ProductsPage />
-            ) : item.key === "suppliers" ? (
-              <SuppliersPage />
-            ) : item.key === "purchases" ? (
-              <PurchasesPage />
-            ) : item.key === "units" ? (
-              <UnitsPage />
-            ) : item.key === "users" ? (
-              <UsersPage />
-            ) : item.key === "batches" ? (
-              <BatchesPage />
-            ) : item.key === "movements" ? (
-              <MovementsPage />
-            ) : item.key === "adjustments" ? (
-              <AdjustmentsPage />
-            ) : item.key === "alerts" ? (
-              <AlertsPage />
-            ) : (
-              <ModulePage description={item.description} icon={item.icon} title={item.label} />
-            )
-          }
-          path={item.path}
-        />
+      {allowedItems.map((item) => (
+        <Route key={item.key} element={buildNavigationRouteElement(item)} path={item.path} />
+      ))}
+      {blockedItems.map((item) => (
+        <Route key={item.key} element={<RouteAccessDeniedPage item={item} />} path={item.path} />
       ))}
       {canAccessSuppliers ? (
         <>
@@ -70,8 +72,44 @@ export function AppRoutes({ user }: AppRoutesProps) {
           <Route element={<PurchaseFormPage mode="detail" />} path="/purchases/:id" />
         </>
       ) : null}
-      <Route element={<Navigate replace to={visibleItems[0]?.path ?? "/dashboard"} />} path="*" />
+      <Route element={<Navigate replace to={allowedItems[0]?.path ?? "/dashboard"} />} path="*" />
     </Routes>
+  );
+}
+
+function buildNavigationRouteElement(item: AppNavigationItem) {
+  if (item.key === "pendingCarts") {
+    return <PosPage focus="pending" />;
+  }
+
+  const Page = routePages[item.key];
+
+  return Page ? <Page /> : <ModulePage description={item.description} icon={item.icon} title={item.label} />;
+}
+
+function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
+  const navigate = useNavigate();
+
+  return (
+    <section className="mx-auto grid max-w-3xl gap-5">
+      <Alert variant="destructive">
+        <ShieldAlert aria-hidden="true" />
+        <AlertTitle>Acceso no autorizado</AlertTitle>
+        <AlertDescription>Tu rol actual no permite abrir esta ruta operativa.</AlertDescription>
+      </Alert>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{item.label}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
+          <Button className="w-fit" type="button" variant="outline" onClick={() => navigate("/dashboard", { replace: true })}>
+            Ir al dashboard
+          </Button>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 

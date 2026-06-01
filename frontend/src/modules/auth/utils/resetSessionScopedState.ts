@@ -1,13 +1,23 @@
+import { resetCashStore } from "@/modules/cash";
+import { resetCashSupervisionStore } from "@/modules/cash-supervision";
 import { resetHealthStatusStore } from "@/modules/health";
+import { resetPendingCartsStore } from "@/modules/pending-carts";
+import { resetPosStore } from "@/modules/pos";
 import { resetProductsCatalogStore } from "@/modules/products";
 import { resetPurchasesStore } from "@/modules/purchases";
+import { resetSalesStore } from "@/modules/sales";
 import { resetSuppliersStore } from "@/modules/suppliers";
 import { resetUnitsCatalogStore } from "@/modules/units";
 import { resetUsersAdminStore } from "@/modules/users";
 
 export function resetSessionScopedState(): void {
+  resetCashStore();
+  resetCashSupervisionStore();
+  resetPendingCartsStore();
+  resetPosStore();
   resetProductsCatalogStore();
   resetPurchasesStore();
+  resetSalesStore();
   resetSuppliersStore();
   resetUnitsCatalogStore();
   resetHealthStatusStore();

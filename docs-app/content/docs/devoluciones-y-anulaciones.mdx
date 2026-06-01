@@ -1,9 +1,11 @@
 ---
 title: Devoluciones y anulaciones
-description: Diferencias entre devolucion, anulacion comercial y anulacion fiscal.
+description: Diferencias entre anulacion POS, devolucion posterior y anulacion fiscal.
 ---
 
-Las devoluciones y anulaciones deben manejarse con control estricto porque pueden afectar inventario, caja, reportes y facturación. En farmacia, además, existe una dimensión sanitaria: no todo producto devuelto puede reincorporarse automáticamente al stock disponible.
+Las devoluciones y anulaciones deben manejarse con control estricto porque pueden afectar inventario, caja, reportes y facturacion. En farmacia, ademas, existe una dimension sanitaria: no todo producto devuelto puede reincorporarse automaticamente al stock disponible.
+
+En V1, el flujo de mostrador acepta anulacion controlada de ventas mientras la caja asociada sigue abierta. Las devoluciones posteriores al cierre de caja y la anulacion fiscal SIAT pertenecen a fases posteriores.
 
 ## Devolucion
 
@@ -11,7 +13,17 @@ La devolución ocurre cuando el cliente retorna uno o más productos asociados a
 
 ## Anulacion comercial
 
-La anulación comercial deja sin efecto una operación interna bajo reglas controladas. Puede aplicar cuando hubo error operativo, duplicidad o registro incorrecto. Debe conservar evidencia y no borrar la historia.
+La anulacion comercial deja sin efecto una operacion interna bajo reglas controladas. Puede aplicar cuando hubo error operativo, duplicidad o registro incorrecto antes de consolidar la caja. Debe conservar evidencia y no borrar la historia.
+
+Reglas V1:
+
+- Toda anulacion exige motivo.
+- El vendedor solo anula ventas propias permitidas del dia.
+- Admin y superadmin pueden anular ventas permitidas de cualquier vendedor.
+- La caja asociada debe seguir abierta.
+- No se anulan ventas de cajas cerradas.
+- El pago original no se borra; queda evidencia de la reversa.
+- El inventario debe reponerse a los mismos lotes consumidos.
 
 ## Anulacion fiscal
 
@@ -30,6 +42,7 @@ La devolución puede generar salida de dinero, nota interna o ajuste administrat
 - Toda devolución debe tener motivo.
 - La venta original debe ser identificable.
 - Los lotes involucrados deben conservarse.
+- La anulacion POS de V1 no reemplaza devolucion posterior ni anulacion fiscal.
 - Las anulaciones fiscales deben ser realizadas por usuarios autorizados.
 - No debe borrarse la operación original.
 

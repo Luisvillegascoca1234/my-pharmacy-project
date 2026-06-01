@@ -1,4 +1,4 @@
-import type { InventoryBatch, Prisma, PurchaseItem } from "@prisma/client";
+import type { InventoryBatch, InventoryMovementType, Prisma, PurchaseItem } from "@prisma/client";
 
 export type InventoryTransactionClient = Prisma.TransactionClient;
 
@@ -44,10 +44,10 @@ export type CreateInventoryBatchData = {
 export type CreateInventoryMovementData = {
   batchId: string;
   productId: string;
-  type: "purchase_received" | "purchase_cancelled" | "inventory_adjustment";
+  type: InventoryMovementType;
   quantityBase: Prisma.Decimal;
   unitCostBase: Prisma.Decimal;
-  referenceType: "purchase" | "inventory_adjustment";
+  referenceType: "purchase" | "inventory_adjustment" | "sale";
   referenceId: string;
   referenceItemId?: string | null;
   actorUserId?: string;
@@ -100,7 +100,7 @@ export type InventoryMovementRecord = {
   productId: string;
   product: InventoryProductRecord;
   batch: Pick<InventoryBatch, "batchNumber" | "expirationDate">;
-  type: "purchase_received" | "purchase_cancelled" | "inventory_adjustment";
+  type: InventoryMovementType;
   quantityBase: Prisma.Decimal;
   unitCostBase: Prisma.Decimal;
   referenceType: string;
@@ -118,7 +118,7 @@ export type InventoryMovementRecord = {
 export type InventoryMovementFilters = {
   search?: string;
   productId?: string;
-  type?: "purchase_received" | "purchase_cancelled" | "inventory_adjustment";
+  type?: InventoryMovementType;
   fromDate?: string;
   toDate?: string;
   page: number;

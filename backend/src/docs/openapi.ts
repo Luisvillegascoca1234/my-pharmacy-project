@@ -13,6 +13,47 @@ export const openApiDocument = {
       description: "Local development API"
     }
   ],
+  "x-contract-parity-review": {
+    flow: "sales-cash-pos-v1",
+    implementedRoutes: [
+      "GET /cash-sessions",
+      "POST /cash-sessions/open",
+      "GET /cash-sessions/current",
+      "POST /cash-sessions/{id}/close",
+      "GET /pending-carts",
+      "POST /pending-carts",
+      "PATCH /pending-carts/{id}",
+      "POST /pending-carts/{id}/discard",
+      "POST /pending-carts/{id}/convert",
+      "GET /pos/products",
+      "GET /sales",
+      "POST /sales",
+      "GET /sales/{id}",
+      "POST /sales/{id}/cancel"
+    ],
+    sharedContracts: [
+      "Cash sessions and supervision envelopes",
+      "POS product search",
+      "Confirmed cash sales and receipts",
+      "Cancelable sale envelopes",
+      "Pending cart lifecycle envelopes"
+    ],
+    deferredRouteParity: [],
+    documentedDomainErrorCodes: [
+      "PENDING_CART_EXPIRED",
+      "PENDING_CART_ACCESS_FORBIDDEN",
+      "PENDING_CART_STOCK_INSUFFICIENT",
+      "SALE_NOT_CANCELABLE",
+      "SALE_ALREADY_CANCELLED",
+      "SALE_CASH_SESSION_CLOSED",
+      "SALE_CASH_SESSION_REQUIRED",
+      "SALE_STOCK_INSUFFICIENT",
+      "SALE_PAYMENT_INSUFFICIENT",
+      "CASH_SESSION_ALREADY_CLOSED",
+      "CASH_SESSION_CLOSE_FORBIDDEN",
+      "FORBIDDEN"
+    ]
+  },
   tags: [
     {
       name: "Auth",
@@ -37,6 +78,22 @@ export const openApiDocument = {
     {
       name: "Purchases",
       description: "Purchase draft, receipt, and cancellation workflows for superadmin and admin users. Seller users do not manage purchases in this PRD."
+    },
+    {
+      name: "Cash Sessions",
+      description: "Cash register session opening, current session lookup, and closing workflows for seller, admin, and superadmin users."
+    },
+    {
+      name: "POS",
+      description: "Point of sale product search for seller, admin, and superadmin users."
+    },
+    {
+      name: "Pending Carts",
+      description: "Pending cart lifecycle for paused point-of-sale attention without stock reservation or frozen prices."
+    },
+    {
+      name: "Sales",
+      description: "Confirmed cash sale workflows for seller, admin, and superadmin users."
     },
     {
       name: "Users",
@@ -826,6 +883,559 @@ export const openApiDocument = {
         }
       }
     },
+    "/cash-sessions": {
+      get: {
+        tags: ["Cash Sessions"],
+        summary: "List cash sessions for supervision",
+        description: "Requires authentication. Seller users receive only their own cash sessions. Admin and superadmin users can supervise all cash sessions with operational filters.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/CashSessionStatusQuery" },
+          { $ref: "#/components/parameters/OpenedByUserIdQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated cash sessions with supervision close eligibility",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CashSessionsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/cash-sessions/open": {
+      post: {
+        tags: ["Cash Sessions"],
+        summary: "Open a cash session",
+        description: "Requires authentication. Available to seller, admin, and superadmin users. A user can only have one open cash session.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/OpenCashSessionRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Cash session opened",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CashSession"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/CashSessionBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          },
+          "409": {
+            $ref: "#/components/responses/CashSessionConflict"
+          }
+        }
+      }
+    },
+    "/cash-sessions/current": {
+      get: {
+        tags: ["Cash Sessions"],
+        summary: "Get the current cash session",
+        description: "Requires authentication. Available to seller, admin, and superadmin users. Returns an empty current-session envelope when the authenticated user has no open cash session.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Current cash session state for the authenticated user",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CurrentCashSession"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/cash-sessions/{id}/close": {
+      post: {
+        tags: ["Cash Sessions"],
+        summary: "Close a cash session",
+        description: "Requires authentication. Seller users can close their own cash session. Admin and superadmin users can close their own cash session or another user's open cash session.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/CashSessionId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CloseCashSessionRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Cash session closed with expected and difference amounts calculated",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CashSession"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/CashSessionBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/CashSessionCloseForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/CashSessionNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/CashSessionConflict"
+          }
+        }
+      }
+    },
+    "/pos/products": {
+      get: {
+        tags: ["POS"],
+        summary: "Search saleable POS products",
+        description: "Requires authentication. Available to seller, admin, and superadmin users. Returns active products with saleable FEFO stock and the next expiration date when available.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/PosProductCodeQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated saleable POS products ordered by product name",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PosProductsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/pending-carts": {
+      get: {
+        tags: ["Pending Carts"],
+        summary: "List pending carts",
+        description: "Requires authentication. Seller users receive only their own pending carts. Admin and superadmin users can supervise all pending carts with filters. Pending carts do not reserve stock or freeze prices.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/PendingCartStatusQuery" },
+          { $ref: "#/components/parameters/SellerUserIdQuery" },
+          { $ref: "#/components/parameters/IncludeAllQuery" },
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated pending carts with current revalidation data",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PendingCartsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PendingCartBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/PendingCartForbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Pending Carts"],
+        summary: "Save a pending cart",
+        description: "Requires authentication. Creates a paused point-of-sale cart for the authenticated user without affecting inventory or cash.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/SavePendingCartRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Pending cart saved",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PendingCart"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PendingCartBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/PendingCartForbidden"
+          }
+        }
+      }
+    },
+    "/pending-carts/{id}": {
+      patch: {
+        tags: ["Pending Carts"],
+        summary: "Edit an active pending cart",
+        description: "Requires authentication. Seller users can edit only their own active pending carts. Expired, discarded, or converted carts cannot be edited.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PendingCartId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/SavePendingCartRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Pending cart updated with current revalidation data",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PendingCart"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PendingCartBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/PendingCartForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PendingCartNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PendingCartConflict"
+          }
+        }
+      }
+    },
+    "/pending-carts/{id}/discard": {
+      post: {
+        tags: ["Pending Carts"],
+        summary: "Discard a pending cart",
+        description: "Requires authentication. Seller users can discard their own active or expired pending carts. Admin and superadmin users can discard visible pending carts for supervision.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PendingCartId" }],
+        requestBody: {
+          required: false,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/DiscardPendingCartRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Pending cart discarded",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PendingCart"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PendingCartBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/PendingCartForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PendingCartNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PendingCartConflict"
+          }
+        }
+      }
+    },
+    "/pending-carts/{id}/convert": {
+      post: {
+        tags: ["Pending Carts"],
+        summary: "Convert a pending cart to a sale",
+        description: "Requires authentication. Converts the authenticated user's active pending cart into a confirmed cash sale using current prices and saleable FEFO stock. The pending cart remains active if conversion is rejected.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PendingCartId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ConvertPendingCartRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Pending cart converted and linked to the confirmed sale",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PendingCart"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/PendingCartBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/PendingCartForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PendingCartNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PendingCartConflict"
+          }
+        }
+      }
+    },
+    "/sales": {
+      get: {
+        tags: ["Sales"],
+        summary: "List sales for operational supervision",
+        description: "Requires authentication. Seller users receive only their own sales. Admin and superadmin users can supervise all sellers with date, seller, cash session, status, and search filters.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SaleStatusQuery" },
+          { $ref: "#/components/parameters/SellerUserIdQuery" },
+          { $ref: "#/components/parameters/CashSessionIdQuery" },
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated sale summaries with cancellation eligibility",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SalesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/SaleForbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Sales"],
+        summary: "Create a confirmed cash sale",
+        description: "Requires authentication. Available to seller, admin, and superadmin users. The sale uses the authenticated user's open cash session, registers a cash payment, and discounts inventory by FEFO.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateSaleRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Confirmed sale with payment, FEFO consumption, totals, margin, and internal receipt",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Sale"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/SaleBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/SaleForbidden"
+          },
+          "409": {
+            $ref: "#/components/responses/SaleConflict"
+          }
+        }
+      }
+    },
+    "/sales/{id}": {
+      get: {
+        tags: ["Sales"],
+        summary: "Get a confirmed sale",
+        description: "Requires authentication. Seller users can read only their own sales. Admin and superadmin users can read any sale.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/SaleId" }],
+        responses: {
+          "200": {
+            description: "Cancelable sale detail with payment, FEFO consumption, totals, margin, and internal receipt",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CancelableSale"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/SaleForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/SaleNotFound"
+          }
+        }
+      }
+    },
+    "/sales/{id}/cancel": {
+      post: {
+        tags: ["Sales"],
+        summary: "Cancel a confirmed sale",
+        description: "Requires authentication. Seller users can cancel only their own current-day sales while the cash session remains open. Admin and superadmin users can cancel any confirmed sale with an open cash session.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/SaleId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CancelSaleRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Sale cancelled with reverted payment and restored inventory movements",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CancelableSale"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/SaleBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/SaleForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/SaleNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/SaleConflict"
+          }
+        }
+      }
+    },
     "/health": {
       get: {
         tags: ["Health"],
@@ -1263,6 +1873,33 @@ export const openApiDocument = {
         },
         description: "Purchase identifier"
       },
+      CashSessionId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Cash session identifier"
+      },
+      PendingCartId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Pending cart identifier"
+      },
+      SaleId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Sale identifier"
+      },
       SearchQuery: {
         name: "search",
         in: "query",
@@ -1271,6 +1908,15 @@ export const openApiDocument = {
           type: "string"
         },
         description: "Search text"
+      },
+      PosProductCodeQuery: {
+        name: "code",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter saleable products by internal code or barcode"
       },
       SupplierStatusQuery: {
         name: "status",
@@ -1298,6 +1944,69 @@ export const openApiDocument = {
           type: "string"
         },
         description: "Filter purchases by supplier"
+      },
+      CashSessionStatusQuery: {
+        name: "status",
+        in: "query",
+        required: false,
+        schema: {
+          $ref: "#/components/schemas/CashSessionStatus"
+        },
+        description: "Filter cash sessions by status"
+      },
+      OpenedByUserIdQuery: {
+        name: "openedByUserId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter cash sessions by opening user. Seller users are always scoped to their own user."
+      },
+      PendingCartStatusQuery: {
+        name: "status",
+        in: "query",
+        required: false,
+        schema: {
+          $ref: "#/components/schemas/PendingCartStatus"
+        },
+        description: "Filter pending carts by lifecycle status"
+      },
+      IncludeAllQuery: {
+        name: "includeAll",
+        in: "query",
+        required: false,
+        schema: {
+          type: "boolean"
+        },
+        description: "Request all visible pending carts. Only admin and superadmin users can list carts owned by other sellers."
+      },
+      SaleStatusQuery: {
+        name: "status",
+        in: "query",
+        required: false,
+        schema: {
+          $ref: "#/components/schemas/SaleStatus"
+        },
+        description: "Filter sales by status"
+      },
+      SellerUserIdQuery: {
+        name: "sellerUserId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter sales by seller. Seller users are always scoped to their own user."
+      },
+      CashSessionIdQuery: {
+        name: "cashSessionId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter sales by cash session"
       },
       FromDateQuery: {
         name: "fromDate",
@@ -1649,6 +2358,450 @@ export const openApiDocument = {
           }
         }
       },
+      CashSessionBadRequest: {
+        description: "Invalid cash session payload or active authenticated user requirement failure",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              initialAmountInvalid: {
+                value: {
+                  message: "Cash session amounts must be zero or greater with at most 2 decimal places.",
+                  code: "CASH_SESSION_INITIAL_AMOUNT_INVALID"
+                }
+              },
+              countedAmountInvalid: {
+                value: {
+                  message: "Cash session amounts must be zero or greater with at most 2 decimal places.",
+                  code: "CASH_SESSION_COUNTED_AMOUNT_INVALID"
+                }
+              },
+              noteInvalid: {
+                value: {
+                  message: "Cash session notes must have at most 240 characters.",
+                  code: "CASH_SESSION_NOTE_INVALID"
+                }
+              }
+            }
+          }
+        }
+      },
+      CashSessionCloseForbidden: {
+        description: "The authenticated user cannot close another user's cash session",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              roleForbidden: {
+                value: {
+                  message: "You do not have permission to perform this action.",
+                  code: "FORBIDDEN"
+                }
+              },
+              closeOtherForbidden: {
+                value: {
+                  message: "Only admin users can close another user's cash session.",
+                  code: "CASH_SESSION_CLOSE_FORBIDDEN"
+                }
+              },
+              inactiveUser: {
+                value: {
+                  message: "Authenticated user must be active.",
+                  code: "AUTHENTICATED_USER_NOT_ACTIVE"
+                }
+              }
+            }
+          }
+        }
+      },
+      CashSessionNotFound: {
+        description: "Cash session was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Cash session was not found.",
+              code: "CASH_SESSION_NOT_FOUND"
+            }
+          }
+        }
+      },
+      CashSessionConflict: {
+        description: "Cash session duplicate opening or invalid closing state",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              alreadyOpen: {
+                value: {
+                  message: "User already has an open cash session.",
+                  code: "CASH_SESSION_ALREADY_OPEN"
+                }
+              },
+              alreadyClosed: {
+                value: {
+                  message: "Cash session is already closed.",
+                  code: "CASH_SESSION_ALREADY_CLOSED"
+                }
+              }
+            }
+          }
+        }
+      },
+      PendingCartBadRequest: {
+        description: "Invalid pending cart payload or product validation failure",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              productNotFound: {
+                value: {
+                  message: "Pending cart item product was not found.",
+                  code: "PENDING_CART_ITEM_PRODUCT_NOT_FOUND",
+                  details: {
+                    productId: "product-id"
+                  }
+                }
+              },
+              productNotActive: {
+                value: {
+                  message: "Pending cart item product must be active.",
+                  code: "PENDING_CART_ITEM_PRODUCT_NOT_ACTIVE",
+                  details: {
+                    productId: "product-id"
+                  }
+                }
+              },
+              salePaymentAmountInvalid: {
+                value: {
+                  message: "Sale amounts must be zero or greater with at most 2 decimal places.",
+                  code: "SALE_PAYMENT_RECEIVED_AMOUNT_INVALID"
+                }
+              }
+            }
+          }
+        }
+      },
+      PendingCartForbidden: {
+        description: "The authenticated user cannot access or mutate the pending cart",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              roleForbidden: {
+                value: {
+                  message: "You do not have permission to perform this action.",
+                  code: "FORBIDDEN"
+                }
+              },
+              listAllForbidden: {
+                value: {
+                  message: "Only admin users can list all pending carts.",
+                  code: "PENDING_CART_ACCESS_FORBIDDEN"
+                }
+              },
+              convertForbidden: {
+                value: {
+                  message: "Pending cart belongs to another seller.",
+                  code: "PENDING_CART_CONVERT_FORBIDDEN"
+                }
+              },
+              discardForbidden: {
+                value: {
+                  message: "Pending cart belongs to another seller.",
+                  code: "PENDING_CART_DISCARD_FORBIDDEN"
+                }
+              }
+            }
+          }
+        }
+      },
+      PendingCartNotFound: {
+        description: "Pending cart was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Pending cart was not found.",
+              code: "PENDING_CART_NOT_FOUND"
+            }
+          }
+        }
+      },
+      PendingCartConflict: {
+        description: "Pending cart lifecycle, revalidation, cash session, or saleable stock rule was not satisfied",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              expired: {
+                value: {
+                  message: "Expired pending carts cannot be converted.",
+                  code: "PENDING_CART_EXPIRED"
+                }
+              },
+              notEditable: {
+                value: {
+                  message: "Pending cart cannot be edited in its current status.",
+                  code: "PENDING_CART_NOT_EDITABLE"
+                }
+              },
+              notDiscardable: {
+                value: {
+                  message: "Only active or expired pending carts can be discarded.",
+                  code: "PENDING_CART_NOT_DISCARDABLE"
+                }
+              },
+              notConvertible: {
+                value: {
+                  message: "Pending cart cannot be converted in its current status.",
+                  code: "PENDING_CART_NOT_CONVERTIBLE"
+                }
+              },
+              priceChanged: {
+                value: {
+                  message: "Pending cart item price changed.",
+                  code: "PENDING_CART_ITEM_PRICE_CHANGED",
+                  details: {
+                    productId: "product-id",
+                    issues: [
+                      {
+                        code: "price-changed",
+                        productId: "product-id",
+                        referenceUnitPrice: 3,
+                        currentUnitPrice: 3.5
+                      }
+                    ]
+                  }
+                }
+              },
+              stockInsufficient: {
+                value: {
+                  message: "Pending cart stock is insufficient.",
+                  code: "PENDING_CART_STOCK_INSUFFICIENT",
+                  details: {
+                    productId: "product-id",
+                    issues: [
+                      {
+                        code: "stock-insufficient",
+                        productId: "product-id",
+                        requestedQuantity: 3,
+                        saleableStock: 1
+                      }
+                    ]
+                  }
+                }
+              },
+              cashSessionRequired: {
+                value: {
+                  message: "User must have an open cash session to create a sale.",
+                  code: "SALE_CASH_SESSION_REQUIRED"
+                }
+              },
+              saleStockInsufficient: {
+                value: {
+                  message: "Saleable stock is not enough for the requested item.",
+                  code: "SALE_STOCK_INSUFFICIENT",
+                  details: {
+                    productId: "product-id",
+                    requestedQuantity: 3,
+                    availableQuantity: 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      SaleBadRequest: {
+        description: "Invalid sale payload or sale business rule violation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              saleItemsRequired: {
+                value: {
+                  message: "Sale must contain at least one item.",
+                  code: "SALE_ITEMS_REQUIRED"
+                }
+              },
+              saleItemQuantityInvalid: {
+                value: {
+                  message: "Sale item quantity must be a positive integer.",
+                  code: "SALE_ITEM_QUANTITY_INVALID"
+                }
+              },
+              salePaymentAmountInvalid: {
+                value: {
+                  message: "Sale amounts must be zero or greater with at most 2 decimal places.",
+                  code: "SALE_PAYMENT_RECEIVED_AMOUNT_INVALID"
+                }
+              },
+              saleItemProductNotFound: {
+                value: {
+                  message: "Sale item product was not found.",
+                  code: "SALE_ITEM_PRODUCT_NOT_FOUND"
+                }
+              },
+              saleItemProductNotActive: {
+                value: {
+                  message: "Sale item product must be active.",
+                  code: "SALE_ITEM_PRODUCT_NOT_ACTIVE"
+                }
+              }
+            }
+          }
+        }
+      },
+      SaleForbidden: {
+        description: "The authenticated user cannot create or read the sale",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              roleForbidden: {
+                value: {
+                  message: "You do not have permission to perform this action.",
+                  code: "FORBIDDEN"
+                }
+              },
+              inactiveUser: {
+                value: {
+                  message: "Authenticated user must be active.",
+                  code: "AUTHENTICATED_USER_NOT_ACTIVE"
+                }
+              },
+              sellerOwnSalesOnly: {
+                value: {
+                  message: "Seller users can only read their own sales.",
+                  code: "SALE_ACCESS_FORBIDDEN"
+                }
+              }
+            }
+          }
+        }
+      },
+      SaleNotFound: {
+        description: "Sale was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Sale was not found.",
+              code: "SALE_NOT_FOUND"
+            }
+          }
+        }
+      },
+      SaleConflict: {
+        description: "Sale cannot be confirmed or cancelled because cash session, payment, cancellation, or saleable stock rules were not satisfied",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              cashSessionRequired: {
+                value: {
+                  message: "User must have an open cash session to create a sale.",
+                  code: "SALE_CASH_SESSION_REQUIRED"
+                }
+              },
+              cashSessionInvalid: {
+                value: {
+                  message: "Sale must use the authenticated user's open cash session.",
+                  code: "SALE_CASH_SESSION_INVALID"
+                }
+              },
+              paymentInsufficient: {
+                value: {
+                  message: "Received cash amount must be equal to or greater than sale total.",
+                  code: "SALE_PAYMENT_INSUFFICIENT",
+                  details: {
+                    totalAmount: 25,
+                    receivedAmount: 20
+                  }
+                }
+              },
+              stockInsufficient: {
+                value: {
+                  message: "Saleable stock is not enough for the requested item.",
+                  code: "SALE_STOCK_INSUFFICIENT",
+                  details: {
+                    productId: "product-id",
+                    requestedQuantity: 3,
+                    availableQuantity: 1
+                  }
+                }
+              },
+              cashSessionClosed: {
+                value: {
+                  message: "Sale cannot be cancelled because its cash session is closed.",
+                  code: "SALE_CASH_SESSION_CLOSED"
+                }
+              },
+              saleAlreadyCancelled: {
+                value: {
+                  message: "Sale has already been cancelled.",
+                  code: "SALE_ALREADY_CANCELLED"
+                }
+              },
+              saleNotCancelable: {
+                value: {
+                  message: "Sale status cannot be cancelled.",
+                  code: "SALE_NOT_CANCELABLE"
+                }
+              },
+              salePaymentAlreadyReverted: {
+                value: {
+                  message: "Sale payment has already been reverted.",
+                  code: "SALE_PAYMENT_ALREADY_REVERTED"
+                }
+              }
+            }
+          }
+        }
+      },
       UnexpectedError: {
         description: "Unexpected server error",
         content: {
@@ -1918,6 +3071,193 @@ export const openApiDocument = {
             type: "integer",
             minimum: 0,
             example: 3
+          }
+        }
+      },
+      CashSessionStatus: {
+        type: "string",
+        enum: ["open", "closed"]
+      },
+      CashSessionUserSummary: {
+        type: "object",
+        required: ["id", "fullName", "email"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          fullName: {
+            type: "string",
+            example: "Vendedor Principal"
+          },
+          email: {
+            type: "string",
+            format: "email",
+            example: "vendedor@farmacia.com"
+          }
+        }
+      },
+      CashSession: {
+        type: "object",
+        required: [
+          "id",
+          "correlativeCode",
+          "openedByUserId",
+          "openedByUser",
+          "initialAmount",
+          "expectedAmount",
+          "status",
+          "openedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          correlativeCode: {
+            type: "string",
+            example: "C-000001"
+          },
+          openedByUserId: {
+            type: "string"
+          },
+          openedByUser: {
+            $ref: "#/components/schemas/CashSessionUserSummary"
+          },
+          closedByUserId: {
+            type: "string"
+          },
+          closedByUser: {
+            $ref: "#/components/schemas/CashSessionUserSummary"
+          },
+          initialAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 100
+          },
+          countedAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 125
+          },
+          expectedAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 125
+          },
+          differenceAmount: {
+            type: "number",
+            multipleOf: 0.01,
+            example: 0
+          },
+          status: {
+            $ref: "#/components/schemas/CashSessionStatus"
+          },
+          openingNote: {
+            type: "string",
+            maxLength: 240,
+            example: "Apertura de turno manana"
+          },
+          closingNote: {
+            type: "string",
+            maxLength: 240,
+            example: "Cierre sin diferencia"
+          },
+          openedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          closedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      OpenCashSessionRequest: {
+        type: "object",
+        required: ["initialAmount"],
+        properties: {
+          initialAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 100
+          },
+          openingNote: {
+            type: "string",
+            maxLength: 240,
+            example: "Apertura de turno manana"
+          }
+        }
+      },
+      CloseCashSessionRequest: {
+        type: "object",
+        required: ["countedAmount"],
+        properties: {
+          countedAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 125
+          },
+          closingNote: {
+            type: "string",
+            maxLength: 240,
+            example: "Cierre sin diferencia"
+          }
+        }
+      },
+      CurrentCashSession: {
+        type: "object",
+        required: ["isOpen", "cashSession"],
+        properties: {
+          isOpen: {
+            type: "boolean",
+            example: true
+          },
+          cashSession: {
+            nullable: true,
+            allOf: [{ $ref: "#/components/schemas/CashSession" }]
+          }
+        }
+      },
+      SupervisableCashSession: {
+        allOf: [
+          { $ref: "#/components/schemas/CashSession" },
+          {
+            type: "object",
+            properties: {
+              canClose: {
+                type: "boolean",
+                example: true
+              }
+            }
+          }
+        ]
+      },
+      CashSessionsListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/SupervisableCashSession"
+            }
+          },
+          pagination: {
+            $ref: "#/components/schemas/PaginationMeta"
           }
         }
       },
@@ -2787,6 +4127,1021 @@ export const openApiDocument = {
             type: "array",
             items: {
               $ref: "#/components/schemas/PurchaseSummary"
+            }
+          },
+          pagination: {
+            $ref: "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      PosProductUnit: {
+        type: "object",
+        required: ["id", "name", "abbreviation"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          name: {
+            type: "string",
+            example: "Tableta"
+          },
+          abbreviation: {
+            type: "string",
+            example: "tab"
+          }
+        }
+      },
+      PosProduct: {
+        type: "object",
+        required: ["id", "internalCode", "commercialName", "salePrice", "baseUnit", "saleableStock"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          internalCode: {
+            type: "string",
+            example: "MED-000001"
+          },
+          barcode: {
+            type: "string",
+            example: "7790000000012"
+          },
+          commercialName: {
+            type: "string",
+            example: "Paracetamol 500 mg"
+          },
+          genericName: {
+            type: "string",
+            example: "Paracetamol"
+          },
+          salePrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 1.5
+          },
+          baseUnit: {
+            $ref: "#/components/schemas/PosProductUnit"
+          },
+          saleableStock: {
+            type: "integer",
+            minimum: 0,
+            example: 120
+          },
+          nextExpirationDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2027-05-11"
+          }
+        }
+      },
+      PosProductsListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PosProduct"
+            }
+          },
+          pagination: {
+            $ref: "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      SaleStatus: {
+        type: "string",
+        enum: ["confirmed", "cancelled"]
+      },
+      PaymentMethod: {
+        type: "string",
+        enum: ["cash"]
+      },
+      PaymentStatus: {
+        type: "string",
+        enum: ["paid", "reverted", "cancelled"]
+      },
+      SaleUserSummary: {
+        type: "object",
+        required: ["id", "fullName", "email"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          fullName: {
+            type: "string",
+            example: "Vendedor Principal"
+          },
+          email: {
+            type: "string",
+            format: "email",
+            example: "vendedor@farmacia.com"
+          }
+        }
+      },
+      SaleBatchConsumption: {
+        type: "object",
+        required: ["id", "saleItemId", "batchId", "quantity", "unitCost", "totalCost"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          saleItemId: {
+            type: "string"
+          },
+          batchId: {
+            type: "string"
+          },
+          batchNumber: {
+            type: "string",
+            example: "L-2026-001"
+          },
+          expirationDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2027-05-11"
+          },
+          quantity: {
+            type: "integer",
+            minimum: 1,
+            example: 2
+          },
+          unitCost: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 0.8
+          },
+          totalCost: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 1.6
+          },
+          inventoryMovementId: {
+            type: "string"
+          }
+        }
+      },
+      SaleItem: {
+        type: "object",
+        required: [
+          "id",
+          "saleId",
+          "productId",
+          "internalCode",
+          "commercialName",
+          "baseUnit",
+          "unitPrice",
+          "quantity",
+          "subtotal",
+          "totalCost",
+          "margin",
+          "consumptions",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          saleId: {
+            type: "string"
+          },
+          productId: {
+            type: "string"
+          },
+          internalCode: {
+            type: "string",
+            example: "MED-000001"
+          },
+          barcode: {
+            type: "string",
+            example: "7790000000012"
+          },
+          commercialName: {
+            type: "string",
+            example: "Paracetamol 500 mg"
+          },
+          genericName: {
+            type: "string",
+            example: "Paracetamol"
+          },
+          baseUnit: {
+            $ref: "#/components/schemas/PosProductUnit"
+          },
+          unitPrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 1.5
+          },
+          quantity: {
+            type: "integer",
+            minimum: 1,
+            example: 2
+          },
+          subtotal: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          totalCost: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 1.6
+          },
+          margin: {
+            type: "number",
+            multipleOf: 0.01,
+            example: 1.4
+          },
+          consumptions: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/SaleBatchConsumption"
+            }
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      Payment: {
+        type: "object",
+        required: [
+          "id",
+          "saleId",
+          "cashSessionId",
+          "method",
+          "saleTotal",
+          "receivedAmount",
+          "changeAmount",
+          "status",
+          "paidAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          saleId: {
+            type: "string"
+          },
+          cashSessionId: {
+            type: "string"
+          },
+          method: {
+            $ref: "#/components/schemas/PaymentMethod"
+          },
+          saleTotal: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          receivedAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 5
+          },
+          changeAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 2
+          },
+          status: {
+            $ref: "#/components/schemas/PaymentStatus"
+          },
+          paidAt: {
+            type: "string",
+            format: "date-time"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      SaleReceiptItem: {
+        type: "object",
+        required: ["productName", "quantity", "unitPrice", "subtotal"],
+        properties: {
+          productName: {
+            type: "string",
+            example: "Paracetamol 500 mg"
+          },
+          quantity: {
+            type: "integer",
+            minimum: 1,
+            example: 2
+          },
+          unitPrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 1.5
+          },
+          subtotal: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          }
+        }
+      },
+      SaleReceipt: {
+        type: "object",
+        required: [
+          "saleId",
+          "saleCorrelativeCode",
+          "cashSessionCorrelativeCode",
+          "sellerName",
+          "issuedAt",
+          "items",
+          "totalAmount",
+          "receivedAmount",
+          "changeAmount"
+        ],
+        properties: {
+          saleId: {
+            type: "string"
+          },
+          saleCorrelativeCode: {
+            type: "string",
+            example: "V-000001"
+          },
+          cashSessionCorrelativeCode: {
+            type: "string",
+            example: "C-000001"
+          },
+          sellerName: {
+            type: "string",
+            example: "Vendedor Principal"
+          },
+          issuedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          items: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/SaleReceiptItem"
+            }
+          },
+          totalAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          receivedAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 5
+          },
+          changeAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 2
+          }
+        }
+      },
+      Sale: {
+        type: "object",
+        required: [
+          "id",
+          "correlativeCode",
+          "sellerUserId",
+          "sellerUser",
+          "cashSessionId",
+          "cashSessionCorrelativeCode",
+          "status",
+          "items",
+          "payment",
+          "totalAmount",
+          "totalCost",
+          "totalMargin",
+          "receipt",
+          "confirmedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          correlativeCode: {
+            type: "string",
+            example: "V-000001"
+          },
+          sellerUserId: {
+            type: "string"
+          },
+          sellerUser: {
+            $ref: "#/components/schemas/SaleUserSummary"
+          },
+          cashSessionId: {
+            type: "string"
+          },
+          cashSessionCorrelativeCode: {
+            type: "string",
+            example: "C-000001"
+          },
+          status: {
+            $ref: "#/components/schemas/SaleStatus"
+          },
+          items: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/SaleItem"
+            }
+          },
+          payment: {
+            $ref: "#/components/schemas/Payment"
+          },
+          totalAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          totalCost: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 1.6
+          },
+          totalMargin: {
+            type: "number",
+            multipleOf: 0.01,
+            example: 1.4
+          },
+          receipt: {
+            $ref: "#/components/schemas/SaleReceipt"
+          },
+          confirmedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      SaleCancellationBlockReason: {
+        type: "string",
+        enum: ["cash-session-closed", "already-cancelled", "forbidden", "not-current-day", "unknown"]
+      },
+      CancelablePayment: {
+        allOf: [
+          { $ref: "#/components/schemas/Payment" },
+          {
+            type: "object",
+            properties: {
+              reversedAt: {
+                type: "string",
+                format: "date-time"
+              },
+              status: {
+                $ref: "#/components/schemas/PaymentStatus"
+              }
+            }
+          }
+        ]
+      },
+      CancelableSale: {
+        allOf: [
+          { $ref: "#/components/schemas/Sale" },
+          {
+            type: "object",
+            properties: {
+              canCancel: {
+                type: "boolean",
+                example: true
+              },
+              cancellationBlockedReason: {
+                $ref: "#/components/schemas/SaleCancellationBlockReason"
+              },
+              cancelReason: {
+                type: "string",
+                maxLength: 240
+              },
+              cancelledAt: {
+                type: "string",
+                format: "date-time"
+              },
+              cancelledByUser: {
+                $ref: "#/components/schemas/SaleUserSummary"
+              },
+              cancelledByUserId: {
+                type: "string"
+              },
+              payment: {
+                $ref: "#/components/schemas/CancelablePayment"
+              },
+              status: {
+                $ref: "#/components/schemas/SaleStatus"
+              }
+            }
+          }
+        ]
+      },
+      CancelableSaleSummary: {
+        type: "object",
+        required: [
+          "id",
+          "cashSessionCorrelativeCode",
+          "cashSessionId",
+          "confirmedAt",
+          "correlativeCode",
+          "createdAt",
+          "sellerUser",
+          "sellerUserId",
+          "status",
+          "totalAmount",
+          "totalMargin",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          canCancel: {
+            type: "boolean",
+            example: true
+          },
+          cancellationBlockedReason: {
+            $ref: "#/components/schemas/SaleCancellationBlockReason"
+          },
+          cancelReason: {
+            type: "string",
+            maxLength: 240
+          },
+          cancelledAt: {
+            type: "string",
+            format: "date-time"
+          },
+          cashSessionCorrelativeCode: {
+            type: "string",
+            example: "C-000001"
+          },
+          cashSessionId: {
+            type: "string"
+          },
+          confirmedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          correlativeCode: {
+            type: "string",
+            example: "V-000001"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          sellerUser: {
+            $ref: "#/components/schemas/SaleUserSummary"
+          },
+          sellerUserId: {
+            type: "string"
+          },
+          status: {
+            $ref: "#/components/schemas/SaleStatus"
+          },
+          totalAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          totalMargin: {
+            type: "number",
+            multipleOf: 0.01,
+            example: 1.4
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      SalesListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/CancelableSaleSummary"
+            }
+          },
+          pagination: {
+            $ref: "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      CreateSaleItem: {
+        type: "object",
+        required: ["productId", "quantity"],
+        properties: {
+          productId: {
+            type: "string",
+            minLength: 1
+          },
+          quantity: {
+            type: "integer",
+            minimum: 1,
+            example: 2
+          }
+        }
+      },
+      CreateSalePayment: {
+        type: "object",
+        required: ["method", "receivedAmount"],
+        properties: {
+          method: {
+            type: "string",
+            enum: ["cash"]
+          },
+          receivedAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 5
+          }
+        }
+      },
+      CreateSaleRequest: {
+        type: "object",
+        required: ["items", "payment"],
+        properties: {
+          items: {
+            type: "array",
+            minItems: 1,
+            items: {
+              $ref: "#/components/schemas/CreateSaleItem"
+            }
+          },
+          payment: {
+            $ref: "#/components/schemas/CreateSalePayment"
+          }
+        }
+      },
+      CancelSaleRequest: {
+        type: "object",
+        required: ["cancelReason"],
+        properties: {
+          cancelReason: {
+            type: "string",
+            minLength: 3,
+            maxLength: 240,
+            example: "Error de registro en caja"
+          }
+        }
+      },
+      PendingCartStatus: {
+        type: "string",
+        enum: ["active", "converted", "discarded", "expired"]
+      },
+      PendingCartRevalidationIssueCode: {
+        type: "string",
+        enum: ["price-changed", "stock-insufficient", "product-not-saleable"]
+      },
+      PendingCartRevalidationIssue: {
+        type: "object",
+        required: ["code", "productId"],
+        properties: {
+          code: {
+            $ref: "#/components/schemas/PendingCartRevalidationIssueCode"
+          },
+          currentUnitPrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3.5
+          },
+          productId: {
+            type: "string"
+          },
+          referenceUnitPrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          requestedQuantity: {
+            type: "integer",
+            minimum: 1,
+            example: 3
+          },
+          saleableStock: {
+            type: "integer",
+            minimum: 0,
+            example: 1
+          }
+        }
+      },
+      PendingCartItem: {
+        type: "object",
+        required: [
+          "baseUnit",
+          "commercialName",
+          "internalCode",
+          "productId",
+          "quantity",
+          "referenceSubtotal",
+          "referenceUnitPrice"
+        ],
+        properties: {
+          barcode: {
+            type: "string",
+            example: "7790000000012"
+          },
+          baseUnit: {
+            $ref: "#/components/schemas/PosProductUnit"
+          },
+          commercialName: {
+            type: "string",
+            example: "Paracetamol 500 mg"
+          },
+          currentUnitPrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3.5
+          },
+          genericName: {
+            type: "string",
+            example: "Paracetamol"
+          },
+          internalCode: {
+            type: "string",
+            example: "MED-000001"
+          },
+          isSaleable: {
+            type: "boolean",
+            example: true
+          },
+          nextExpirationDate: {
+            type: "string",
+            format: "date",
+            pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+            example: "2027-05-11"
+          },
+          productId: {
+            type: "string"
+          },
+          quantity: {
+            type: "integer",
+            minimum: 1,
+            example: 2
+          },
+          referenceSubtotal: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 6
+          },
+          referenceUnitPrice: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 3
+          },
+          revalidationIssues: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PendingCartRevalidationIssue"
+            }
+          },
+          saleableStock: {
+            type: "integer",
+            minimum: 0,
+            example: 8
+          }
+        }
+      },
+      PendingCart: {
+        type: "object",
+        required: [
+          "id",
+          "createdAt",
+          "expiresAt",
+          "items",
+          "ownerUserId",
+          "referenceTotalAmount",
+          "status",
+          "updatedAt"
+        ],
+        properties: {
+          id: {
+            type: "string"
+          },
+          convertedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          convertedSale: {
+            $ref: "#/components/schemas/Sale"
+          },
+          convertedSaleId: {
+            type: "string"
+          },
+          createdAt: {
+            type: "string",
+            format: "date-time"
+          },
+          currentTotalAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 7
+          },
+          discardReason: {
+            type: "string",
+            maxLength: 240
+          },
+          discardedAt: {
+            type: "string",
+            format: "date-time"
+          },
+          expiredAt: {
+            type: "string",
+            format: "date-time"
+          },
+          expiresAt: {
+            type: "string",
+            format: "date-time"
+          },
+          items: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PendingCartItem"
+            }
+          },
+          name: {
+            type: "string",
+            maxLength: 120,
+            example: "Cliente vuelve en la tarde"
+          },
+          note: {
+            type: "string",
+            maxLength: 240
+          },
+          ownerUser: {
+            $ref: "#/components/schemas/SaleUserSummary"
+          },
+          ownerUserId: {
+            type: "string"
+          },
+          referenceTotalAmount: {
+            type: "number",
+            minimum: 0,
+            multipleOf: 0.01,
+            example: 6
+          },
+          revalidationIssues: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PendingCartRevalidationIssue"
+            }
+          },
+          status: {
+            $ref: "#/components/schemas/PendingCartStatus"
+          },
+          updatedAt: {
+            type: "string",
+            format: "date-time"
+          }
+        }
+      },
+      PendingCartItemInput: {
+        type: "object",
+        required: ["productId", "quantity"],
+        properties: {
+          productId: {
+            type: "string",
+            minLength: 1
+          },
+          quantity: {
+            type: "integer",
+            minimum: 1,
+            example: 2
+          }
+        }
+      },
+      SavePendingCartRequest: {
+        type: "object",
+        required: ["items"],
+        properties: {
+          items: {
+            type: "array",
+            minItems: 1,
+            items: {
+              $ref: "#/components/schemas/PendingCartItemInput"
+            }
+          },
+          name: {
+            type: "string",
+            maxLength: 120,
+            example: "Cliente vuelve en la tarde"
+          },
+          note: {
+            type: "string",
+            maxLength: 240
+          }
+        }
+      },
+      DiscardPendingCartRequest: {
+        type: "object",
+        properties: {
+          discardReason: {
+            type: "string",
+            maxLength: 240,
+            example: "Atencion no concretada"
+          }
+        }
+      },
+      ConvertPendingCartRequest: {
+        type: "object",
+        required: ["payment"],
+        properties: {
+          payment: {
+            $ref: "#/components/schemas/CreateSalePayment"
+          }
+        }
+      },
+      PendingCartRevalidation: {
+        type: "object",
+        required: ["cartId", "issues", "status", "totals"],
+        properties: {
+          cartId: {
+            type: "string"
+          },
+          issues: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PendingCartRevalidationIssue"
+            }
+          },
+          status: {
+            type: "string",
+            enum: ["valid", "warning", "blocked", "expired"]
+          },
+          totals: {
+            type: "object",
+            required: ["currentTotalAmount", "referenceTotalAmount"],
+            properties: {
+              currentTotalAmount: {
+                type: "number",
+                minimum: 0,
+                multipleOf: 0.01,
+                example: 7
+              },
+              referenceTotalAmount: {
+                type: "number",
+                minimum: 0,
+                multipleOf: 0.01,
+                example: 6
+              }
+            }
+          }
+        }
+      },
+      PendingCartsListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: {
+              $ref: "#/components/schemas/PendingCart"
             }
           },
           pagination: {

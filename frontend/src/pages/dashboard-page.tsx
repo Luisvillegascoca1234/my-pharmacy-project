@@ -10,7 +10,7 @@ const summaryCards = [
   {
     title: "Ventas de hoy",
     value: "0",
-    detail: "Listo para conectar el POS",
+    detail: "POS listo para ventas de mostrador",
     icon: Store
   },
   {
@@ -77,7 +77,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Preparación del sistema</CardTitle>
-            <CardDescription>Estado base para conectar módulos funcionales.</CardDescription>
+            <CardDescription>Estado operativo para ventas, caja e inventario.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <HealthAlert status={health.status} />
@@ -103,7 +103,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Alertas operativas</CardTitle>
-            <CardDescription>Se conectarán al inventario, caja y SIAT.</CardDescription>
+            <CardDescription>Priorizadas por inventario, caja y SIAT.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
@@ -156,4 +156,3 @@ function HealthAlert({ status }: HealthAlertProps) {
     </Alert>
   );
 }
-

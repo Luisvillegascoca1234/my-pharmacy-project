@@ -16,10 +16,19 @@ const movementTypeLabels: Record<InventoryMovementType | "all", string> = {
   all: "Todos los movimientos",
   inventory_adjustment: "Ajuste manual",
   purchase_cancelled: "Anulación de compra",
-  purchase_received: "Compra recibida"
+  purchase_received: "Compra recibida",
+  sale_cancelled: "Anulación de venta",
+  sale_confirmed: "Venta confirmada"
 };
 
-const movementTypes: Array<InventoryMovementType | "all"> = ["all", "purchase_received", "purchase_cancelled", "inventory_adjustment"];
+const movementTypes: Array<InventoryMovementType | "all"> = [
+  "all",
+  "purchase_received",
+  "purchase_cancelled",
+  "inventory_adjustment",
+  "sale_confirmed",
+  "sale_cancelled"
+];
 const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 4, style: "currency" });
 

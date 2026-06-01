@@ -3,7 +3,7 @@ title: Caja y pagos
 description: Control de apertura, cobro, cierre y diferencias de caja.
 ---
 
-La caja organiza el flujo monetario diario de la farmacia. Aunque la primera versión se enfoca en pago en efectivo, el modelo conceptual debe permitir incorporar métodos como QR, tarjeta o transferencia en etapas posteriores.
+La caja organiza el flujo monetario diario de la farmacia. En V1 se opera con pago unico en efectivo para mantener el arqueo simple y trazable.
 
 ## Apertura de caja
 
@@ -11,26 +11,24 @@ La apertura define el inicio de una sesión de caja. Debe registrar usuario resp
 
 ## Cobro
 
-El cobro se relaciona con una venta. En la operación inicial, el pago principal es efectivo. El sistema debe conservar monto, método de pago, venta relacionada y sesión de caja cuando corresponda.
+El cobro se relaciona con una venta confirmada. El sistema conserva total de venta, monto recibido, cambio, metodo efectivo, venta relacionada y sesion de caja.
 
 ## Cierre de caja
 
 El cierre compara el total esperado con el monto contado. Si existe diferencia, debe registrarse como sobrante o faltante. La diferencia de caja no debe ocultarse, porque puede indicar error operativo, cambio mal entregado, omisión de registro o incidencia administrativa.
 
-## Métodos de pago previstos
+## Medios fuera de V1
 
-- Efectivo.
-- QR.
-- Tarjeta.
-- Transferencia.
-
-QR queda contemplado como método futuro, especialmente por su adopción en Bolivia, pero no forma parte obligatoria de la primera etapa operativa.
+QR real, tarjeta, credito, pagos mixtos y cuentas por cobrar quedan fuera de V1. Su incorporacion futura debe mantener separado el arqueo de caja, el pago operativo y la facturacion fiscal.
 
 ## Reglas de negocio
 
 - Una sesión de caja abierta debe tener usuario responsable.
+- Un usuario no debe tener dos cajas abiertas al mismo tiempo.
+- El monto inicial puede ser cero o mayor.
 - El cierre debe conservar monto contado y diferencia.
-- Los pagos deben relacionarse con ventas.
+- La caja suma el total de la venta, no el efectivo bruto recibido.
+- El cierre puede registrar diferencia positiva, negativa o cero.
 - No debe confundirse caja con facturación fiscal.
 
 ## Resultado esperado

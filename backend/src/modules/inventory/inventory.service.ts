@@ -48,7 +48,7 @@ type InventoryRepositoryPort = {
   listMovements(filters: {
     search?: string;
     productId?: string;
-    type?: "purchase_received" | "purchase_cancelled" | "inventory_adjustment";
+    type?: InventoryMovementRecord["type"];
     fromDate?: string;
     toDate?: string;
     page: number;

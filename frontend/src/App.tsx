@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, type ReactNode } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { useShallow } from "zustand/react/shallow";
-import { AuthGuard, AuthTokenSync } from "@/components/auth";
+import { AuthGuard, AuthTokenSync, SessionScopedStateReset } from "@/components/auth";
 import { applyThemeByName, selectIsThemeInitialized, selectThemeActions, selectThemeMode, useThemeStore } from "@/clients/theme";
 import { AppShell } from "./layouts/app-shell";
 import { TooltipProvider } from "./components/ui/tooltip";
@@ -16,6 +16,7 @@ export function App() {
       <TooltipProvider>
         <BrowserRouter>
           <AuthTokenSync />
+          <SessionScopedStateReset />
           <Routes>
             <Route element={<LoginPage />} path="/login" />
             <Route element={<LogoutPage />} path="/logout" />
@@ -72,8 +73,10 @@ function AuthenticatedApp() {
     return null;
   }
 
+  const sessionKey = `${user.id}:${user.role.name}`;
+
   return (
-    <AppShell user={user}>
+    <AppShell key={sessionKey} user={user}>
       <AppRoutes user={user} />
     </AppShell>
   );

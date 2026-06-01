@@ -16,6 +16,7 @@ import {
   Ruler,
   Settings,
   Shield,
+  ShieldCheck,
   ShoppingCart,
   Store,
   Truck,
@@ -27,8 +28,10 @@ import {
 export type AppRouteKey =
   | "dashboard"
   | "pos"
+  | "pendingCarts"
   | "cash"
-  | "returns"
+  | "supervision"
+  | "salesCancellations"
   | "alerts"
   | "products"
   | "units"
@@ -64,6 +67,8 @@ const allRoles: BaseRole[] = ["superadmin", "admin", "seller"];
 const adminRoles: BaseRole[] = ["superadmin", "admin"];
 const superadminOnly: BaseRole[] = ["superadmin"];
 
+export const SALES_CANCELLATIONS_PATH = "/sales-cancellations";
+
 export const navigationGroups: AppNavigationGroup[] = [
   {
     label: "Inicio",
@@ -90,6 +95,14 @@ export const navigationGroups: AppNavigationGroup[] = [
         roles: allRoles
       },
       {
+        key: "pendingCarts",
+        label: "Pendientes POS",
+        path: "/pending-carts",
+        icon: ClipboardList,
+        description: "Carritos propios para retomar, editar, descartar o cobrar en mostrador.",
+        roles: allRoles
+      },
+      {
         key: "cash",
         label: "Caja",
         path: "/cash",
@@ -98,12 +111,20 @@ export const navigationGroups: AppNavigationGroup[] = [
         roles: allRoles
       },
       {
-        key: "returns",
-        label: "Devoluciones y anulaciones",
-        path: "/returns",
-        icon: RefreshCcw,
-        description: "Flujos controlados para devoluciones, ventas anuladas y documentos fiscales.",
+        key: "supervision",
+        label: "Supervisión POS",
+        path: "/supervision",
+        icon: ShieldCheck,
+        description: "Control administrativo de cajas, ventas anulables y pendientes de mostrador.",
         roles: adminRoles
+      },
+      {
+        key: "salesCancellations",
+        label: "Ventas y anulaciones",
+        path: SALES_CANCELLATIONS_PATH,
+        icon: RefreshCcw,
+        description: "Consulta de ventas recientes y anulación controlada mientras la caja siga abierta.",
+        roles: allRoles
       },
       {
         key: "alerts",

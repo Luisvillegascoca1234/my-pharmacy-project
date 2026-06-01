@@ -273,6 +273,8 @@ async function main() {
 
 async function resetDatabase() {
   await prisma.$transaction([
+    prisma.sale.deleteMany(),
+    prisma.cashSession.deleteMany(),
     prisma.inventoryAdjustment.deleteMany(),
     prisma.inventoryMovement.deleteMany(),
     prisma.inventoryBatch.deleteMany(),
