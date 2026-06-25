@@ -41,7 +41,7 @@ Crear módulos backend y frontend para proveedores y compras. Una compra en `dra
 
 ## Estado de cierre
 
-El epic sigue en `TODO`. La validacion final registrada en el Sprint 08 quedo bloqueada porque los puntos locales de frontend y backend rechazaron conexion; no hay evidencia exitosa para cerrar el circuito de proveedores, compras recibidas, recepcion, anulacion y permisos. El cierre debe reintentarse cuando el entorno local responda y `GET /api/health` confirme disponibilidad.
+El epic queda en `DONE`. La validacion final del Sprint 08 recorrio el circuito principal de proveedores y compras recibidas con usuario autorizado: proveedor creado, editado, desactivado y reactivado; compra creada en borrador, abierta por detalle, guardada, recibida y anulada con motivo. No se observaron errores relevantes de consola en los flujos cubiertos. La sesion `seller` queda como limitacion no bloqueante por ausencia de credencial seed.
 
 ## Fuera de alcance
 

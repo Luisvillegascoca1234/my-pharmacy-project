@@ -36,8 +36,8 @@ Cerrar formalmente el epic de proveedores y compras recibidas solo despues de qu
 
 ## Execution Notes
 
-- Se reviso la evidencia del ticket 02 y la validacion final no paso: frontend y backend locales rechazaron conexion en los puntos de entrada definidos.
-- `epic.md` permanece en `- Status: TODO`; no hay cierre formal porque no se ejercitaron proveedores, compras, recepcion, anulacion ni permisos.
-- El README del Sprint 08 resume la evidencia bloqueada y la accion siguiente sin presentarla como QA exitoso.
-- `issue.md` refleja que el epic sigue abierto hasta repetir la validacion con entorno local disponible.
-- No se modifico funcionalidad ni se ejecuto QA manual adicional dentro de este ticket.
+- Se reviso la evidencia del ticket 02 y la validacion final paso con entorno local disponible.
+- `epic.md` cambia a `- Status: DONE` porque se ejercitaron proveedores, compras, recepcion y anulacion con usuario autorizado.
+- El README del Sprint 08 resume la evidencia final sin mantener el bloqueo anterior como estado vigente.
+- `issue.md` refleja que el circuito farmaceutico principal queda cerrado para el alcance del PRD.
+- La ausencia de credencial seed para `seller` queda registrada como limitacion no bloqueante.

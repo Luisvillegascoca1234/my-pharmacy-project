@@ -1,14 +1,14 @@
 # Epic - Proveedores y Compras Recibidas
 
 - PRD: ./PRD.md
-- Status: TODO
+- Status: DONE
 - Slug: proveedores-compras-recibidas
 
 ## Closure Validation Status
 
-El epic permanece abierto porque la validacion final del Sprint 08 no paso. El ticket 02 registro bloqueo de infraestructura local: `http://localhost:5173/`, `http://localhost:5174/` y `http://localhost:4000/api/health` rechazaron conexion, por lo que no se pudo ejercitar el circuito farmaceutico de proveedores, compras, recepcion, anulacion ni restricciones por rol.
+El epic queda cerrado despues de la validacion final del Sprint 08. Con entorno local disponible, se recorrio el circuito farmaceutico de proveedores y compras recibidas: gestion de proveedor, creacion de borrador, detalle por URL, guardado, recepcion y anulacion con motivo.
 
-Accion siguiente: exponer frontend y backend locales, confirmar `GET /api/health` y repetir la validacion final antes de cambiar este estado a `DONE`.
+La credencial `seller` no estaba disponible para sesion manual y queda registrada como limitacion no bloqueante; el cierre se realizo con usuario autorizado para la operacion.
 
 ## Goal
 

@@ -8,22 +8,22 @@ Ejecutar el cierre correctivo de validacion final del epic de proveedores y comp
 
 - Status: DONE
 - Owner: Unassigned
-- Resultado de cierre: bloqueado por frontend/backend locales inaccesibles durante la evidencia del ticket 02
+- Resultado de cierre: validacion final exitosa y epic cerrado
 
 ## Current Closure Evidence
 
-El ticket 02 fue ejecutado y dejo evidencia bloqueada, no exitosa. El navegador no pudo abrir `http://localhost:5173/` por `net::ERR_CONNECTION_REFUSED`, las comprobaciones de puertos locales para `5173`, `5174` y `4000` no encontraron listeners, y `GET http://localhost:4000/api/health` rechazo conexion.
+El ticket 02 fue reejecutado con entorno local disponible: `http://localhost:5173/` cargo correctamente y `GET http://localhost:4000/api/health` respondio `status: ok`. Se inicio sesion con usuario autorizado y se recorrio el circuito farmaceutico de proveedores y compras recibidas.
 
-Por esa evidencia, el epic `proveedores-compras-recibidas` permanece en `TODO`. No se consideran validados los flujos farmaceuticos de proveedores, compras, recepcion, anulacion, permisos, consola ni requests funcionales. La accion siguiente es levantar o exponer el dev server local, confirmar salud backend y reintentar la validacion final antes de cerrar el epic.
+La evidencia cubre listado, busqueda, creacion, detalle, edicion, desactivacion y reactivacion de proveedores; listado, filtro, creacion de borrador, detalle, edicion pendiente, guardado, recepcion y anulacion de compras con motivo. No se observaron errores relevantes de consola durante los flujos cubiertos. La credencial `seller` no estaba disponible y queda como limitacion no bloqueante segun las precondiciones del sprint.
 
 ## Final Outcome
 
 Al cierre de este sprint:
 
-- La validacion final queda documentada como bloqueada por frontend/backend locales inaccesibles durante el intento del ticket 02.
-- El bloqueo del Sprint 07 queda contextualizado como antecedente confirmado nuevamente en Sprint 08, no como fallo funcional de proveedores o compras.
-- El epic permanece en `TODO` porque no existe evidencia exitosa sobre proveedores, compras, recepcion, anulacion ni permisos.
-- Accion siguiente concreta: levantar o exponer frontend y backend locales, confirmar `GET /api/health` y repetir la validacion final antes de cambiar el epic a `DONE`.
+- La validacion final queda documentada como exitosa para proveedores, compras, recepcion y anulacion dentro del alcance del PRD.
+- El bloqueo del Sprint 07 queda contextualizado como antecedente de infraestructura ya resuelto en Sprint 08.
+- El epic cambia a `DONE` porque existe evidencia exitosa sobre el circuito principal de proveedores y compras recibidas.
+- No queda accion de cierre pendiente dentro de este epic; la validacion con credencial `seller` queda diferida por ausencia de credencial seed.
 
 ## Execution Order
 

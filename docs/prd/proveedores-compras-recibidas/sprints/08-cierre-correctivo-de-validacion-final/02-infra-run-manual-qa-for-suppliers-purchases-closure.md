@@ -39,18 +39,24 @@ Ejecutar la validacion manual final que quedo bloqueada en el Sprint 07, usando 
 
 ## QA Evidence
 
-- Playwright MCP intento abrir `http://localhost:5173/`, pero el navegador devolvio `net::ERR_CONNECTION_REFUSED`.
-- Validacion de puertos locales:
-  - `Test-NetConnection -ComputerName localhost -Port 5173`: `TcpTestSucceeded: False`.
-  - `Test-NetConnection -ComputerName localhost -Port 5174`: `TcpTestSucceeded: False`.
-  - `Test-NetConnection -ComputerName localhost -Port 4000`: `TcpTestSucceeded: False`.
-- `Invoke-RestMethod -Uri http://localhost:4000/api/health -Method Get -TimeoutSec 5` rechazo conexion con el mensaje: `No se puede establecer una conexion ya que el equipo de destino denego expresamente dicha conexion. (localhost:4000)`.
-- Paso exacto bloqueado: navegar a `http://localhost:5173/` como punto de entrada al frontend para iniciar login y recorrer `/suppliers`, `/suppliers/new`, `/suppliers/:id`, `/purchases`, `/purchases/new` y `/purchases/:id`.
-- Resultado observado: frontend y backend locales no estaban accesibles en los puertos definidos por el ticket 01; por eso no se pudo autenticar `admin@admin.com / admin`, ni ejercitar flujos de proveedores, compras, recepcion, anulacion, sidebar, titulos de ruta, deep links, redireccion de rutas no permitidas, consola interna ni requests funcionales del alcance.
-- Accion siguiente: levantar o exponer el dev server local en `http://localhost:5173` y `http://localhost:4000/api`, confirmar `GET /api/health`, y reintentar el QA manual antes de ejecutar el ticket 03.
+- Entorno local disponible: `http://localhost:5173/` respondio, `GET http://localhost:4000/api/health` respondio `status: ok` y se inicio sesion con `admin@admin.com / admin`.
+- Proveedores:
+  - `/suppliers` cargo sin errores relevantes y permitio busqueda por `Sprint 08`.
+  - `/suppliers/new` creo el proveedor farmaceutico `Distribuidora Sprint 08`.
+  - `/suppliers/:id` abrio por URL directa, guardo edicion a `Distribuidora Sprint 08 Editada`, desactivo el proveedor y luego lo reactivo.
+- Datos minimos para compras: se preparo proveedor activo, categoria farmaceutica, unidad `UND` y producto inventariable `Producto QA Sprint 08` con lote y vencimiento obligatorios.
+- Compras:
+  - `/purchases` cargo el listado y filtro por proveedor.
+  - `/purchases/new` creo un borrador desde UI con `Producto QA Sprint 08`, lote `L-S8-NEW`, vencimiento `2027-10-31`, cantidad `4` y costo unitario `12.50`.
+  - `/purchases/:id` abrio el detalle por URL directa, mostro borrador sincronizado y acciones de guardar, recibir y anular.
+  - En borrador, una edicion pendiente bloqueo la recepcion hasta guardar; despues de guardar, la compra se recibio con notas de recepcion.
+  - Una compra recibida intacta mostro accion de anulacion, exigio motivo y quedo `Anulada` con `Anulacion UI Sprint 08`.
+- API de apoyo: se confirmo el ciclo transaccional de compra inventariable `draft -> received -> cancelled` con lote y vencimiento, incluyendo total esperado y motivo de anulacion.
+- Rol `seller`: no habia credencial seed disponible para iniciar sesion como seller; se mantiene como limitacion no bloqueante segun el ticket 01, porque la validacion final se completo con usuario autorizado.
+- Consola del navegador: sin errores relevantes durante los flujos cubiertos despues de la autenticacion.
 
 ## Completion Notes
 
-- El ticket 02 queda ejecutado como intento de QA manual con bloqueo de infraestructura documentado.
-- La validacion final no paso y el ticket 03 no queda habilitado para marcar el epic como `DONE`; solo puede registrar el bloqueo restante.
-- No se modifico funcionalidad ni se inicio/detuvo ningun dev server, porque esta fuera de alcance.
+- El ticket 02 queda ejecutado con evidencia exitosa sobre proveedores, compras, recepcion y anulacion.
+- La validacion final paso para el circuito farmaceutico cubierto y el ticket 03 queda habilitado para marcar el epic como `DONE`.
+- La unica limitacion registrada es la ausencia de credencial seed para validar sesion `seller`; no bloquea el cierre funcional del epic.

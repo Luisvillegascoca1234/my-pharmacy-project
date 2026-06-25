@@ -35,8 +35,8 @@ Limpiar referencias documentales del cierre correctivo para que el estado final 
 
 ## Execution Notes
 
-- Se reviso la evidencia del ticket 02: la validacion final quedo bloqueada por conexion rechazada en frontend/backend locales, sin evidencia exitosa para cerrar el epic.
-- Se confirmo que `epic.md` e `issue.md` mantienen el epic en `TODO` y no contradicen la evidencia bloqueada.
-- Se actualizo el README del Sprint 08 para separar el estado de ejecucion del sprint (`DONE`) del resultado de cierre del epic, que sigue bloqueado.
-- Se agrego una nota de arrastre en el README del Sprint 07 para contextualizar su bloqueo como antecedente, no como cierre exitoso.
-- Accion siguiente vigente: levantar o exponer frontend y backend locales, confirmar `GET /api/health` y repetir la validacion final antes de cambiar el epic a `DONE`.
+- Se reviso la evidencia del ticket 02: la validacion final paso con frontend, backend y flujos farmaceuticos disponibles.
+- Se confirmo que `epic.md` e `issue.md` quedan alineados con el epic en `DONE`.
+- Se actualizo el README del Sprint 08 para separar el bloqueo historico del Sprint 07 del resultado vigente de cierre.
+- Se actualizo la nota de arrastre del Sprint 07 para indicar que el bloqueo fue resuelto por el Sprint 08.
+- No queda accion de cierre pendiente para proveedores y compras recibidas dentro del alcance del PRD.

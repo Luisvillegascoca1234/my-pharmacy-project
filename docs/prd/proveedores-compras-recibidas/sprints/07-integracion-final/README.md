@@ -19,7 +19,7 @@ By the end of this sprint:
 
 ## Arrastre de Cierre
 
-El Sprint 07 dejo la validacion final bloqueada por frontend/backend locales inaccesibles durante el ticket 05. Ese bloqueo se traslado al Sprint 08 como antecedente de infraestructura; no confirma un fallo funcional del circuito farmaceutico ni habilita marcar el epic como `DONE`.
+El Sprint 07 dejo la validacion final bloqueada por frontend/backend locales inaccesibles durante el ticket 05. Ese bloqueo se traslado al Sprint 08 como antecedente de infraestructura y fue resuelto alli con validacion final exitosa del circuito farmaceutico.
 
 ## Execution Order
 

@@ -216,8 +216,10 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
   const isDraft = isCreateMode || selectedPurchase?.status === "draft";
   const canEdit = purchases.canManage && isDraft && !isLoadingDetail;
   const canOperateDraft = purchases.canManage && !isCreateMode && selectedPurchase?.status === "draft" && !isLoadingDetail;
+  const canShowCancel =
+    purchases.canManage && !isCreateMode && selectedPurchase !== null && selectedPurchase.status !== "cancelled" && !isLoadingDetail;
   const canReceive = canOperateDraft && !purchases.isDirty && !isReceiving && !isCancelling;
-  const canCancel = canOperateDraft && !isReceiving && !isCancelling;
+  const canCancel = canShowCancel && !purchases.isDirty && !isReceiving && !isCancelling;
   const activeProducts = useMemo(() => productsCatalog.products.filter((product) => product.status === "active"), [productsCatalog.products]);
   const supplierProducts = useMemo(
     () =>
@@ -463,6 +465,10 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                 {isReceiving ? <Spinner /> : <PackageCheck aria-hidden="true" />}
                 Recibir
               </Button>
+            </>
+          ) : null}
+          {canShowCancel ? (
+            <>
               <Button disabled={!canCancel} type="button" variant="destructive" onClick={openCancelDialog}>
                 {isCancelling ? <Spinner /> : <Ban aria-hidden="true" />}
                 Anular
@@ -754,16 +760,20 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                     Guardar borrador
                   </Button>
                 ) : null}
-                {canOperateDraft ? (
+                {canOperateDraft || canShowCancel ? (
                   <div className="grid gap-2">
-                    <Button disabled={!canReceive} type="button" variant="outline" onClick={openReceiveDialog}>
-                      {isReceiving ? <Spinner /> : <PackageCheck aria-hidden="true" />}
-                      Recibir compra
-                    </Button>
-                    <Button disabled={!canCancel} type="button" variant="destructive" onClick={openCancelDialog}>
-                      {isCancelling ? <Spinner /> : <Ban aria-hidden="true" />}
-                      Anular compra
-                    </Button>
+                    {canOperateDraft ? (
+                      <Button disabled={!canReceive} type="button" variant="outline" onClick={openReceiveDialog}>
+                        {isReceiving ? <Spinner /> : <PackageCheck aria-hidden="true" />}
+                        Recibir compra
+                      </Button>
+                    ) : null}
+                    {canShowCancel ? (
+                      <Button disabled={!canCancel} type="button" variant="destructive" onClick={openCancelDialog}>
+                        {isCancelling ? <Spinner /> : <Ban aria-hidden="true" />}
+                        Anular compra
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
                 {!isCreateMode && selectedPurchase ? (
