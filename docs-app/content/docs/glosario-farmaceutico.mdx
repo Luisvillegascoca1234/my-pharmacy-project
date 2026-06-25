@@ -3,7 +3,7 @@ title: Glosario farmaceutico
 description: Terminos principales del dominio de farmacia usados en el sistema.
 ---
 
-Este glosario reúne los terminos necesarios para comprender los procesos del sistema POS farmacéutico. Las definiciones se presentan con sentido operativo, es decir, orientadas a cómo se usan dentro de una farmacia y cómo afectan compras, inventario, ventas y reportes.
+Este glosario reune los terminos necesarios para comprender los procesos del sistema POS farmaceutico. Las definiciones se presentan con sentido operativo, orientadas a como se usan dentro de una farmacia y como afectan compras, inventario, ventas, cierre administrativo y reportes.
 
 ## Producto farmaceutico
 
@@ -11,52 +11,74 @@ Bien comercializado por la farmacia dentro de su alcance sanitario y operativo. 
 
 ## Medicamento
 
-Producto con principio activo destinado a prevenir, diagnosticar, aliviar o tratar una condición de salud. En el sistema puede requerir registro sanitario, control de lote, fecha de vencimiento y, según corresponda, receta.
+Producto con principio activo destinado a prevenir, diagnosticar, aliviar o tratar una condicion de salud. En el sistema puede requerir registro sanitario, control de lote, fecha de vencimiento y, segun corresponda, receta.
 
 ## Principio activo
 
-Sustancia responsable del efecto terapéutico de un medicamento. Este dato permite distinguir productos con distinto nombre comercial pero con composición farmacológica relacionada.
+Sustancia responsable del efecto terapeutico de un medicamento. Este dato permite distinguir productos con distinto nombre comercial pero con composicion farmacologica relacionada.
 
 ## Producto OTC
 
-Producto de venta libre, conocido por la sigla inglesa OTC. Puede venderse sin receta, pero continúa sujeto a control de inventario, vencimiento y trazabilidad cuando forma parte del stock de farmacia.
+Producto de venta libre, conocido por la sigla inglesa OTC. Puede venderse sin receta, pero continua sujeto a control de inventario, vencimiento y trazabilidad cuando forma parte del stock de farmacia.
 
 ## Lote
 
-Identificador asociado a una fabricación, recepción o partida específica de un producto. Permite rastrear origen, costo, vencimiento y movimientos posteriores. En farmacia, el lote es un dato sanitario clave.
+Identificador asociado a una fabricacion, recepcion o partida especifica de un producto. Permite rastrear origen, costo, vencimiento y movimientos posteriores. En farmacia, el lote es un dato sanitario clave.
+
+Cuando una venta consume stock por FEFO, el lote permite saber que partida salio. Si una anulacion POS o devolucion administrativa repone inventario, la reposicion debe volver al lote original cuando la regla lo permite.
 
 ## Fecha de vencimiento
 
-Fecha límite hasta la cual el producto puede considerarse apto para comercialización bajo condiciones normales. El sistema debe usarla para alertas, bloqueo operativo y selección FEFO.
+Fecha limite hasta la cual el producto puede considerarse apto para comercializacion bajo condiciones normales. El sistema debe usarla para alertas, bloqueo operativo y seleccion FEFO.
 
 ## Unidad base
 
-Unidad mínima o principal con la que se controla el inventario de un producto. Por ejemplo, una tableta puede ser unidad base aunque el producto se compre por caja o se venda por blister.
+Unidad minima o principal con la que se controla el inventario de un producto. Por ejemplo, una tableta puede ser unidad base aunque el producto se compre por caja o se venda por blister.
 
 ## Presentacion comercial
 
-Forma en la que se compra o vende un producto, como caja, blister, frasco, ampolla o unidad. Cada presentación debe relacionarse con la unidad base mediante una conversión.
+Forma en la que se compra o vende un producto, como caja, blister, frasco, ampolla o unidad. Cada presentacion debe relacionarse con la unidad base mediante una conversion.
 
 ## Conversion
 
-Equivalencia entre una presentación comercial y la unidad base. Por ejemplo, si una caja contiene 100 tabletas, la conversión permite que una compra de una caja aumente el inventario en 100 tabletas.
+Equivalencia entre una presentacion comercial y la unidad base. Por ejemplo, si una caja contiene 100 tabletas, la conversion permite que una compra de una caja aumente el inventario en 100 tabletas.
 
 ## Kardex
 
-Registro cronológico de movimientos de inventario. Explica entradas, salidas, anulaciones y ajustes, indicando producto, lote, cantidad, costo, referencia, usuario y motivo.
+Registro cronologico de movimientos de inventario. Explica entradas, salidas, anulaciones, devoluciones y ajustes, indicando producto, lote, cantidad, costo, referencia, usuario y motivo.
+
+En cierre administrativo, el kardex explica la reposicion por anulacion POS o devolucion administrativa total. No reemplaza el reporte financiero; explica el movimiento fisico o contable del stock.
 
 ## FEFO
 
-Metodo de salida First Expired, First Out. Significa que se priorizan los lotes con vencimiento más cercano, siempre que estén disponibles y sean aptos para venta. Es especialmente importante en farmacia porque reduce pérdidas por vencimiento y mejora la trazabilidad.
+Metodo de salida First Expired, First Out. Significa que se priorizan los lotes con vencimiento mas cercano, siempre que esten disponibles y sean aptos para venta. Es especialmente importante en farmacia porque reduce perdidas por vencimiento y mejora la trazabilidad.
+
+FEFO no significa vender cualquier lote vencido ni elegir manualmente el lote por conveniencia. La salida debe respetar disponibilidad, estado operativo y vencimiento.
 
 ## Compra recibida
 
-Compra cuyo contenido fue confirmado y que ya generó inventario. A diferencia de una compra en borrador, la recepción tiene impacto operativo: crea lotes o capas de inventario y movimientos de entrada.
+Compra cuyo contenido fue confirmado y que ya genero inventario. A diferencia de una compra en borrador, la recepcion tiene impacto operativo: crea lotes o capas de inventario y movimientos de entrada.
 
 ## Capa de inventario
 
-Registro interno que representa una cantidad recibida de un producto, lote y vencimiento con un costo específico. Permite conservar costos históricos diferentes incluso cuando el lote físico parezca el mismo.
+Registro interno que representa una cantidad recibida de un producto, lote y vencimiento con un costo especifico. Permite conservar costos historicos diferentes incluso cuando el lote fisico parezca el mismo.
+
+## Comprobante interno
+
+Documento administrativo emitido por el sistema para respaldar una operacion interna. En ventas POS, el comprobante interno de mostrador no es factura fiscal y no representa validacion SIAT.
+
+## Factura preparada
+
+Comprobante interno preparado desde una venta POS confirmada. Conserva datos comerciales del cliente, productos, vendedor, caja, total y estado documental. No emite factura fiscal real, no genera CUF/CUFD funcional, no incluye QR fiscal y no registra respuesta del SIN.
+
+## Devolucion administrativa
+
+Correccion administrativa posterior al cierre de caja. En V1 es total, exige motivo, marca la venta como devuelta, registra reembolso administrativo y repone los lotes originales cuando la regla lo permite. No reabre caja cerrada.
+
+## Anulacion POS
+
+Correccion de una venta mientras la caja asociada sigue abierta. Exige motivo, conserva evidencia, revierte el pago operativo y repone inventario a los lotes consumidos.
 
 ## Auditoria
 
-Registro de acciones relevantes realizadas por usuarios o por procesos del sistema. Sirve para explicar quién hizo una operación, cuándo ocurrió, sobre qué entidad y con qué información asociada.
+Registro de acciones relevantes realizadas por usuarios o por procesos del sistema. Sirve para explicar quien hizo una operacion, cuando ocurrio, sobre que entidad y con que informacion asociada.

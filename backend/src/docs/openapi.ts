@@ -14,7 +14,7 @@ export const openApiDocument = {
     }
   ],
   "x-contract-parity-review": {
-    flow: "sales-cash-pos-v1",
+    flow: "sales-cash-pos-v1-and-administrative-closure-v1",
     implementedRoutes: [
       "GET /cash-sessions",
       "POST /cash-sessions/open",
@@ -29,17 +29,51 @@ export const openApiDocument = {
       "GET /sales",
       "POST /sales",
       "GET /sales/{id}",
-      "POST /sales/{id}/cancel"
+      "POST /sales/{id}/cancel",
+      "GET /billing/prepared-invoices",
+      "POST /billing/prepared-invoices",
+      "GET /billing/prepared-invoices/{id}",
+      "POST /billing/prepared-invoices/{id}/cancel",
+      "GET /billing/invoiceable-sales",
+      "GET /returns/returnable-sales",
+      "GET /returns/sale-returns",
+      "POST /returns/sale-returns",
+      "GET /returns/sale-returns/{id}",
+      "GET /audit/logs",
+      "GET /reports/daily-sales",
+      "GET /reports/inventory-valuation",
+      "GET /reports/expiring-products",
+      "GET /exports/sales.csv",
+      "GET /exports/inventory-movements.csv"
     ],
+    plannedRoutes: [],
     sharedContracts: [
       "Cash sessions and supervision envelopes",
       "POS product search",
       "Confirmed cash sales and receipts",
       "Cancelable sale envelopes",
-      "Pending cart lifecycle envelopes"
+      "Pending cart lifecycle envelopes",
+      "Prepared invoice internal envelopes",
+      "Total sale return envelopes",
+      "Queryable audit log envelopes",
+      "Operational report envelopes",
+      "CSV export query and row contracts"
     ],
-    deferredRouteParity: [],
+    deferredRouteParity: [
+      "Queryable audit logs and visual operational reports are executable V1 contracts.",
+      "Returns endpoints are executable administrative total return workflows and remain separate from POS sale cancellation.",
+      "Prepared invoices are executable internal pharmacy fiscal preparation records and do not promise real SIAT integration, fiscal QR generation, XML, CUF, CUFD, or tax authority submission.",
+      "CSV export downloads must create audit logs; visual report queries must not create audit logs."
+    ],
+    generationGuardrails: [
+      "Run pnpm --filter @pharmacy-pos/shared typecheck after changing shared contracts.",
+      "Run pnpm --filter @pharmacy-pos/backend typecheck after changing OpenAPI or Prisma-backed contracts.",
+      "Run pnpm --filter @pharmacy-pos/backend prisma:generate after Prisma schema changes before backend typecheck.",
+      "Advanced BI, CSV per sold item, visual query auditing, and UI consumption work remain outside this V1 scope."
+    ],
     documentedDomainErrorCodes: [
+      "VALIDATION_ERROR",
+      "ADMINISTRATIVE_REASON_INVALID",
       "PENDING_CART_EXPIRED",
       "PENDING_CART_ACCESS_FORBIDDEN",
       "PENDING_CART_STOCK_INSUFFICIENT",
@@ -49,10 +83,105 @@ export const openApiDocument = {
       "SALE_CASH_SESSION_REQUIRED",
       "SALE_STOCK_INSUFFICIENT",
       "SALE_PAYMENT_INSUFFICIENT",
+      "SALE_NOT_FOUND",
       "CASH_SESSION_ALREADY_CLOSED",
       "CASH_SESSION_CLOSE_FORBIDDEN",
+      "SALE_NOT_INVOICEABLE",
+      "PREPARED_INVOICE_ACTIVE_EXISTS",
+      "PREPARED_INVOICE_NOT_FOUND",
+      "PREPARED_INVOICE_ALREADY_CANCELLED",
+      "SALE_NOT_RETURNABLE",
+      "SALE_PAYMENT_NOT_REFUNDABLE",
+      "SALE_RETURN_CONFLICT",
+      "SALE_RETURN_NOT_FOUND",
+      "SALE_RETURN_REASON_INVALID",
+      "UNSUPPORTED_TIMEZONE",
+      "INVALID_REPORT_DATE_RANGE",
+      "INVALID_EXPORT_DATE_RANGE",
       "FORBIDDEN"
-    ]
+    ],
+    administrativeClosureV1Evidence: {
+      roleMatrix: {
+        billing: ["admin", "superadmin"],
+        returns: ["admin", "superadmin"],
+        audit: ["superadmin"],
+        reports: ["admin", "superadmin"],
+        exports: ["admin", "superadmin"]
+      },
+      billingPreparedInvoiceContract: {
+        executableRoutes: [
+          "GET /billing/invoiceable-sales",
+          "GET /billing/prepared-invoices",
+          "POST /billing/prepared-invoices",
+          "GET /billing/prepared-invoices/{id}",
+          "POST /billing/prepared-invoices/{id}/cancel"
+        ],
+        statusValues: ["prepared", "cancelled"],
+        expectedErrors: [
+          "SALE_NOT_FOUND",
+          "SALE_NOT_INVOICEABLE",
+          "PREPARED_INVOICE_ACTIVE_EXISTS",
+          "PREPARED_INVOICE_NOT_FOUND",
+          "PREPARED_INVOICE_ALREADY_CANCELLED",
+          "ADMINISTRATIVE_REASON_INVALID",
+          "FORBIDDEN"
+        ],
+        siatBoundary:
+          "Prepared invoices are internal administrative records only; V1 does not issue SIAT documents, fiscal QR, XML, CUF, CUFD, tax authority submissions, or fiscal annulments."
+      },
+      totalSaleReturnContract: {
+        executableRoutes: [
+          "GET /returns/returnable-sales",
+          "GET /returns/sale-returns",
+          "POST /returns/sale-returns",
+          "GET /returns/sale-returns/{id}"
+        ],
+        resultingStateValues: {
+          sale: "returned",
+          payment: "refunded",
+          inventoryMovement: "sale_returned"
+        },
+        expectedErrors: [
+          "SALE_NOT_FOUND",
+          "SALE_NOT_RETURNABLE",
+          "SALE_PAYMENT_NOT_REFUNDABLE",
+          "SALE_RETURN_CONFLICT",
+          "SALE_RETURN_NOT_FOUND",
+          "SALE_RETURN_REASON_INVALID",
+          "FORBIDDEN"
+        ],
+        boundary:
+          "Returns are total administrative returns after sale closure; V1 does not support partial returns, sold-item CSV files, or direct mutation of closed cash sessions."
+      },
+      reportsAndExportsAuditPolicy: {
+        visualReports: {
+          routes: [
+            "GET /reports/daily-sales",
+            "GET /reports/inventory-valuation",
+            "GET /reports/expiring-products"
+          ],
+          responseField: "audited=false",
+          auditSideEffect: false,
+          expectedErrors: ["UNSUPPORTED_TIMEZONE", "INVALID_REPORT_DATE_RANGE", "FORBIDDEN"]
+        },
+        csvDownloads: {
+          routes: ["GET /exports/sales.csv", "GET /exports/inventory-movements.csv"],
+          contentType: "text/csv; charset=utf-8",
+          separator: ";",
+          auditSideEffect: true,
+          auditAction: "CSV_EXPORT_DOWNLOADED",
+          expectedErrors: ["INVALID_EXPORT_DATE_RANGE", "FORBIDDEN"]
+        }
+      },
+      explicitV1Limitations: [
+        "No real SIAT integration.",
+        "No fiscal QR.",
+        "No partial returns.",
+        "No advanced BI or data warehouse.",
+        "No CSV file grouped by sold item."
+      ],
+      reconciliationDebt: []
+    }
   },
   tags: [
     {
@@ -94,6 +223,26 @@ export const openApiDocument = {
     {
       name: "Sales",
       description: "Confirmed cash sale workflows for seller, admin, and superadmin users."
+    },
+    {
+      name: "Billing",
+      description: "Executable internal prepared invoice workflows for admin and superadmin users. This V1 scope does not integrate with SIAT, fiscal QR generation, XML, CUF, CUFD, or tax authority submission."
+    },
+    {
+      name: "Returns",
+      description: "Executable administrative total sale return workflows for admin and superadmin users with inventory reversal, payment refund state, and audit traceability. POS sale cancellation remains a separate workflow."
+    },
+    {
+      name: "Audit",
+      description: "Executable queryable audit log review for superadmin users."
+    },
+    {
+      name: "Reports",
+      description: "Executable visual operational reports for admin and superadmin users. Visual report queries return audited=false and do not create audit logs."
+    },
+    {
+      name: "Exports",
+      description: "Executable CSV downloads for admin and superadmin users. CSV downloads generate audit logs."
     },
     {
       name: "Users",
@@ -1436,6 +1585,577 @@ export const openApiDocument = {
         }
       }
     },
+    "/billing/invoiceable-sales": {
+      get: {
+        tags: ["Billing"],
+        summary: "List sales eligible for internal prepared invoices",
+        description: "Executable V1 endpoint for admin and superadmin users. Returns sales with invoice eligibility flags before prepared invoice creation. It does not call SIAT, generate fiscal QR/XML, or issue tax documents.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/SellerUserIdQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated sales with prepared invoice eligibility",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/InvoiceableSalesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
+    "/billing/prepared-invoices": {
+      get: {
+        tags: ["Billing"],
+        summary: "List internal prepared invoices",
+        description: "Executable V1 endpoint for admin and superadmin users. Prepared invoices are internal records with stable correlatives and no real SIAT submission, fiscal QR, XML, CUF, or CUFD.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/PreparedInvoiceStatusQuery" },
+          { $ref: "#/components/parameters/SaleIdQuery" },
+          { $ref: "#/components/parameters/CorrelativeCodeQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated prepared invoices",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PreparedInvoicesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Billing"],
+        summary: "Prepare an internal invoice from an eligible sale",
+        description: "Executable V1 endpoint for admin and superadmin users. Creates an internal prepared invoice only; real SIAT integration, fiscal QR/XML generation, CUF, CUFD, and tax authority issuance are out of scope.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/PrepareInvoiceFromSaleRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Prepared invoice created",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PreparedInvoice"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/AdministrativeBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PreparedInvoiceSaleNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PreparedInvoiceConflict"
+          }
+        }
+      }
+    },
+    "/billing/prepared-invoices/{id}": {
+      get: {
+        tags: ["Billing"],
+        summary: "Get an internal prepared invoice",
+        description: "Executable V1 endpoint for admin and superadmin users. Returns the internal prepared invoice detail and line snapshot without SIAT, fiscal QR, XML, CUF, or CUFD data.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PreparedInvoiceId" }],
+        responses: {
+          "200": {
+            description: "Prepared invoice detail with items",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PreparedInvoice"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PreparedInvoiceNotFound"
+          }
+        }
+      }
+    },
+    "/billing/prepared-invoices/{id}/cancel": {
+      post: {
+        tags: ["Billing"],
+        summary: "Cancel an internal prepared invoice",
+        description: "Executable V1 endpoint for admin and superadmin users. Cancellation is internal, records the administrative reason, and does not send SIAT annulment messages.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/PreparedInvoiceId" }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CancelPreparedInvoiceRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Prepared invoice cancelled",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/PreparedInvoice"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/AdministrativeBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/PreparedInvoiceNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/PreparedInvoiceConflict"
+          }
+        }
+      }
+    },
+    "/returns/returnable-sales": {
+      get: {
+        tags: ["Returns"],
+        summary: "List sales eligible for total return",
+        description: "Executable V1 endpoint for admin and superadmin users. Lists confirmed sales with total return eligibility flags. Administrative returns restore inventory and refund payment state; POS sale cancellation is handled by the sales cancellation endpoint.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/SellerUserIdQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated sales with total return eligibility",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ReturnableSalesListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
+    "/returns/sale-returns": {
+      get: {
+        tags: ["Returns"],
+        summary: "List total sale returns",
+        description: "Executable V1 endpoint for admin and superadmin users. Lists administrative total returns already registered through the returns workflow.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/SaleIdQuery" },
+          { $ref: "#/components/parameters/ActorUserIdQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated total sale returns",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SaleReturnsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      },
+      post: {
+        tags: ["Returns"],
+        summary: "Register a total sale return",
+        description: "Executable V1 endpoint for admin and superadmin users. Registers one administrative total return for an eligible sale, restores the originally consumed lots, marks the payment as refunded, and writes audit traceability in one transaction. It does not perform partial returns or modify open cash sessions; POS sale cancellation remains separate.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/CreateTotalSaleReturnRequest"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "Total sale return registered",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SaleReturn"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/SaleReturnBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/SaleReturnSaleNotFound"
+          },
+          "409": {
+            $ref: "#/components/responses/SaleReturnConflict"
+          }
+        }
+      }
+    },
+    "/returns/sale-returns/{id}": {
+      get: {
+        tags: ["Returns"],
+        summary: "Get a total sale return",
+        description: "Executable V1 endpoint for admin and superadmin users. Returns administrative total return detail with the item and lot snapshot restored during the transaction.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: "#/components/parameters/SaleReturnId" }],
+        responses: {
+          "200": {
+            description: "Total sale return detail with returned items",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/SaleReturn"
+                }
+              }
+            }
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          },
+          "404": {
+            $ref: "#/components/responses/SaleReturnNotFound"
+          }
+        }
+      }
+    },
+    "/audit/logs": {
+      get: {
+        tags: ["Audit"],
+        summary: "List audit logs",
+        description: "Executable V1 audit log query for superadmin users only. Includes administrative traceability metadata and paginated results.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/AuditActionQuery" },
+          { $ref: "#/components/parameters/ActorUserIdQuery" },
+          { $ref: "#/components/parameters/EntityTypeQuery" },
+          { $ref: "#/components/parameters/EntityIdQuery" },
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/PageQuery" },
+          { $ref: "#/components/parameters/PageSizeQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Paginated audit logs",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/AuditLogsListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/BadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/SuperadminOnlyForbidden"
+          }
+        }
+      }
+    },
+    "/reports/daily-sales": {
+      get: {
+        tags: ["Reports"],
+        summary: "Get daily sales report",
+        description: "Executable V1 visual report for admin and superadmin users. Queries use America/La_Paz, return audited=false, and do not create audit logs.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/RequiredFromDateQuery" },
+          { $ref: "#/components/parameters/RequiredToDateQuery" },
+          { $ref: "#/components/parameters/TimezoneQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Daily sales report rows",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/DailySalesReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/ReportBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
+    "/reports/inventory-valuation": {
+      get: {
+        tags: ["Reports"],
+        summary: "Get inventory valuation report",
+        description: "Executable V1 visual report for admin and superadmin users. Queries use America/La_Paz, return audited=false, and do not create audit logs.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/ProductIdQuery" },
+          { $ref: "#/components/parameters/TimezoneQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Inventory valuation grouped by product and lot",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/InventoryValuationReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/ReportBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
+    "/reports/expiring-products": {
+      get: {
+        tags: ["Reports"],
+        summary: "Get expiring products report",
+        description: "Executable V1 visual report for admin and superadmin users. Queries use America/La_Paz, return audited=false, and do not create audit logs.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/DaysQuery" },
+          { $ref: "#/components/parameters/SearchQuery" },
+          { $ref: "#/components/parameters/ProductIdQuery" },
+          { $ref: "#/components/parameters/TimezoneQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Products with lots close to expiration",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ExpiringProductsReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/ReportBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
+    "/exports/sales.csv": {
+      get: {
+        tags: ["Exports"],
+        summary: "Download sales CSV export",
+        description: "Executable V1 CSV download for admin and superadmin users. Downloads generate audit logs and return text/csv with semicolon-separated rows.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/CsvSeparatorQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Sales CSV download",
+            headers: {
+              "Content-Disposition": {
+                schema: {
+                  type: "string",
+                  example: "attachment; filename=\"sales.csv\""
+                }
+              }
+            },
+            content: {
+              "text/csv; charset=utf-8": {
+                schema: {
+                  type: "string",
+                  example: "saleId;correlativeCode;status;sellerName;cashSessionCorrelativeCode;totalAmount;totalCost;totalMargin;confirmedAt;cancelledAt;returnedAt\r\nsale-id;V-000001;confirmed;Maria Perez;C-000001;25;18;7;2026-06-25T14:30:00.000Z;;\r\n"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/ExportBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
+    "/exports/inventory-movements.csv": {
+      get: {
+        tags: ["Exports"],
+        summary: "Download inventory movements CSV export",
+        description: "Executable V1 CSV download for admin and superadmin users. Downloads generate audit logs and return text/csv with semicolon-separated rows.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/FromDateQuery" },
+          { $ref: "#/components/parameters/ToDateQuery" },
+          { $ref: "#/components/parameters/CsvSeparatorQuery" }
+        ],
+        responses: {
+          "200": {
+            description: "Inventory movements CSV download",
+            headers: {
+              "Content-Disposition": {
+                schema: {
+                  type: "string",
+                  example: "attachment; filename=\"inventory-movements.csv\""
+                }
+              }
+            },
+            content: {
+              "text/csv; charset=utf-8": {
+                schema: {
+                  type: "string",
+                  example: "movementId;type;productId;internalCode;commercialName;batchId;batchNumber;quantityBase;unitCostBase;referenceType;referenceId;actorUserName;reason;createdAt\r\nmovement-id;sale_returned;product-id;MED-000001;Paracetamol 500 mg;batch-id;L-001;2;1.25;sale_return;return-id;Maria Perez;Total return;2026-06-25T14:30:00.000Z\r\n"
+                }
+              }
+            }
+          },
+          "400": {
+            $ref: "#/components/responses/ExportBadRequest"
+          },
+          "401": {
+            $ref: "#/components/responses/Unauthorized"
+          },
+          "403": {
+            $ref: "#/components/responses/AdministrativeForbidden"
+          }
+        }
+      }
+    },
     "/health": {
       get: {
         tags: ["Health"],
@@ -1900,6 +2620,24 @@ export const openApiDocument = {
         },
         description: "Sale identifier"
       },
+      PreparedInvoiceId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Prepared invoice identifier"
+      },
+      SaleReturnId: {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: {
+          type: "string"
+        },
+        description: "Sale return identifier"
+      },
       SearchQuery: {
         name: "search",
         in: "query",
@@ -2008,6 +2746,78 @@ export const openApiDocument = {
         },
         description: "Filter sales by cash session"
       },
+      SaleIdQuery: {
+        name: "saleId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter by sale identifier"
+      },
+      CorrelativeCodeQuery: {
+        name: "correlativeCode",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter by prepared invoice correlative code"
+      },
+      PreparedInvoiceStatusQuery: {
+        name: "status",
+        in: "query",
+        required: false,
+        schema: {
+          $ref: "#/components/schemas/PreparedInvoiceStatus"
+        },
+        description: "Filter prepared invoices by internal status"
+      },
+      ActorUserIdQuery: {
+        name: "actorUserId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter by administrative actor user"
+      },
+      AuditActionQuery: {
+        name: "action",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter audit logs by action"
+      },
+      EntityTypeQuery: {
+        name: "entityType",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter audit logs by entity type"
+      },
+      EntityIdQuery: {
+        name: "entityId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter audit logs by entity identifier"
+      },
+      ProductIdQuery: {
+        name: "productId",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string"
+        },
+        description: "Filter report data by product identifier"
+      },
       FromDateQuery: {
         name: "fromDate",
         in: "query",
@@ -2017,7 +2827,18 @@ export const openApiDocument = {
           format: "date",
           pattern: "^\\d{4}-\\d{2}-\\d{2}$"
         },
-        description: "Inclusive purchase date lower bound in YYYY-MM-DD format"
+        description: "Inclusive date lower bound in YYYY-MM-DD format"
+      },
+      RequiredFromDateQuery: {
+        name: "fromDate",
+        in: "query",
+        required: true,
+        schema: {
+          type: "string",
+          format: "date",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        description: "Inclusive report date lower bound in YYYY-MM-DD format"
       },
       ToDateQuery: {
         name: "toDate",
@@ -2028,7 +2849,52 @@ export const openApiDocument = {
           format: "date",
           pattern: "^\\d{4}-\\d{2}-\\d{2}$"
         },
-        description: "Inclusive purchase date upper bound in YYYY-MM-DD format"
+        description: "Inclusive date upper bound in YYYY-MM-DD format"
+      },
+      RequiredToDateQuery: {
+        name: "toDate",
+        in: "query",
+        required: true,
+        schema: {
+          type: "string",
+          format: "date",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        description: "Inclusive report date upper bound in YYYY-MM-DD format"
+      },
+      TimezoneQuery: {
+        name: "timezone",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string",
+          enum: ["America/La_Paz"],
+          default: "America/La_Paz"
+        },
+        description: "Report timezone"
+      },
+      DaysQuery: {
+        name: "days",
+        in: "query",
+        required: false,
+        schema: {
+          type: "integer",
+          minimum: 1,
+          maximum: 365,
+          default: 30
+        },
+        description: "Expiration horizon in days"
+      },
+      CsvSeparatorQuery: {
+        name: "separator",
+        in: "query",
+        required: false,
+        schema: {
+          type: "string",
+          enum: [";"],
+          default: ";"
+        },
+        description: "CSV separator"
       },
       PageQuery: {
         name: "page",
@@ -2070,6 +2936,60 @@ export const openApiDocument = {
           "application/json": {
             schema: {
               $ref: "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      ReportBadRequest: {
+        description: "Invalid report query or report business rule violation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              unsupportedTimezone: {
+                value: {
+                  message: "Inventory valuation report only supports America/La_Paz timezone.",
+                  code: "UNSUPPORTED_TIMEZONE"
+                }
+              },
+              invalidDateRange: {
+                value: {
+                  message: "fromDate must be less than or equal to toDate.",
+                  code: "INVALID_REPORT_DATE_RANGE"
+                }
+              }
+            }
+          }
+        }
+      },
+      ExportBadRequest: {
+        description: "Invalid CSV export query or export business rule violation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              invalidDateRange: {
+                value: {
+                  message: "fromDate must be less than or equal to toDate.",
+                  code: "INVALID_EXPORT_DATE_RANGE"
+                }
+              }
             }
           }
         }
@@ -2796,6 +3716,268 @@ export const openApiDocument = {
                 value: {
                   message: "Sale payment has already been reverted.",
                   code: "SALE_PAYMENT_ALREADY_REVERTED"
+                }
+              }
+            }
+          }
+        }
+      },
+      AdministrativeForbidden: {
+        description: "The authenticated user is not admin or superadmin",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Only admin and superadmin users can access this administrative operation.",
+              code: "FORBIDDEN"
+            }
+          }
+        }
+      },
+      SuperadminOnlyForbidden: {
+        description: "The authenticated user is not superadmin",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Only superadmin users can access audit logs.",
+              code: "FORBIDDEN"
+            }
+          }
+        }
+      },
+      AdministrativeBadRequest: {
+        description: "Invalid administrative closure payload",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              invalidReason: {
+                value: {
+                  message: "Administrative reason must be between 5 and 500 characters.",
+                  code: "ADMINISTRATIVE_REASON_INVALID"
+                }
+              }
+            }
+          }
+        }
+      },
+      PreparedInvoiceNotFound: {
+        description: "Prepared invoice was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Prepared invoice was not found.",
+              code: "PREPARED_INVOICE_NOT_FOUND"
+            }
+          }
+        }
+      },
+      PreparedInvoiceSaleNotFound: {
+        description: "Sale was not found for prepared invoice creation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Sale was not found for prepared invoice creation.",
+              code: "SALE_NOT_FOUND",
+              details: {
+                saleId: "sale-1",
+                invoiceBlockedReason: "sale-not-found"
+              }
+            }
+          }
+        }
+      },
+      PreparedInvoiceConflict: {
+        description: "Prepared invoice eligibility or lifecycle rule was not satisfied",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              saleNotInvoiceable: {
+                value: {
+                  message: "Sale is not eligible for prepared invoice creation.",
+                  code: "SALE_NOT_INVOICEABLE",
+                  details: {
+                    invoiceBlockedReason: "sale-cancelled"
+                  }
+                }
+              },
+              activeInvoiceExists: {
+                value: {
+                  message: "Sale already has an active prepared invoice.",
+                  code: "PREPARED_INVOICE_ACTIVE_EXISTS",
+                  details: {
+                    invoiceBlockedReason: "active-invoice-exists"
+                  }
+                }
+              },
+              alreadyCancelled: {
+                value: {
+                  message: "Prepared invoice has already been cancelled.",
+                  code: "PREPARED_INVOICE_ALREADY_CANCELLED"
+                }
+              }
+            }
+          }
+        }
+      },
+      SaleReturnBadRequest: {
+        description: "Invalid total sale return payload",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              validationError: {
+                value: {
+                  message: "Invalid request payload.",
+                  code: "VALIDATION_ERROR"
+                }
+              },
+              invalidReason: {
+                value: {
+                  message: "Sale return reason must be between 5 and 500 characters.",
+                  code: "SALE_RETURN_REASON_INVALID"
+                }
+              }
+            }
+          }
+        }
+      },
+      SaleReturnNotFound: {
+        description: "Sale return was not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Sale return was not found.",
+              code: "SALE_RETURN_NOT_FOUND"
+            }
+          }
+        }
+      },
+      SaleReturnSaleNotFound: {
+        description: "Sale was not found for return creation",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            example: {
+              message: "Sale was not found for return creation.",
+              code: "SALE_NOT_FOUND",
+              details: {
+                saleId: "sale-0001",
+                returnBlockedReason: "sale-not-found"
+              }
+            }
+          }
+        }
+      },
+      SaleReturnConflict: {
+        description: "Total sale return eligibility rule was not satisfied",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ApiError"
+            },
+            examples: {
+              saleCancelled: {
+                value: {
+                  message: "Sale is not eligible for total return.",
+                  code: "SALE_NOT_RETURNABLE",
+                  details: {
+                    saleId: "sale-0001",
+                    saleStatus: "cancelled",
+                    returnBlockedReason: "sale-cancelled"
+                  }
+                }
+              },
+              alreadyReturned: {
+                value: {
+                  message: "Sale is not eligible for total return.",
+                  code: "SALE_NOT_RETURNABLE",
+                  details: {
+                    saleId: "sale-0001",
+                    saleStatus: "returned",
+                    returnBlockedReason: "already-returned"
+                  }
+                }
+              },
+              cashSessionOpen: {
+                value: {
+                  message: "Sale is not eligible for total return.",
+                  code: "SALE_NOT_RETURNABLE",
+                  details: {
+                    saleId: "sale-0001",
+                    saleStatus: "confirmed",
+                    returnBlockedReason: "cash-session-open"
+                  }
+                }
+              },
+              activeInvoiceExists: {
+                value: {
+                  message: "Sale is not eligible for total return.",
+                  code: "SALE_NOT_RETURNABLE",
+                  details: {
+                    saleId: "sale-0001",
+                    saleStatus: "confirmed",
+                    returnBlockedReason: "active-invoice-exists"
+                  }
+                }
+              },
+              paymentNotRefundable: {
+                value: {
+                  message: "Sale is not eligible for total return.",
+                  code: "SALE_NOT_RETURNABLE",
+                  details: {
+                    saleId: "sale-0001",
+                    saleStatus: "confirmed",
+                    returnBlockedReason: "payment-not-refundable"
+                  }
+                }
+              },
+              paymentRefundFailed: {
+                value: {
+                  message: "Sale payment cannot be refunded.",
+                  code: "SALE_PAYMENT_NOT_REFUNDABLE",
+                  details: {
+                    saleId: "sale-0001",
+                    paymentId: "payment-0001"
+                  }
+                }
+              },
+              returnConflict: {
+                value: {
+                  message: "Sale has already been returned or is no longer confirmed.",
+                  code: "SALE_RETURN_CONFLICT",
+                  details: {
+                    saleId: "sale-0001"
+                  }
                 }
               }
             }
@@ -4213,7 +5395,7 @@ export const openApiDocument = {
       },
       SaleStatus: {
         type: "string",
-        enum: ["confirmed", "cancelled"]
+        enum: ["confirmed", "cancelled", "returned"]
       },
       PaymentMethod: {
         type: "string",
@@ -4221,7 +5403,7 @@ export const openApiDocument = {
       },
       PaymentStatus: {
         type: "string",
-        enum: ["paid", "reverted", "cancelled"]
+        enum: ["paid", "reverted", "cancelled", "refunded"]
       },
       SaleUserSummary: {
         type: "object",
@@ -5147,6 +6329,586 @@ export const openApiDocument = {
           pagination: {
             $ref: "#/components/schemas/PaginationMeta"
           }
+        }
+      },
+      AdministrativeUserSummary: {
+        $ref: "#/components/schemas/SaleUserSummary"
+      },
+      PreparedInvoiceStatus: {
+        type: "string",
+        enum: ["prepared", "cancelled"]
+      },
+      PreparedInvoiceEligibilityBlockReason: {
+        type: "string",
+        enum: ["sale-not-found", "sale-cancelled", "sale-returned", "active-invoice-exists", "unknown"]
+      },
+      PreparedInvoiceItem: {
+        type: "object",
+        required: [
+          "id",
+          "preparedInvoiceId",
+          "saleItemId",
+          "productId",
+          "internalCode",
+          "commercialName",
+          "baseUnit",
+          "unitPrice",
+          "quantity",
+          "subtotal",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: { type: "string" },
+          preparedInvoiceId: { type: "string" },
+          saleItemId: { type: "string" },
+          productId: { type: "string" },
+          internalCode: { type: "string", example: "MED-000001" },
+          barcode: { type: "string", example: "7790000000012" },
+          commercialName: { type: "string", example: "Paracetamol 500 mg" },
+          genericName: { type: "string", example: "Paracetamol" },
+          baseUnit: { $ref: "#/components/schemas/PosProductUnit" },
+          unitPrice: { type: "number", minimum: 0, multipleOf: 0.01, example: 3 },
+          quantity: { type: "integer", minimum: 1, example: 2 },
+          subtotal: { type: "number", minimum: 0, multipleOf: 0.01, example: 6 },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" }
+        }
+      },
+      PreparedInvoiceSummary: {
+        type: "object",
+        required: [
+          "id",
+          "correlativeCode",
+          "saleId",
+          "saleCorrelativeCode",
+          "cashSessionId",
+          "cashSessionCode",
+          "sellerUserId",
+          "sellerName",
+          "sellerEmail",
+          "status",
+          "customerNit",
+          "customerBusinessName",
+          "totalAmount",
+          "preparedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: { type: "string" },
+          correlativeCode: { type: "string", example: "INV-000001" },
+          saleId: { type: "string" },
+          saleCorrelativeCode: { type: "string", example: "V-000001" },
+          cashSessionId: { type: "string" },
+          cashSessionCode: { type: "string", example: "C-000001" },
+          sellerUserId: { type: "string" },
+          sellerName: { type: "string", example: "Vendedor Principal" },
+          sellerEmail: { type: "string", format: "email" },
+          status: { $ref: "#/components/schemas/PreparedInvoiceStatus" },
+          customerNit: { type: "string", default: "0" },
+          customerBusinessName: { type: "string", default: "Consumidor final" },
+          fiscalNotes: { type: "string", maxLength: 500 },
+          totalAmount: { type: "number", minimum: 0, multipleOf: 0.01, example: 6 },
+          preparedAt: { type: "string", format: "date-time" },
+          cancelledAt: { type: "string", format: "date-time" },
+          cancelledByUserId: { type: "string" },
+          cancelledByUser: { $ref: "#/components/schemas/AdministrativeUserSummary" },
+          cancelReason: { type: "string", maxLength: 500 },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" }
+        }
+      },
+      PreparedInvoice: {
+        allOf: [
+          { $ref: "#/components/schemas/PreparedInvoiceSummary" },
+          {
+            type: "object",
+            required: ["items"],
+            properties: {
+              sellerUser: { $ref: "#/components/schemas/AdministrativeUserSummary" },
+              items: {
+                type: "array",
+                items: { $ref: "#/components/schemas/PreparedInvoiceItem" }
+              }
+            }
+          }
+        ]
+      },
+      PrepareInvoiceFromSaleRequest: {
+        type: "object",
+        required: ["saleId"],
+        properties: {
+          saleId: { type: "string", minLength: 1 },
+          customerNit: { type: "string", maxLength: 32, default: "0" },
+          customerBusinessName: { type: "string", maxLength: 180, default: "Consumidor final" },
+          fiscalNotes: { type: "string", maxLength: 500 }
+        }
+      },
+      CancelPreparedInvoiceRequest: {
+        type: "object",
+        required: ["cancelReason"],
+        properties: {
+          cancelReason: { type: "string", minLength: 5, maxLength: 500 }
+        }
+      },
+      PreparedInvoicesListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/PreparedInvoiceSummary" }
+          },
+          pagination: { $ref: "#/components/schemas/PaginationMeta" }
+        }
+      },
+      InvoiceableSaleSummary: {
+        type: "object",
+        required: [
+          "id",
+          "correlativeCode",
+          "cashSessionId",
+          "cashSessionCorrelativeCode",
+          "sellerUserId",
+          "sellerUser",
+          "status",
+          "totalAmount",
+          "confirmedAt",
+          "canPrepareInvoice"
+        ],
+        properties: {
+          id: { type: "string" },
+          correlativeCode: { type: "string", example: "V-000001" },
+          cashSessionId: { type: "string" },
+          cashSessionCorrelativeCode: { type: "string", example: "C-000001" },
+          sellerUserId: { type: "string" },
+          sellerUser: { $ref: "#/components/schemas/AdministrativeUserSummary" },
+          status: { $ref: "#/components/schemas/SaleStatus" },
+          totalAmount: { type: "number", minimum: 0, multipleOf: 0.01, example: 6 },
+          confirmedAt: { type: "string", format: "date-time" },
+          activePreparedInvoiceId: { type: "string" },
+          canPrepareInvoice: { type: "boolean", example: true },
+          invoiceBlockedReason: { $ref: "#/components/schemas/PreparedInvoiceEligibilityBlockReason" }
+        }
+      },
+      InvoiceableSalesListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/InvoiceableSaleSummary" }
+          },
+          pagination: { $ref: "#/components/schemas/PaginationMeta" }
+        }
+      },
+      ReturnableSaleBlockReason: {
+        type: "string",
+        enum: [
+          "sale-not-found",
+          "sale-cancelled",
+          "already-returned",
+          "cash-session-open",
+          "active-invoice-exists",
+          "payment-not-refundable",
+          "unknown"
+        ]
+      },
+      ReturnableSaleSummary: {
+        type: "object",
+        required: [
+          "id",
+          "correlativeCode",
+          "cashSessionId",
+          "cashSessionCorrelativeCode",
+          "sellerUserId",
+          "sellerUser",
+          "status",
+          "paymentStatus",
+          "totalAmount",
+          "confirmedAt",
+          "canReturn"
+        ],
+        properties: {
+          id: { type: "string" },
+          correlativeCode: { type: "string", example: "V-000001" },
+          cashSessionId: { type: "string" },
+          cashSessionCorrelativeCode: { type: "string", example: "C-000001" },
+          sellerUserId: { type: "string" },
+          sellerUser: { $ref: "#/components/schemas/AdministrativeUserSummary" },
+          status: { $ref: "#/components/schemas/SaleStatus" },
+          paymentStatus: { $ref: "#/components/schemas/PaymentStatus" },
+          totalAmount: { type: "number", minimum: 0, multipleOf: 0.01, example: 6 },
+          confirmedAt: { type: "string", format: "date-time" },
+          canReturn: { type: "boolean", example: true },
+          returnBlockedReason: { $ref: "#/components/schemas/ReturnableSaleBlockReason" },
+          activePreparedInvoiceId: { type: "string" }
+        }
+      },
+      ReturnableSalesListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/ReturnableSaleSummary" }
+          },
+          pagination: { $ref: "#/components/schemas/PaginationMeta" }
+        }
+      },
+      CreateTotalSaleReturnRequest: {
+        type: "object",
+        required: ["saleId", "reason"],
+        properties: {
+          saleId: { type: "string", minLength: 1 },
+          reason: { type: "string", minLength: 5, maxLength: 500 }
+        }
+      },
+      SaleReturnItem: {
+        type: "object",
+        required: [
+          "id",
+          "saleReturnId",
+          "saleItemId",
+          "saleItemBatchId",
+          "batchId",
+          "productId",
+          "internalCode",
+          "commercialName",
+          "quantity",
+          "unitCostBase",
+          "refundUnitPrice",
+          "refundSubtotal",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: { type: "string" },
+          saleReturnId: { type: "string" },
+          saleItemId: { type: "string" },
+          saleItemBatchId: { type: "string" },
+          batchId: { type: "string" },
+          productId: { type: "string" },
+          inventoryMovementId: { type: "string" },
+          internalCode: { type: "string", example: "MED-000001" },
+          commercialName: { type: "string", example: "Paracetamol 500 mg" },
+          genericName: { type: "string", example: "Paracetamol" },
+          batchNumber: { type: "string", example: "L-001" },
+          expirationDate: { type: "string", format: "date", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+          quantity: { type: "number", minimum: 0, example: 2 },
+          unitCostBase: { type: "number", minimum: 0, example: 1.25 },
+          refundUnitPrice: { type: "number", minimum: 0, multipleOf: 0.01, example: 3 },
+          refundSubtotal: { type: "number", minimum: 0, multipleOf: 0.01, example: 6 },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" }
+        }
+      },
+      SaleReturnSummary: {
+        type: "object",
+        required: [
+          "id",
+          "saleId",
+          "saleCorrelativeCode",
+          "paymentId",
+          "actorUserId",
+          "actorUser",
+          "reason",
+          "refundAmount",
+          "returnedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        properties: {
+          id: { type: "string" },
+          saleId: { type: "string" },
+          saleCorrelativeCode: { type: "string", example: "V-000001" },
+          paymentId: { type: "string" },
+          actorUserId: { type: "string" },
+          actorUser: { $ref: "#/components/schemas/AdministrativeUserSummary" },
+          reason: { type: "string", minLength: 5, maxLength: 500 },
+          refundAmount: { type: "number", minimum: 0, multipleOf: 0.01, example: 6 },
+          returnedAt: { type: "string", format: "date-time" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" }
+        }
+      },
+      SaleReturn: {
+        allOf: [
+          { $ref: "#/components/schemas/SaleReturnSummary" },
+          {
+            type: "object",
+            required: ["items"],
+            properties: {
+              items: {
+                type: "array",
+                items: { $ref: "#/components/schemas/SaleReturnItem" }
+              }
+            }
+          }
+        ]
+      },
+      SaleReturnsListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/SaleReturnSummary" }
+          },
+          pagination: { $ref: "#/components/schemas/PaginationMeta" }
+        }
+      },
+      AdministrativeJsonValue: {
+        nullable: true,
+        oneOf: [
+          { type: "string" },
+          { type: "number" },
+          { type: "boolean" },
+          { type: "object", additionalProperties: true },
+          { type: "array", items: {} }
+        ]
+      },
+      AuditLog: {
+        type: "object",
+        required: ["id", "action", "createdAt"],
+        properties: {
+          id: { type: "string" },
+          action: { type: "string", example: "CSV_EXPORT_DOWNLOADED" },
+          actorUserId: { type: "string" },
+          actorUser: { $ref: "#/components/schemas/AdministrativeUserSummary" },
+          entityType: { type: "string", example: "export" },
+          entityId: { type: "string", example: "sales.csv" },
+          metadata: { $ref: "#/components/schemas/AdministrativeJsonValue" },
+          ipAddress: { type: "string" },
+          userAgent: { type: "string" },
+          createdAt: { type: "string", format: "date-time" }
+        }
+      },
+      AuditLogsListResponse: {
+        type: "object",
+        required: ["data", "pagination"],
+        properties: {
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/AuditLog" }
+          },
+          pagination: { $ref: "#/components/schemas/PaginationMeta" }
+        }
+      },
+      ReportRange: {
+        type: "object",
+        required: ["fromDate", "toDate", "timezone"],
+        properties: {
+          fromDate: { type: "string", format: "date", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+          toDate: { type: "string", format: "date", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+          timezone: { type: "string", enum: ["America/La_Paz"], default: "America/La_Paz" }
+        }
+      },
+      DailySalesReportRow: {
+        type: "object",
+        required: [
+          "date",
+          "grossSalesAmount",
+          "cancelledAmount",
+          "returnedAmount",
+          "netSalesAmount",
+          "saleCount",
+          "cancelledCount",
+          "returnedCount"
+        ],
+        properties: {
+          date: { type: "string", format: "date", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+          grossSalesAmount: { type: "number", minimum: 0, multipleOf: 0.01 },
+          cancelledAmount: { type: "number", minimum: 0, multipleOf: 0.01 },
+          returnedAmount: { type: "number", minimum: 0, multipleOf: 0.01 },
+          netSalesAmount: { type: "number", multipleOf: 0.01 },
+          saleCount: { type: "integer", minimum: 0 },
+          cancelledCount: { type: "integer", minimum: 0 },
+          returnedCount: { type: "integer", minimum: 0 }
+        }
+      },
+      DailySalesReportResponse: {
+        type: "object",
+        required: ["range", "generatedAt", "audited", "data"],
+        properties: {
+          range: { $ref: "#/components/schemas/ReportRange" },
+          generatedAt: { type: "string", format: "date-time" },
+          audited: { type: "boolean", enum: [false], example: false },
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/DailySalesReportRow" }
+          }
+        }
+      },
+      InventoryValuationLot: {
+        type: "object",
+        required: ["batchId", "availableQuantity", "unitCostBase", "totalValue"],
+        properties: {
+          batchId: { type: "string" },
+          batchNumber: { type: "string", example: "L-001" },
+          expirationDate: { type: "string", format: "date", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+          availableQuantity: { type: "number", minimum: 0 },
+          unitCostBase: { type: "number", minimum: 0 },
+          totalValue: { type: "number", minimum: 0, multipleOf: 0.01 }
+        }
+      },
+      InventoryValuationProduct: {
+        type: "object",
+        required: [
+          "productId",
+          "internalCode",
+          "commercialName",
+          "baseUnit",
+          "totalAvailableQuantity",
+          "totalValue",
+          "lots"
+        ],
+        properties: {
+          productId: { type: "string" },
+          internalCode: { type: "string", example: "MED-000001" },
+          commercialName: { type: "string", example: "Paracetamol 500 mg" },
+          genericName: { type: "string", example: "Paracetamol" },
+          baseUnit: { $ref: "#/components/schemas/PosProductUnit" },
+          totalAvailableQuantity: { type: "number", minimum: 0 },
+          totalValue: { type: "number", minimum: 0, multipleOf: 0.01 },
+          lots: {
+            type: "array",
+            items: { $ref: "#/components/schemas/InventoryValuationLot" }
+          }
+        }
+      },
+      InventoryValuationReportResponse: {
+        type: "object",
+        required: ["generatedAt", "timezone", "audited", "totalValue", "data"],
+        properties: {
+          generatedAt: { type: "string", format: "date-time" },
+          timezone: { type: "string", enum: ["America/La_Paz"], default: "America/La_Paz" },
+          audited: { type: "boolean", enum: [false], example: false },
+          totalValue: { type: "number", minimum: 0, multipleOf: 0.01 },
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/InventoryValuationProduct" }
+          }
+        }
+      },
+      ExpiringProduct: {
+        type: "object",
+        required: [
+          "productId",
+          "internalCode",
+          "commercialName",
+          "batchId",
+          "expirationDate",
+          "daysUntilExpiration",
+          "availableQuantity",
+          "unitCostBase",
+          "totalValue"
+        ],
+        properties: {
+          productId: { type: "string" },
+          internalCode: { type: "string", example: "MED-000001" },
+          commercialName: { type: "string", example: "Paracetamol 500 mg" },
+          genericName: { type: "string", example: "Paracetamol" },
+          batchId: { type: "string" },
+          batchNumber: { type: "string", example: "L-001" },
+          expirationDate: { type: "string", format: "date", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+          daysUntilExpiration: { type: "integer", example: 14 },
+          availableQuantity: { type: "number", minimum: 0 },
+          unitCostBase: { type: "number", minimum: 0 },
+          totalValue: { type: "number", minimum: 0, multipleOf: 0.01 }
+        }
+      },
+      ExpiringProductsReportResponse: {
+        type: "object",
+        required: ["range", "generatedAt", "audited", "data"],
+        properties: {
+          range: {
+            type: "object",
+            required: ["days", "timezone"],
+            properties: {
+              days: { type: "integer", minimum: 1, maximum: 365, default: 30 },
+              search: { type: "string" },
+              productId: { type: "string" },
+              timezone: { type: "string", enum: ["America/La_Paz"], default: "America/La_Paz" }
+            }
+          },
+          generatedAt: { type: "string", format: "date-time" },
+          audited: { type: "boolean", enum: [false], example: false },
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/ExpiringProduct" }
+          }
+        }
+      },
+      InventoryMovementType: {
+        type: "string",
+        enum: [
+          "purchase_received",
+          "purchase_cancelled",
+          "inventory_adjustment",
+          "sale_confirmed",
+          "sale_cancelled",
+          "sale_returned"
+        ]
+      },
+      SalesCsvRow: {
+        type: "object",
+        required: [
+          "saleId",
+          "correlativeCode",
+          "status",
+          "sellerName",
+          "cashSessionCorrelativeCode",
+          "totalAmount",
+          "totalCost",
+          "totalMargin",
+          "confirmedAt"
+        ],
+        properties: {
+          saleId: { type: "string" },
+          correlativeCode: { type: "string", example: "V-000001" },
+          status: { $ref: "#/components/schemas/SaleStatus" },
+          sellerName: { type: "string" },
+          cashSessionCorrelativeCode: { type: "string", example: "C-000001" },
+          totalAmount: { type: "number", minimum: 0, multipleOf: 0.01 },
+          totalCost: { type: "number", minimum: 0, multipleOf: 0.01 },
+          totalMargin: { type: "number", multipleOf: 0.01 },
+          confirmedAt: { type: "string", format: "date-time" },
+          cancelledAt: { type: "string", format: "date-time" },
+          returnedAt: { type: "string", format: "date-time" }
+        }
+      },
+      InventoryMovementsCsvRow: {
+        type: "object",
+        required: [
+          "movementId",
+          "type",
+          "productId",
+          "internalCode",
+          "commercialName",
+          "batchId",
+          "quantityBase",
+          "unitCostBase",
+          "referenceType",
+          "referenceId",
+          "createdAt"
+        ],
+        properties: {
+          movementId: { type: "string" },
+          type: { $ref: "#/components/schemas/InventoryMovementType" },
+          productId: { type: "string" },
+          internalCode: { type: "string", example: "MED-000001" },
+          commercialName: { type: "string", example: "Paracetamol 500 mg" },
+          batchId: { type: "string" },
+          batchNumber: { type: "string", example: "L-001" },
+          quantityBase: { type: "number", example: -2 },
+          unitCostBase: { type: "number", minimum: 0, example: 1.25 },
+          referenceType: { type: "string", example: "sale_return" },
+          referenceId: { type: "string" },
+          actorUserName: { type: "string" },
+          reason: { type: "string" },
+          createdAt: { type: "string", format: "date-time" }
         }
       },
       ApiError: {

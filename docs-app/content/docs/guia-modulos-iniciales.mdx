@@ -1,28 +1,39 @@
 ---
-title: Guia de modulos iniciales
-description: Navegacion y uso previsto de pantallas que aun muestran contenido inicial.
+title: Guia de modulos administrativos
+description: Navegacion y alcance operativo de las areas administrativas.
 ---
 
-Algunos modulos ya aparecen en la navegacion, pero todavia muestran una pantalla inicial con el mensaje **Contenido operativo pendiente**. Esta guia explica como ubicarlos y que funcion tendran dentro del flujo completo.
+Esta guia resume como ubicar los modulos administrativos que complementan el flujo de mostrador. Deben usarse para control de inventario, documentacion interna, devoluciones, reportes, exportaciones y auditoria.
 
 ## Flujo de mostrador
 
-Las pantallas **Punto de venta**, **Pendientes POS**, **Caja**, **Supervision POS** y **Ventas y anulaciones** ya no se consideran modulos iniciales. Forman parte del flujo V1 de mostrador: caja abierta, venta en efectivo, FEFO, comprobante interno, pendientes sin reserva de stock y anulacion controlada segun disponibilidad de cierre.
+Las pantallas **Punto de venta**, **Pendientes POS**, **Caja**, **Supervision POS** y **Ventas y anulaciones** forman parte del flujo V1 de mostrador: caja abierta, venta en efectivo, FEFO, comprobante interno de venta, pendientes sin reserva de stock y anulacion controlada segun estado de caja.
 
-Las devoluciones posteriores al cierre y la facturacion fiscal no forman parte de ese flujo V1.
+## Inventario y compras
 
-## Modulos de inventario ya operativos
+Las pantallas **Alertas**, **Lotes y stock**, **Movimientos**, **Ajustes manuales**, **Proveedores** y **Compras** tienen guias propias porque explican disponibilidad, vencimiento, kardex, abastecimiento y correcciones administrativas.
 
-Las pantallas **Alertas**, **Lotes y stock**, **Movimientos** y **Ajustes manuales** ya tienen guias propias porque muestran datos reales de inventario y acciones operativas. Consultar esas guias antes de registrar conteos, revisar kardex o interpretar alertas.
+## Facturacion preparada y devoluciones
 
-## Facturacion y analisis
+Las pantallas **Comprobantes internos** y **Devoluciones administrativas** pertenecen al cierre administrativo posterior a la venta.
 
-Las rutas **Facturas SIAT**, **Configuración SIAT**, **Reportes**, **Exportaciones CSV** y **Auditoría** ya aparecen en la barra lateral. Su uso previsto es fiscal, analítico y administrativo. Mientras aparezcan como modulos iniciales, deben considerarse pantallas preparadas para recibir funcionalidad posterior.
+- **Comprobantes internos:** preparan y cancelan documentos administrativos desde ventas POS, sin emision SIAT real.
+- **Devoluciones administrativas:** registran devolucion total posterior al cierre de caja, con reembolso administrativo y reposicion por lote cuando la regla lo permite.
 
-## Administracion pendiente
+Con caja abierta corresponde revisar anulacion POS; con caja cerrada corresponde evaluar devolucion administrativa total.
 
-Las rutas **Roles y permisos** y **Configuración** tambien pueden aparecer como modulos iniciales segun el rol. Su proposito es administrar permisos y parametros globales, no operar ventas de mostrador.
+## Analisis y auditoria
+
+Las pantallas **Reportes operativos**, **Exportaciones CSV** y **Registro de auditoria** ayudan a cerrar periodos y revisar acciones sensibles.
+
+- Los reportes muestran ventas brutas, anulaciones, devoluciones, neto, inventario disponible valorizado y proximos vencimientos.
+- Las exportaciones CSV descargan ventas y movimientos con separador punto y coma y fechas ISO.
+- La auditoria permite revisar quien hizo una accion, cuando ocurrio y que registro fue afectado.
+
+## Administracion
+
+Las pantallas **Usuarios**, **Roles y permisos**, **Configuracion** y **Configuracion SIAT** son responsabilidad administrativa. La configuracion SIAT no implica que exista emision fiscal real en V1.
 
 ## Consejo
 
-No documentar acciones que todavia no aparecen en la pantalla. Cuando un modulo deje de mostrar contenido inicial y agregue formularios o tablas reales, se debe crear una guia especifica con sus botones y flujo completo.
+Antes de corregir una venta, identificar el estado operativo: caja abierta, caja cerrada, comprobante interno activo o comprobante cancelado. Esa diferencia define si corresponde anulacion POS, devolucion administrativa total o cancelacion documental.

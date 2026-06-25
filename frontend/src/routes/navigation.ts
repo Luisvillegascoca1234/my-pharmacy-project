@@ -13,6 +13,7 @@ import {
   PackageSearch,
   ReceiptText,
   RefreshCcw,
+  RotateCcw,
   Ruler,
   Settings,
   Shield,
@@ -41,6 +42,7 @@ export type AppRouteKey =
   | "suppliers"
   | "purchases"
   | "invoices"
+  | "returns"
   | "siatSettings"
   | "reports"
   | "exports"
@@ -68,6 +70,12 @@ const adminRoles: BaseRole[] = ["superadmin", "admin"];
 const superadminOnly: BaseRole[] = ["superadmin"];
 
 export const SALES_CANCELLATIONS_PATH = "/sales-cancellations";
+export const PREPARED_INTERNAL_DOCUMENTS_PATH = "/invoices";
+export const ADMINISTRATIVE_RETURNS_PATH = "/returns";
+export const SIAT_SETTINGS_PATH = "/siat-settings";
+export const REPORTS_PATH = "/reports";
+export const EXPORTS_PATH = "/exports";
+export const AUDIT_PATH = "/audit";
 
 export const navigationGroups: AppNavigationGroup[] = [
   {
@@ -207,16 +215,24 @@ export const navigationGroups: AppNavigationGroup[] = [
     items: [
       {
         key: "invoices",
-        label: "Facturas SIAT",
-        path: "/invoices",
+        label: "Comprobantes internos",
+        path: PREPARED_INTERNAL_DOCUMENTS_PATH,
         icon: ReceiptText,
-        description: "Estados fiscales, respuestas del SIN, validación y anulaciones permitidas.",
+        description: "Preparación y cancelación administrativa de comprobantes internos desde ventas POS, sin emisión SIAT.",
+        roles: adminRoles
+      },
+      {
+        key: "returns",
+        label: "Devoluciones administrativas",
+        path: ADMINISTRATIVE_RETURNS_PATH,
+        icon: RotateCcw,
+        description: "Devolución total posterior al cierre de caja; con caja abierta corresponde anulación POS.",
         roles: adminRoles
       },
       {
         key: "siatSettings",
         label: "Configuración SIAT",
-        path: "/siat-settings",
+        path: SIAT_SETTINGS_PATH,
         icon: FileCog,
         description: "CUIS, CUFD, punto de venta, actividad económica y contingencia.",
         roles: superadminOnly
@@ -228,26 +244,26 @@ export const navigationGroups: AppNavigationGroup[] = [
     items: [
       {
         key: "reports",
-        label: "Reportes",
-        path: "/reports",
+        label: "Reportes operativos",
+        path: REPORTS_PATH,
         icon: BarChart3,
-        description: "Ventas, margen, rotación, vencimientos, compras y caja.",
+        description: "Ventas diarias, valuacion de inventario disponible y proximos vencimientos; consulta visual sin auditoria de descarga.",
         roles: adminRoles
       },
       {
         key: "exports",
         label: "Exportaciones CSV",
-        path: "/exports",
+        path: EXPORTS_PATH,
         icon: FileText,
-        description: "Datos normalizados para análisis externo con fechas ISO e IDs estables.",
+        description: "Descargas CSV auditadas de ventas POS y movimientos de inventario con filtros de fecha.",
         roles: adminRoles
       },
       {
         key: "audit",
-        label: "Auditoría",
-        path: "/audit",
+        label: "Registro de auditoria",
+        path: AUDIT_PATH,
         icon: FileBarChart,
-        description: "Registro de acciones sensibles, cambios de datos y respuestas fiscales.",
+        description: "Consulta de acciones sensibles con filtros y metadata completa para investigacion superadmin.",
         roles: superadminOnly
       }
     ]

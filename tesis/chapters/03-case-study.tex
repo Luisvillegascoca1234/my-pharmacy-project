@@ -2,7 +2,7 @@
 
 \section{Ingeniería de requerimientos}
 
-El caso de estudio corresponde a un sistema web para farmacia orientado a sostener operaciones administrativas y transaccionales. La etapa analizada se concentra en el flujo que permite registrar proveedores, preparar compras, recibir mercadería, generar inventario trazable, operar una caja simple y registrar ventas POS con pago efectivo. Esta delimitación responde a una necesidad operativa concreta: una farmacia requiere saber de qué proveedor proviene cada producto, en qué fecha ingresó, bajo qué costo, con qué lote, con qué vencimiento, qué usuario autorizó la operación y mediante qué venta se produjo la salida de inventario.
+El caso de estudio corresponde a un sistema web para farmacia orientado a sostener operaciones administrativas y transaccionales. La etapa analizada se concentra en el flujo que permite registrar proveedores, preparar compras, recibir mercadería, generar inventario trazable, operar una caja simple, registrar ventas POS con pago efectivo y cerrar administrativamente operaciones posteriores a la venta. Esta delimitación responde a una necesidad operativa concreta: una farmacia requiere saber de qué proveedor proviene cada producto, en qué fecha ingresó, bajo qué costo, con qué lote, con qué vencimiento, qué usuario autorizó la operación, mediante qué venta se produjo la salida de inventario y qué correcciones administrativas modificaron su vigencia comercial.
 
 Los actores principales del flujo son el superadministrador, el administrador y el vendedor. Los dos primeros gestionan proveedores, compras, supervisión de caja y operaciones administrativas; el vendedor participa en operaciones de atención comercial, apertura y cierre de su caja y cobro de ventas. Esta separación permite proteger acciones que afectan inventario, costos y efectivo, manteniendo una frontera clara entre administración, venta y supervisión.
 
@@ -23,11 +23,17 @@ Los requerimientos funcionales identificados son los siguientes:
   \item Anular ventas permitidas con motivo, reversa de pago, reposición de lotes y ajuste neto de caja.
   \item Supervisar cajas, ventas y pendientes según rol, preservando la responsabilidad del usuario que originó cada operación.
   \item Cerrar caja con monto contado final, diferencia calculada y responsable de cierre.
-  \item Restringir proveedores, compras, caja, ventas y supervisión según perfiles autorizados.
-  \item Registrar auditoría sobre operaciones relevantes del flujo.
+  \item Preparar facturas internas desde ventas vigentes, con correlativo propio y datos fiscales mínimos, sin presentarlas como emisión tributaria real.
+  \item Cancelar facturas preparadas con motivo sin anular la venta POS ni modificar inventario.
+  \item Registrar devoluciones administrativas totales posteriores al cierre cuando la venta ya no corresponde a anulación POS.
+  \item Restituir inventario al mismo lote consumido, marcar la venta como devuelta y el pago como reembolsado en devoluciones administrativas.
+  \item Consultar reportes de ventas diarias, valuación de inventario y productos próximos a vencer para apoyar control financiero y sanitario.
+  \item Exportar ventas y movimientos de inventario en CSV con auditoría de descarga.
+  \item Restringir proveedores, compras, caja, ventas, facturas preparadas, devoluciones, reportes, exportaciones, auditoría y supervisión según perfiles autorizados.
+  \item Registrar auditoría sobre operaciones sensibles del flujo.
 \end{enumerate}
 
-Los requerimientos no funcionales se orientan a mantenibilidad, consistencia, seguridad y trazabilidad. El sistema debe separar responsabilidades para evitar duplicación de reglas, validar los datos antes de persistirlos, conservar integridad relacional y permitir que la interfaz muestre mensajes comprensibles en español. También debe evitar que una operación parcial deje la compra recibida sin inventario, el inventario sin el registro administrativo que lo originó, una venta pagada sin salida de lote o una caja con efectivo esperado incompatible con las ventas confirmadas.
+Los requerimientos no funcionales se orientan a mantenibilidad, consistencia, seguridad y trazabilidad. El sistema debe separar responsabilidades para evitar duplicación de reglas, validar los datos antes de persistirlos, conservar integridad relacional y permitir que la interfaz muestre mensajes comprensibles en español. También debe evitar que una operación parcial deje la compra recibida sin inventario, el inventario sin el registro administrativo que lo originó, una venta pagada sin salida de lote, una caja con efectivo esperado incompatible con las ventas confirmadas o una devolución administrativa sin evidencia de lote, pago y motivo.
 
 \input{figures/actors-use-cases}
 
@@ -47,6 +53,16 @@ La venta de mostrador adopta el mismo criterio de consistencia. El carrito activ
 
 [Insertar Diagrama generado en TikZ de LaTeX: esquema conceptual de una venta de mostrador en farmacia, mostrando al vendedor con caja abierta, el carrito sin impacto de inventario, la confirmacion de pago efectivo, la seleccion automatica FEFO de lotes vigentes, los movimientos de salida por lote, el comprobante interno y el aumento del efectivo esperado de caja]
 
+El cierre administrativo posterior a la venta se diseña como una ampliación del caso farmacéutico, no como sustitución del POS. La venta confirmada conserva su comprobante interno y su impacto en caja; la factura preparada constituye un documento administrativo separado, con correlativo propio, snapshot de la venta y datos fiscales mínimos. Esta separación evita confundir comprobante de mostrador con factura tributaria real, especialmente porque el alcance no integra SIAT, QR fiscal, XML ni envío a una autoridad tributaria.
+
+La anulación POS y la devolución administrativa responden a momentos operativos distintos. La anulación POS corrige una venta mientras la caja relacionada permanece abierta y por ello puede ajustar efectivo esperado. La devolución administrativa total ocurre después del cierre operativo, no reabre caja y exige que la venta sea vigente, no anulada, no devuelta previamente y sin factura preparada activa. Si existe una factura preparada vigente, primero debe cancelarse con motivo; si la factura ya fue cancelada, la devolución puede continuar cuando las demás reglas se cumplen.
+
+Desde el punto de vista sanitario, la regla central de la devolución es reponer los mismos lotes consumidos por la venta original. El sistema no trata la devolución como un ajuste genérico de stock, sino como una reversión trazable por ítem, lote, cantidad, costo base y movimiento de inventario. Por ello, el estado de venta devuelta, el pago reembolsado y el movimiento de inventario por devolución forman una unidad conceptual que permite reconstruir la operación ante revisión administrativa.
+
+Los reportes y exportaciones cumplen una función de control gerencial inicial. El reporte de ventas diarias diferencia ventas brutas, anulaciones, devoluciones y ventas netas; la valuación de inventario usa costo real disponible por lote; y el reporte de productos próximos a vencer orienta decisiones de rotación, reposición o revisión sanitaria. Las exportaciones CSV permiten conciliación externa con herramientas de oficina, mientras que la auditoría de descargas evita que la extracción de datos sensibles quede invisible.
+
+[Insertar Diagrama generado en TikZ de LaTeX: ciclo posterior a venta en farmacia, mostrando venta POS confirmada con comprobante interno, factura preparada separada sin SIAT real, cancelacion de factura con motivo, devolucion administrativa total posterior al cierre, reposicion del mismo lote, venta marcada como devuelta, pago reembolsado, reporte neto y auditoria de acciones sensibles]
+
 \input{figures/inventory-conceptual-model}
 
 El diseño de permisos distingue dos perfiles administrativos y un perfil de venta. Superadministrador y administrador pueden operar proveedores, compras y supervisión; vendedor queda excluido de los módulos administrativos, pero puede operar su propia caja y registrar ventas de mostrador. Esta matriz se aplica tanto en la experiencia visible como en las operaciones protegidas, de modo que la interfaz no sea la única barrera de seguridad.
@@ -61,9 +77,9 @@ El diseño de permisos distingue dos perfiles administrativos y un perfil de ven
 \textbf{Rol} & \textbf{Acceso permitido} & \textbf{Restricción principal}\\
 \midrule
 \endhead
-Superadministrador & Gestión de proveedores, compras, recepción, anulación administrativa, caja propia y supervisión de mostrador. & Debe conservar trazabilidad de acciones críticas.\\
-Administrador & Gestión de proveedores, compras, recepción, anulación administrativa, caja propia y supervisión operativa. & No debe asumir funciones globales reservadas al superadministrador.\\
-Vendedor & Apertura y cierre de caja propia, búsqueda POS, venta en efectivo y consulta de sus operaciones. & No gestiona proveedores ni compras recibidas, ni supervisa operaciones ajenas.\\
+Superadministrador & Gestión de proveedores, compras, recepción, anulación administrativa, caja propia, facturas preparadas, devoluciones, reportes, exportaciones, auditoría consultable y supervisión de mostrador. & Debe conservar trazabilidad de acciones críticas y revisar eventos sensibles.\\
+Administrador & Gestión de proveedores, compras, recepción, anulación administrativa, caja propia, facturas preparadas, devoluciones, reportes, exportaciones y supervisión operativa. & No debe acceder a la consulta global de auditoría reservada al superadministrador.\\
+Vendedor & Apertura y cierre de caja propia, búsqueda POS, venta en efectivo y consulta de sus operaciones. & No gestiona proveedores, compras recibidas, facturas preparadas, devoluciones, reportes, exportaciones ni operaciones ajenas.\\
 \bottomrule
 \end{longtable}
 
@@ -87,6 +103,12 @@ El descuento de inventario se resuelve mediante FEFO. Este criterio, cuyo nombre
 
 Los carritos pendientes y la anulación de ventas forman parte del control operativo V1. Conceptualmente, un pendiente no es una venta, no reserva stock, no congela precio y requiere revalidación antes de cobrarse. Si el precio cambió, el stock ya no alcanza o el producto dejó de ser vendible, la operación debe advertir la inconsistencia y conservar el pendiente para corrección. La anulación de venta, a su vez, exige motivo, conserva el pago original como evidencia revertida, repone inventario a los mismos lotes consumidos, genera movimientos inversos y ajusta el efectivo esperado de la caja con base en ventas netas. La supervisión administrativa permite revisar cajas, ventas y pendientes de vendedores, descartar pendientes permitidos, cerrar caja ajena cuando corresponde y anular ventas habilitadas por regla, sin abrir capacidades fuera de V1.
 
+La facturación preparada se incorpora como documento administrativo interno posterior a la venta. Su correlativo no reutiliza el correlativo de venta, lo que permite conservar dos evidencias distintas: por un lado, el comprobante POS que respalda la operación de mostrador; por otro, una factura preparada que registra datos fiscales mínimos cuando el cliente los proporciona. Si no existen esos datos, la factura conserva valores de consumidor final. La cancelación de una factura preparada exige motivo y no altera la venta, el pago ni el inventario, porque su propósito es corregir el documento administrativo, no revertir la operación comercial.
+
+La devolución administrativa total se diferencia deliberadamente de la anulación POS. Cuando la caja sigue abierta y la venta todavía puede anularse, se mantiene el flujo POS para corregir efectivo esperado. Cuando la operación pertenece al cierre posterior, la devolución no modifica la caja histórica; marca la venta como devuelta, registra el pago como reembolsado, conserva el importe total devuelto y repone el inventario a los mismos lotes de origen. Este enfoque preserva la lectura financiera del cierre y, al mismo tiempo, mantiene la trazabilidad farmacéutica del producto que retorna al stock.
+
+La auditoría consultable y los reportes operativos amplían la evidencia de control. La consulta de auditoría queda reservada al superadministrador por su sensibilidad, mientras que reportes y exportaciones quedan disponibles para perfiles administrativos. Los reportes visuales no generan ruido de auditoría porque su consulta forma parte de la gestión diaria; en cambio, la descarga CSV se registra como acción sensible debido a que extrae datos que pueden circular fuera del sistema. Esta distinción equilibra utilidad operativa y control de información.
+
 La comparación tecnológica favorece el stack seleccionado. React y Vite ofrecen una base ligera para interfaces administrativas y de mostrador frente a alternativas más rígidas o pesadas cuando el objetivo es una aplicación de gestión con múltiples formularios, búsquedas rápidas y paneles operativos. Express y TypeScript permiten una API explícita y tipada sin incorporar la complejidad de marcos empresariales más amplios. PostgreSQL aporta integridad relacional superior a una persistencia documental para este dominio, porque las compras, productos, unidades, proveedores, usuarios, cajas, ventas, pagos y movimientos requieren relaciones verificables. Prisma facilita el acceso tipado y las migraciones sin reemplazar las reglas de negocio.
 
 \input{figures/purchase-receipt-flow}
@@ -102,6 +124,12 @@ La recepción y la anulación requieren especial atención porque modifican inve
 Para caja y ventas POS, la validación técnica se concentra en reglas que podrían afectar efectivo, stock o trazabilidad sanitaria. La evidencia del sprint registra cobertura automatizada sobre apertura de caja con monto cero o positivo, rechazo de monto negativo, unicidad de caja abierta por usuario, cierre propio, cierre administrativo y cálculo de diferencia. En ventas, se registra cobertura sobre venta con caja abierta, rechazo cuando no existe caja abierta, pago efectivo suficiente, cálculo de cambio, rechazo de pago insuficiente, consumo FEFO de una o varias capas, rechazo por stock insuficiente y movimientos de salida con referencia auditable.
 
 La validación de carritos pendientes, anulación de ventas y supervisión administrativa queda expresamente diferenciada como evidencia técnica posterior al cierre inicial de integración. La regresión automatizada cubre que un pendiente no reserve stock ni congele precio, que expire a los tres días, que no pueda convertirse cuando está expirado, que su conversión use precio y stock vigentes, y que un fallo de conversión conserve el pendiente activo para corrección. En anulación, la validación cubre motivo obligatorio, permisos por rol, bloqueo por caja cerrada, venta ya anulada, reposición al mismo lote consumido, movimientos inversos, pago revertido y ajuste del efectivo esperado de caja. En supervisión, la evidencia cubre listados y filtros por rol para vendedores, administradores y superadministradores.
+
+Para el cierre administrativo posterior a venta, la estrategia conceptual de pruebas se concentra en separar estados y responsabilidades. En facturación preparada, la evidencia debe cubrir creación desde venta elegible, bloqueo por venta anulada o devuelta, bloqueo por factura activa, correlativo interno, datos fiscales por defecto, cancelación con motivo y posibilidad de preparar una nueva factura cuando la anterior fue cancelada. Estas pruebas no buscan validar emisión fiscal real, porque esa integración queda fuera del alcance, sino demostrar que el documento administrativo no se confunde con el comprobante POS.
+
+En devoluciones administrativas, la validación debe confirmar devolución total, motivo obligatorio, bloqueo de doble devolución, bloqueo cuando corresponde anulación POS, bloqueo por factura preparada activa, aceptación cuando la factura fue cancelada, venta marcada como devuelta, pago reembolsado, importe de reembolso igual al total neto y reposición de los mismos lotes consumidos. El criterio de aceptación más importante es que la operación conserve la relación entre venta, pago, lote, movimiento y auditoría sin reabrir caja cerrada.
+
+En reportes, CSV y auditoría, la validación debe cubrir ventas diarias con separación entre bruto, anulaciones, devoluciones y neto; valuación por costo real de lote disponible; productos próximos a vencer con horizonte configurable; CSV con separador regional; fechas de corte operativo en Bolivia; consulta visual de reportes sin auditoría; descarga CSV con auditoría; y consulta de auditoría limitada al superadministrador. Esta evidencia permite demostrar que el sistema produce información útil para control sanitario, control financiero y revisión de acciones sensibles.
 
 La documentación de API y los contratos de datos funcionan como apoyo de consistencia. No sustituyen a las pruebas funcionales, pero permiten revisar que los estados, entradas, respuestas y errores esperados se mantengan alineados entre interfaz y servidor. La validación manual de navegador se considera complementaria y no forma parte de la evidencia ejecutada en este cierre documental; debe abordarse posteriormente sobre escenarios de usuario, especialmente en listas, filtros, creación, edición, recepción, anulación y restricciones por rol.
 
@@ -119,8 +147,10 @@ En el cierre de ventas POS, no se incorpora evidencia de QA manual ejecutado. Es
 \endhead
 Contratos de datos & Divergencia entre interfaz, API y persistencia. & Esquemas compartidos y validaciones de entrada.\\
 Reglas de dominio & Reglas críticas dispersas o inconsistentes. & Pruebas automatizadas de proveedores, compras, caja, ventas e inventario.\\
-Transacciones de inventario & Estados parciales entre compra, venta, capas y movimientos. & Verificación de recepción, consumo FEFO y movimientos auditables.\\
+Transacciones de inventario & Estados parciales entre compra, venta, devolución, capas y movimientos. & Verificación de recepción, consumo FEFO, reposición del mismo lote y movimientos auditables.\\
 Caja y pagos & Diferencias de efectivo no trazables o ventas sin caja abierta. & Pruebas de apertura, cierre, pago efectivo, cambio y monto esperado.\\
+Facturación preparada y devoluciones & Confusión entre comprobante POS, documento administrativo, anulación y devolución posterior. & Pruebas de elegibilidad, cancelación con motivo, venta devuelta, pago reembolsado y bloqueo de estados incompatibles.\\
+Reportes, CSV y auditoría & Información gerencial incompleta o extracción de datos sensibles sin evidencia. & Pruebas de ventas netas, valuación, vencimientos, separador CSV y auditoría de descargas.\\
 Autorización & Acceso administrativo u operativo por usuarios no autorizados. & Pruebas de roles y revisión de operaciones protegidas.\\
 Interfaz web & Errores de flujo, mensajes o navegación. & Recorridos manuales de usuario en ambiente disponible; no ejecutados en el cierre documentado.\\
 \bottomrule
@@ -145,7 +175,7 @@ Desarrollo frontend y backend & Alto & Concentra formularios, API, contratos, pe
 Base de datos e infraestructura local & Bajo & PostgreSQL y herramientas de desarrollo no requieren licencias propietarias para el caso de estudio.\\
 Validación técnica & Medio & Requiere pruebas automatizadas de reglas críticas y validación manual complementaria.\\
 Despliegue inicial & Medio & Depende del servidor, copias de seguridad, configuración segura y monitoreo básico.\\
-Mantenimiento evolutivo & Medio & Incluye futuros módulos como facturación fiscal, kardex visual, reportes, medios de pago ampliados, devoluciones posteriores al cierre y control operativo más avanzado.\\
+Mantenimiento evolutivo & Medio & Incluye futuros módulos como facturación fiscal real, kardex visual, medios de pago ampliados, devoluciones parciales y control operativo más avanzado.\\
 \bottomrule
 \end{longtable}
 

@@ -12,16 +12,16 @@ const quantity = z.number().int().min(0);
 const soldQuantity = z.number().int().positive();
 const positiveQuantityInput = z.coerce.number().int().positive();
 
-export const SaleStatusSchema = z.enum(["confirmed", "cancelled"]);
+export const SaleStatusSchema = z.enum(["confirmed", "cancelled", "returned"]);
 export type SaleStatus = z.infer<typeof SaleStatusSchema>;
 
 export const PaymentMethodSchema = z.enum(["cash"]);
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
 
-export const PaymentStatusSchema = z.enum(["paid", "reverted", "cancelled"]);
+export const PaymentStatusSchema = z.enum(["paid", "reverted", "cancelled", "refunded"]);
 export type PaymentStatus = z.infer<typeof PaymentStatusSchema>;
 
-export const CancelablePaymentStatusSchema = z.enum(["paid", "reverted", "cancelled"]);
+export const CancelablePaymentStatusSchema = z.enum(["paid", "reverted", "cancelled", "refunded"]);
 export type CancelablePaymentStatus = z.infer<typeof CancelablePaymentStatusSchema>;
 
 export const PosProductUnitSchema = z.object({
@@ -156,7 +156,7 @@ export const SaleSchema = z.object({
 
 export type Sale = z.infer<typeof SaleSchema>;
 
-export const CancelableSaleStatusSchema = z.enum(["confirmed", "cancelled"]);
+export const CancelableSaleStatusSchema = z.enum(["confirmed", "cancelled", "returned"]);
 export type CancelableSaleStatus = z.infer<typeof CancelableSaleStatusSchema>;
 
 export const SaleCancellationBlockReasonSchema = z.enum([

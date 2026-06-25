@@ -1,51 +1,67 @@
 ---
 title: Devoluciones y anulaciones
-description: Diferencias entre anulacion POS, devolucion posterior y anulacion fiscal.
+description: Diferencias entre anulacion POS, devolucion administrativa total y cancelacion de facturas preparadas internas.
 ---
 
-Las devoluciones y anulaciones deben manejarse con control estricto porque pueden afectar inventario, caja, reportes y facturacion. En farmacia, ademas, existe una dimension sanitaria: no todo producto devuelto puede reincorporarse automaticamente al stock disponible.
+Las anulaciones y devoluciones corrigen operaciones sin borrar historia. En farmacia deben manejarse con control estricto porque afectan caja, inventario por lote, reportes, kardex y auditoria.
 
-En V1, el flujo de mostrador acepta anulacion controlada de ventas mientras la caja asociada sigue abierta. Las devoluciones posteriores al cierre de caja y la anulacion fiscal SIAT pertenecen a fases posteriores.
+V1 diferencia tres situaciones: **anulacion POS** mientras la caja sigue abierta, **devolucion administrativa total** cuando la caja ya fue cerrada y **cancelacion de la factura preparada interna** cuando el documento administrativo contiene un error.
 
-## Devolucion
+## Anulacion POS con caja abierta
 
-La devolución ocurre cuando el cliente retorna uno o más productos asociados a una venta. Debe registrar venta original, productos devueltos, lotes involucrados, motivo, usuario que registra y usuario que autoriza cuando corresponda.
+La anulacion POS corrige una venta reciente antes de consolidar el cierre de caja. Aplica cuando la caja asociada a la venta sigue abierta.
 
-## Anulacion comercial
-
-La anulacion comercial deja sin efecto una operacion interna bajo reglas controladas. Puede aplicar cuando hubo error operativo, duplicidad o registro incorrecto antes de consolidar la caja. Debe conservar evidencia y no borrar la historia.
-
-Reglas V1:
+Reglas operativas:
 
 - Toda anulacion exige motivo.
-- El vendedor solo anula ventas propias permitidas del dia.
+- El vendedor puede anular ventas propias permitidas.
 - Admin y superadmin pueden anular ventas permitidas de cualquier vendedor.
 - La caja asociada debe seguir abierta.
-- No se anulan ventas de cajas cerradas.
-- El pago original no se borra; queda evidencia de la reversa.
-- El inventario debe reponerse a los mismos lotes consumidos.
+- La anulacion ajusta el resultado operativo de la caja.
+- El pago original no se borra; queda evidencia de reversa.
+- El inventario se repone a los lotes originales consumidos.
 
-## Anulacion fiscal
+Si la caja ya fue cerrada, no corresponde anular POS ni reabrir caja para corregir la venta.
 
-La anulación fiscal afecta la factura emitida ante SIAT. Es distinta de la devolución física del producto y debe gestionarse con permisos restringidos, motivo y registro de respuesta fiscal cuando corresponda.
+## Devolucion administrativa total
 
-## Impacto en inventario
+La devolucion administrativa total se usa para una venta confirmada cuya caja ya fue cerrada. Es posterior al cierre y no modifica el arqueo cerrado.
 
-Una devolución puede o no retornar stock disponible. Si el producto mantiene condiciones sanitarias válidas, podría reincorporarse con trazabilidad. Si existe riesgo por manipulación, daño o pérdida de cadena de conservación, puede tratarse como merma o producto no vendible.
+Reglas operativas:
 
-## Impacto en caja
+- La devolucion es total, no parcial.
+- Debe registrarse motivo administrativo.
+- Solo admin y superadmin pueden ejecutarla.
+- La venta queda marcada como devuelta.
+- El pago queda reembolsado administrativamente por el total de la venta.
+- Se conservan vendedor, caja original, fecha de venta y evidencia del reembolso.
+- Cuando la regla lo permite, el stock vuelve a los mismos lotes consumidos por FEFO.
+- Cada reposicion queda reflejada en kardex como movimiento de devolucion.
 
-La devolución puede generar salida de dinero, nota interna o ajuste administrativo. El sistema debe diferenciar el impacto en caja del impacto en inventario y del impacto fiscal.
+La devolucion administrativa total no reabre caja cerrada, no recalcula el cierre ya consolidado y no crea una venta nueva.
 
-## Reglas de negocio
+## Bloqueos habituales
 
-- Toda devolución debe tener motivo.
-- La venta original debe ser identificable.
-- Los lotes involucrados deben conservarse.
-- La anulacion POS de V1 no reemplaza devolucion posterior ni anulacion fiscal.
-- Las anulaciones fiscales deben ser realizadas por usuarios autorizados.
-- No debe borrarse la operación original.
+Una venta no debe devolverse administrativamente cuando:
+
+- La caja sigue abierta; en ese caso corresponde anulacion POS.
+- La venta ya fue anulada.
+- La venta ya fue devuelta.
+- Existe una factura preparada interna activa.
+- El pago no esta en estado apto para reembolso administrativo.
+
+Si existe una factura preparada interna activa y la venta debe devolverse, primero corresponde cancelarla con motivo. La cancelacion documental no devuelve productos por si sola.
+
+## Factura preparada y factura fiscal
+
+La factura preparada interna es un documento administrativo sin emision SIAT real. Cancelarla no equivale a anulacion fiscal, no genera respuesta del SIN y no repone inventario. El comprobante interno POS permanece como evidencia historica de la venta de mostrador.
+
+La factura fiscal real, QR fiscal, CUF/CUFD funcional y anulacion tributaria quedan fuera de V1.
+
+## Impacto sanitario e inventario
+
+Cuando una devolucion repone stock, la trazabilidad debe volver al lote original para mantener control de vencimiento, costo real y kardex. En farmacia, el responsable administrativo debe revisar si el producto conserva condiciones sanitarias antes de considerarlo vendible.
 
 ## Resultado esperado
 
-El sistema debe permitir corregir operaciones sin destruir evidencia. La farmacia debe poder explicar qué se devolvió, por qué, quién autorizó, qué pasó con el stock, cómo se afectó caja y si existió impacto fiscal.
+La farmacia debe poder explicar si una correccion fue anulacion POS, devolucion administrativa total o cancelacion documental. Cada caso debe conservar motivo, usuario responsable, fecha, venta original, lotes involucrados y efecto sobre caja, pago e inventario.

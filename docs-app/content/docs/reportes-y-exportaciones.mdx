@@ -1,42 +1,65 @@
 ---
 title: Reportes y exportaciones
-description: Informacion analitica para administracion, inventario y ventas.
+description: Reportes administrativos, valuacion de inventario y descargas CSV auditadas.
 ---
 
-Los reportes convierten las operaciones diarias en información útil para la administración de la farmacia. Su valor depende de que compras, ventas, inventario, caja y facturación conserven datos consistentes desde el origen.
+Los reportes convierten las operaciones diarias en informacion util para administracion de farmacia. En V1 se enfocan en ventas netas, inventario disponible valorizado, productos proximos a vencer y exportaciones CSV trazables.
 
-## Reportes de ventas
+## Reporte de ventas diarias
 
-Permiten analizar ventas diarias, ventas por producto, ventas por categoría, comportamiento de mostrador y evolución de ingresos. Cuando se relacionan con costos de lote, también permiten calcular margen real.
+El reporte de ventas diarias separa importes para que administracion no confunda venta bruta con venta neta.
 
-## Reportes de inventario
+Conceptos principales:
 
-Muestran stock actual, stock por lote, productos próximos a vencer, productos vencidos, inventario valorizado y rotación. Estos reportes son esenciales para reducir pérdidas y planificar compras.
+- **Ventas brutas:** total de ventas confirmadas dentro del rango.
+- **Anulaciones:** ventas dejadas sin efecto por anulacion POS.
+- **Devoluciones:** importes reembolsados por devolucion administrativa total.
+- **Ventas netas:** ventas brutas menos anulaciones y devoluciones.
+- **Conteos:** cantidad de ventas, anulaciones y devoluciones por fecha.
 
-## Reportes de compras
+Este reporte ayuda a revisar el comportamiento de mostrador y a explicar diferencias entre lo vendido originalmente y lo que queda como ingreso operativo neto.
 
-Permiten revisar compras por proveedor, compras por periodo, costos de reposición, historial de recepción y anulaciones. También ayudan a comparar proveedores y detectar variaciones de precio.
+## Valuacion de inventario
 
-## Reportes de caja
+La valuacion de inventario calcula valor sobre stock disponible por producto y lote. Usa cantidad disponible y costo real de la capa o lote, por lo que no debe interpretarse como precio de venta ni margen.
 
-Explican ingresos por método de pago, cierres, diferencias, ventas cobradas y sesiones abiertas. Su objetivo es apoyar conciliación diaria.
+Para cada producto se puede revisar:
 
-## Reportes fiscales
+- Codigo interno y nombre comercial.
+- Unidad base.
+- Cantidad disponible total.
+- Valor total disponible.
+- Detalle por lote, vencimiento, cantidad disponible, costo unitario base y valor.
 
-Agrupan facturas por estado, observaciones, rechazos, anulaciones y eventos de contingencia. Son relevantes para administración tributaria y revisión de cumplimiento.
+En farmacia, este reporte sirve para conocer capital inmovilizado, priorizar rotacion FEFO y detectar lotes de alto valor que requieren seguimiento.
 
-## Exportacion CSV
+## Productos proximos a vencer
 
-La exportación CSV permite analizar datos fuera del sistema con hojas de cálculo o herramientas de análisis. Para que sea útil, debe usar fechas en formato ISO, cantidades normalizadas, identificadores estables y columnas separadas para precio, costo, margen, lote y vencimiento.
+El reporte de proximos vencimientos muestra lotes disponibles dentro de una ventana de dias. Permite anticipar acciones comerciales, traslado interno, bloqueo preventivo o baja documentada.
 
-## Reglas de negocio
+Debe revisarse junto con lote, fecha de vencimiento, dias restantes, cantidad disponible, costo base y valor total.
 
-- Los reportes deben basarse en operaciones trazables.
-- Las cantidades deben ser comparables en unidad base cuando corresponda.
-- Los costos deben respetar el origen por lote o capa.
-- Los estados de documentos deben conservarse.
-- Las exportaciones no deben mezclar valores numéricos con texto decorativo.
+## Exportaciones CSV
+
+Las exportaciones CSV permiten descargar informacion para conciliacion, archivo administrativo o analisis externo. En V1 existen descargas de ventas POS y movimientos de inventario.
+
+Reglas de exportacion:
+
+- El archivo usa separador punto y coma (`;`), adecuado para configuraciones regionales donde la coma puede usarse como separador decimal.
+- Las fechas se exportan en formato ISO para conservar orden cronologico y evitar ambiguedades.
+- Las descargas quedan auditadas con usuario, filtros aplicados, archivo y cantidad de filas.
+- Los filtros por fecha ayudan a cerrar periodos diarios, semanales o mensuales sin mezclar operaciones.
+
+La descarga CSV no modifica ventas, inventario ni caja. Solo genera evidencia consultable de que un usuario autorizado extrajo informacion.
+
+## Auditoria
+
+La auditoria permite revisar acciones sensibles como preparacion o cancelacion de facturas preparadas internas, devoluciones administrativas, descargas CSV y otras operaciones criticas. Debe usarse para responder preguntas de control: quien hizo la accion, cuando ocurrio, sobre que registro y con que datos asociados.
+
+## Responsables
+
+Admin y superadmin pueden consultar reportes y descargar CSV. La auditoria completa queda reservada a superadmin. El vendedor no accede a reportes administrativos, exportaciones ni auditoria.
 
 ## Resultado esperado
 
-La farmacia debe poder tomar decisiones con información confiable: qué comprar, qué vender primero, qué productos vencen, qué margen se obtiene, qué proveedor abastece mejor y qué diferencias operativas requieren revisión.
+La farmacia debe poder cerrar periodos con informacion consistente: ventas brutas, anulaciones, devoluciones, neto, inventario disponible valorizado, lotes proximos a vencer y descargas CSV auditadas.

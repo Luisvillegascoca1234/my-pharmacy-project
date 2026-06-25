@@ -14,7 +14,8 @@ export const InventoryMovementTypeSchema = z.enum([
   "purchase_cancelled",
   "inventory_adjustment",
   "sale_confirmed",
-  "sale_cancelled"
+  "sale_cancelled",
+  "sale_returned"
 ]);
 export type InventoryMovementType = z.infer<typeof InventoryMovementTypeSchema>;
 

@@ -2,100 +2,58 @@
 
 ## Objetivo
 
-Cerrar el primer ciclo administrativo: separar venta de factura, permitir devoluciones controladas, exponer auditoria completa y generar reportes exportables.
+Cerrar el primer ciclo administrativo posterior a la venta POS: distinguir comprobante interno POS, factura preparada interna y factura fiscal real; permitir devoluciones administrativas totales; consultar auditoria; y generar reportes exportables.
 
 ## Alcance
 
-- Factura como entidad fiscal separada de venta.
-- Estados SIAT preparados.
-- Anulacion de factura restringida.
-- Devolucion controlada de venta.
-- Auditoria consultable.
-- Reportes operativos iniciales.
-- Exportacion CSV.
-
-## Backend
-
-Modulos:
-
-```text
-backend/src/modules/billing/
-backend/src/modules/returns/
-backend/src/modules/audit/
-backend/src/modules/reports/
-backend/src/modules/exports/
-```
-
-Endpoints minimos:
-
-- `POST /api/billing/invoices/from-sale/:saleId`
-- `POST /api/billing/invoices/:id/cancel`
-- `GET /api/billing/invoices`
-- `POST /api/returns`
-- `GET /api/audit-logs`
-- `GET /api/reports/daily-sales`
-- `GET /api/reports/inventory-valuation`
-- `GET /api/reports/expiring-products`
-- `GET /api/exports/inventory-movements.csv`
-- `GET /api/exports/sales.csv`
+- Factura preparada interna separada de la venta y del comprobante POS.
+- Correlativo propio para la factura preparada.
+- Cancelacion de factura preparada con motivo obligatorio.
+- Devolucion administrativa total posterior al cierre de caja.
+- Reposicion a los mismos lotes consumidos por la venta original.
+- Venta devuelta y pago reembolsado como estados visibles del cierre administrativo.
+- Auditoria consultable para operaciones sensibles.
+- Reportes operativos iniciales de ventas diarias, valuacion de inventario y productos proximos a vencer.
+- Exportacion CSV regional con separador punto y coma.
 
 Reglas:
 
-- Venta y factura no son la misma entidad.
-- Solo admin y superadmin anulan facturas.
-- Devolucion debe referenciar venta original y lotes involucrados.
-- Devolucion impacta inventario y caja segun estado de venta/factura.
-- Reportes se apoyan en `inventory_movements`, ventas, compras, pagos e invoices.
-- CSV usa fechas ISO, cantidades en unidad base e IDs estables.
+- El comprobante interno POS no es factura fiscal ni documento SIAT.
+- La factura preparada no representa emision fiscal real, QR fiscal, CUF, CUFD ni respuesta SIAT.
+- Solo `admin` y `superadmin` preparan o cancelan facturas preparadas.
+- La devolucion administrativa aplica despues del cierre operativo y no reabre ni modifica cierres historicos de caja.
+- Si la caja sigue abierta y la venta es anulable, corresponde anulacion POS, no devolucion administrativa.
+- Si existe factura preparada activa, primero debe cancelarse antes de registrar devolucion.
+- La devolucion V1 es total; no se permiten devoluciones parciales.
+- Los reportes visuales no generan auditoria; las descargas CSV si registran auditoria.
 
-## Frontend
+## Superficies operativas
 
-Modulos:
-
-```text
-frontend/src/modules/billing/
-frontend/src/modules/returns/
-frontend/src/modules/audit/
-frontend/src/modules/reports/
-frontend/src/modules/exports/
-```
-
-Pantallas:
-
-- Facturas por estado.
-- Anulacion de factura.
-- Registro de devolucion.
-- Auditoria con filtros.
-- Reportes iniciales.
-- Botones de exportacion CSV.
-
-## Contratos compartidos
-
-Schemas:
-
-- `InvoiceSchema`
-- `CreateInvoiceFromSaleSchema`
-- `CancelInvoiceSchema`
-- `SaleReturnSchema`
-- `CreateSaleReturnSchema`
-- `AuditLogSchema`
-- `ReportFilterSchema`
+- Facturas preparadas por estado, detalle, preparacion desde ventas elegibles y cancelacion.
+- Devoluciones administrativas totales, ventas devolvibles, motivo y detalle con lotes.
+- Auditoria con filtros, paginacion y metadata para investigacion administrativa.
+- Reportes de ventas diarias, valuacion de inventario por lote y proximos vencimientos.
+- Exportaciones de ventas y movimientos de inventario en CSV.
 
 ## Verificacion
 
-- Venta puede generar factura en estado preparado.
-- Admin o superadmin anula factura.
-- Seller no puede anular factura.
-- Devolucion registra motivo y usuario autorizador.
-- Devolucion genera movimientos si retorna stock.
-- Auditoria muestra eventos sensibles.
-- Reporte de ventas diarias refleja ventas reales.
-- CSV de movimientos puede abrirse con columnas limpias.
+- Venta vigente elegible puede generar factura preparada.
+- `admin` o `superadmin` puede cancelar una factura preparada con motivo.
+- `seller` no puede operar facturas, devoluciones, reportes administrativos, exportaciones ni auditoria.
+- Devolucion registra motivo, actor administrativo, venta original y lotes restaurados.
+- Devolucion cambia la venta a devuelta, el pago a reembolsado y genera movimiento de retorno.
+- Auditoria muestra eventos sensibles con metadata suficiente.
+- Reporte de ventas diarias diferencia ventas brutas, anulaciones, devoluciones y neto.
+- CSV de ventas y movimientos usa columnas estables, fechas ISO y separador punto y coma.
 
 ## Fuera de alcance
 
-- Integracion SIAT completa si no entra en V1.
+- Integracion SIAT real.
+- QR fiscal.
+- Emision fiscal en linea.
+- Devoluciones parciales.
+- Reapertura de caja cerrada.
 - Data warehouse.
 - BI externo.
-- QR integrado.
+- CSV por item vendido separado.
 - Notas fiscales complejas fuera del alcance academico inicial.

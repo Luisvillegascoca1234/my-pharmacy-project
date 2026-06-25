@@ -82,7 +82,8 @@ const cashErrorMessages: Record<CashSupervisionDataErrorCode, string> = {
 const saleStatusLabels: Record<SalesStatusFilter, string> = {
   all: "Todas",
   cancelled: "Anuladas",
-  confirmed: "Confirmadas"
+  confirmed: "Confirmadas",
+  returned: "Devueltas"
 };
 
 const saleErrorMessages: Record<SalesDataErrorCode, string> = {
@@ -125,7 +126,7 @@ const pendingIssueLabels: Record<PendingCartRevalidationIssueCode, string> = {
 };
 
 const cashStatusOptions = ["all", "open", "closed"] as const;
-const saleStatusOptions: SalesStatusFilter[] = ["all", "confirmed", "cancelled"];
+const saleStatusOptions: SalesStatusFilter[] = ["all", "confirmed", "cancelled", "returned"];
 const pendingStatusOptions: PendingCartStatusFilter[] = ["active", "expired", "all", "converted", "discarded"];
 
 export function AdministrativeSupervisionPage() {

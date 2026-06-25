@@ -331,13 +331,15 @@ El vendedor cierra su propia caja. Admin y superadmin pueden cerrar una caja aje
 
 Los pagos deben relacionarse con ventas y caja. Si una venta se anula bajo regla, el pago queda con evidencia de reversa y el esperado de caja se ajusta de forma neta.
 
-## 14. Facturacion SIAT Bolivia
+## 14. Factura preparada y SIAT Bolivia
 
-El sistema debe contemplar facturacion integrada con el sistema tributario boliviano SIAT como modulo fiscal separado.
+El sistema distingue tres documentos o evidencias: comprobante interno POS, factura preparada interna y factura fiscal SIAT real.
 
-La recomendacion conceptual futura es apuntar a Facturacion Computarizada en Linea. En el flujo POS V1 no hay SIAT real, QR fiscal ni emision fiscal en linea.
+En V1, la venta POS emite comprobante interno y el cierre administrativo permite preparar una factura interna con correlativo propio, datos fiscales minimos y estados controlados. Esa factura preparada no representa emision fiscal real, QR fiscal, CUF, CUFD ni respuesta SIAT.
 
-La venta POS V1 emite comprobante interno. Ese comprobante sirve para atencion, caja, inventario y auditoria operativa, pero no reemplaza factura fiscal ni debe presentarse como documento SIAT.
+La recomendacion conceptual futura para facturacion fiscal real es apuntar a Facturacion Computarizada en Linea. En el flujo POS V1 no hay SIAT real, QR fiscal ni emision fiscal en linea.
+
+El comprobante interno sirve para atencion, caja, inventario y auditoria operativa, pero no reemplaza factura fiscal ni debe presentarse como documento SIAT.
 
 Conceptos principales:
 
@@ -348,13 +350,13 @@ Conceptos principales:
 - Actividad economica.
 - Leyenda.
 - Documento sector.
-- Factura.
+- Factura fiscal.
 - XML generado.
 - Estado de envio.
 - Respuesta del SIN.
 - Codigo de recepcion.
 - Errores SIAT.
-- Anulacion de factura.
+- Anulacion fiscal.
 - Contingencia.
 
 Estados conceptuales de factura:
@@ -367,9 +369,9 @@ Estados conceptuales de factura:
 - Observada.
 - Anulada.
 
-Solo `admin` y `superadmin` pueden anular facturas.
+Solo `admin` y `superadmin` pueden cancelar facturas preparadas en V1. Cuando exista facturacion fiscal real, la anulacion ante SIAT debera tratarse como accion separada y restringida.
 
-La venta y la factura deben relacionarse, pero no ser la misma entidad. La venta representa la operacion comercial e inventario. La factura representa el documento fiscal.
+La venta, el comprobante interno, la factura preparada y la factura fiscal real no deben mezclarse. La venta representa la operacion comercial e inventario; el comprobante interno respalda la atencion POS; la factura preparada deja evidencia administrativa; la factura fiscal real queda como integracion tributaria posterior.
 
 Referencias SIAT consultadas:
 
@@ -380,13 +382,13 @@ Referencias SIAT consultadas:
 
 ## 15. Devoluciones y anulaciones
 
-El sistema debe distinguir anulacion operativa V1 y devolucion posterior.
+El sistema debe distinguir anulacion operativa V1 y devolucion administrativa posterior.
 
 La anulacion operativa V1 corrige una venta reciente mientras la caja asociada sigue abierta. Debe exigir motivo, conservar la venta como registro historico, revertir el pago, reponer inventario a los mismos lotes consumidos y ajustar el esperado de caja.
 
 El vendedor puede anular solo ventas propias permitidas del dia. Admin y superadmin pueden anular ventas permitidas de cualquier vendedor mientras la caja asociada siga abierta.
 
-Las devoluciones posteriores al cierre de caja quedan fuera de V1. Cuando se habiliten, deberan manejarse con cuidado por razones sanitarias, fiscales y de trazabilidad.
+El cierre administrativo V1 permite devolucion administrativa total posterior al cierre de caja. Debe manejarse con cuidado por razones sanitarias, fiscales y de trazabilidad, sin reabrir ni modificar cierres historicos de caja.
 
 Una devolucion debe registrar:
 
@@ -397,7 +399,7 @@ Una devolucion debe registrar:
 - Usuario que registra.
 - Usuario que autoriza.
 - Impacto en inventario.
-- Impacto en caja.
+- Estado del pago reembolsado.
 - Impacto fiscal, si la venta fue facturada.
 
 Las devoluciones no deben ser libres.
@@ -405,8 +407,8 @@ Las devoluciones no deben ser libres.
 Se distinguen dos acciones:
 
 - Anular venta interna: aplica bajo reglas controladas mientras la caja asociada siga abierta.
-- Devolucion posterior: queda fuera de V1 y requerira control sanitario, fiscal y de caja.
-- Anular factura: accion fiscal ante SIAT, restringida a `admin` y `superadmin` cuando exista facturacion fiscal.
+- Devolucion administrativa total: aplica despues del cierre operativo, exige motivo, repone lotes originales y conserva el cierre historico.
+- Cancelar factura preparada: accion administrativa V1 restringida a `admin` y `superadmin`; cuando exista facturacion fiscal real, la anulacion ante SIAT sera un flujo separado.
 
 ## 16. Ajustes manuales de inventario
 
@@ -448,7 +450,7 @@ Eventos auditables:
 - Ventas.
 - Devoluciones.
 - Anulaciones.
-- Emision y anulacion de facturas.
+- Preparacion y cancelacion de facturas preparadas internas.
 - Cambios de configuracion SIAT.
 - Errores o respuestas relevantes del SIAT.
 
@@ -625,19 +627,20 @@ Relaciones clave:
 - No se manejara credito a clientes.
 - No se manejara modulo de pacientes.
 - En V1 la venta POS emitira comprobante interno, no factura fiscal.
-- La facturacion se disena para integracion SIAT Bolivia.
+- La factura preparada V1 sera interna, separada del comprobante POS y sin emision SIAT real.
+- La facturacion fiscal real se disena para integracion SIAT Bolivia posterior.
 - La recomendacion fiscal base es Facturacion Computarizada en Linea.
-- La integracion SIAT puede quedar preparada si no se completa en V1.
+- La integracion SIAT real queda fuera de V1.
 - Se permitiran productos no medicinales relacionados con farmacia y salud.
 - Se exigira lote y vencimiento para los productos de inventario.
-- El vendedor no puede anular facturas.
-- Solo admin y superadmin pueden anular facturas.
+- El vendedor no puede cancelar facturas preparadas.
+- Solo admin y superadmin pueden cancelar facturas preparadas.
 - La anulacion interna V1 exige caja abierta, motivo obligatorio, reversa de pago y reposicion al mismo lote.
 - Admin y superadmin pueden cerrar caja ajena y descartar pendientes permitidos.
 - Los carritos pendientes expiran a los 3 dias, no reservan stock y no congelan precio.
-- Se tendra auditoria completa.
+- Se tendra auditoria consultable para operaciones sensibles.
 - Se permitiran ajustes manuales solo a admin y superadmin.
-- Las devoluciones posteriores al cierre de caja quedan fuera de V1.
+- Se permitira devolucion administrativa total posterior al cierre de caja, separada de anulacion POS.
 - Se incluiran alertas automaticas.
 - El analisis iniciara con PostgreSQL y vistas analiticas.
 - Se exportaran datos a CSV para analisis con pandas u otras herramientas.

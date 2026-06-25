@@ -1,43 +1,44 @@
 ---
-title: Facturacion SIAT
-description: Conceptos fiscales bolivianos previstos para la facturacion del sistema.
+title: Facturacion preparada
+description: Uso administrativo de la factura preparada interna desde una venta POS.
 ---
 
-La facturación SIAT representa el componente fiscal del sistema. Debe entenderse como un proceso relacionado con la venta, pero no idéntico a ella. La venta refleja la operación comercial e inventario; la factura representa el documento tributario y su relación con el Servicio de Impuestos Nacionales.
+La facturacion preparada V1 permite generar una **factura preparada interna** a partir de una venta POS confirmada. Este documento ayuda a administracion a respaldar la atencion, identificar cliente, revisar productos dispensados y conservar evidencia documental, pero **no emite factura fiscal real**.
 
-## Conceptos principales
+La factura preparada interna esta separada de la venta y del comprobante interno POS: la venta explica caja, pago, inventario y consumo FEFO; el comprobante interno POS respalda la atencion de mostrador; y la factura preparada conserva una copia administrativa de los datos comerciales para consulta y control. Preparar la factura no vuelve a descontar stock, no cambia el pago y no reemplaza el comprobante de venta de mostrador.
 
-- **SIAT:** Sistema Integrado de la Administración Tributaria utilizado en Bolivia.
-- **CUIS:** código único de inicio de sistemas.
-- **CUFD:** código único de facturación diaria.
-- **Punto de venta:** identificador fiscal del lugar o canal desde donde se emite.
-- **Leyenda:** texto tributario asociado al documento fiscal.
-- **Factura:** documento fiscal emitido por la operación comercial.
-- **Respuesta del SIN:** resultado de validación, observación, rechazo o recepción.
+## Alcance V1
 
-## Estados conceptuales de factura
+- Se prepara desde una venta confirmada que todavia sea elegible.
+- Registra NIT o identificacion del cliente, razon social o nombre, notas administrativas y el detalle de productos.
+- Conserva correlativo interno propio, vendedor, caja asociada, fecha de preparacion, total y estado.
+- Puede quedar **preparado** o **cancelado**.
+- La cancelacion exige motivo y queda disponible para auditoria administrativa.
 
-Una factura puede encontrarse en estados como borrador, emitida, enviada, validada, observada, rechazada o anulada. Estos estados permiten separar el momento comercial de la venta del ciclo fiscal posterior.
+## Limites fiscales
+
+La facturacion preparada no integra SIAT real. En V1 no genera CUF, CUFD funcional, QR fiscal, leyenda tributaria validada ni respuesta del Servicio de Impuestos Nacionales. Tampoco representa recepcion fiscal, envio fiscal, validacion externa ni anulacion tributaria.
+
+Cuando una farmacia necesite factura fiscal real, la factura preparada interna debe tratarse solo como antecedente administrativo. No debe entregarse al cliente como factura fiscal ni usarse para declarar obligaciones tributarias.
 
 ## Relacion con ventas
 
-La venta puede generar una factura, pero no debe confundirse con ella. Una venta afecta productos, pagos e inventario. Una factura afecta obligaciones fiscales, validaciones externas, códigos de recepción y posibles anulaciones ante SIAT.
+Una venta puede tener como maximo una factura preparada interna activa. La preparacion se bloquea cuando la venta fue anulada, ya fue devuelta administrativamente o ya tiene una factura preparada activa.
 
-## Anulacion fiscal
+La cancelacion de la factura preparada interna no anula la venta, no reembolsa pago y no repone inventario. Solo cambia el estado del documento preparado y conserva el motivo administrativo.
 
-La anulación de factura es una acción sensible. Debe reservarse a usuarios administrativos autorizados, registrar motivo y conservar respuesta fiscal cuando aplique. No equivale automáticamente a una devolución física de productos ni a una reversa de caja.
+## Uso operativo recomendado
 
-## Contingencia
+1. Buscar la venta POS confirmada.
+2. Verificar que la venta corresponda al cliente y al importe solicitado.
+3. Registrar NIT o identificacion, razon social o nombre y notas si corresponde.
+4. Preparar la factura interna.
+5. Cancelarlo solo cuando exista error documental, duplicidad o solicitud administrativa justificada.
 
-Cuando el servicio externo no se encuentra disponible, el sistema debe contemplar la posibilidad conceptual de contingencia. Esto permite registrar el evento y diferenciar problemas fiscales externos de errores propios de operación.
+## Responsables
 
-## Reglas de negocio
-
-- Solo admin y superadmin deben poder anular facturas.
-- La factura debe conservar estado fiscal.
-- La venta y la factura deben relacionarse sin fusionarse.
-- Las respuestas fiscales relevantes deben quedar auditadas.
+Solo usuarios **admin** y **superadmin** deben preparar o cancelar facturas preparadas internas. El rol **seller** opera ventas y caja, pero no gestiona facturacion preparada.
 
 ## Resultado esperado
 
-La farmacia debe poder emitir y consultar documentos fiscales de forma trazable, diferenciando claramente operación comercial, control de inventario y cumplimiento tributario.
+La farmacia debe poder distinguir claramente entre venta POS, comprobante interno POS, factura preparada interna y factura fiscal real. La factura preparada sirve para control administrativo y trazabilidad, sin afirmar una emision SIAT disponible.

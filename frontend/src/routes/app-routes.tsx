@@ -8,12 +8,17 @@ import { AlertsPage } from "@/pages/alerts-page";
 import { BatchesPage } from "@/pages/batches-page";
 import { CashPage } from "@/pages/cash-page";
 import { DashboardPage } from "@/pages/dashboard-page";
+import { AuditPage } from "@/pages/audit-page";
+import { ExportsPage } from "@/pages/exports-page";
+import { InvoicesPage } from "@/pages/invoices-page";
 import { ModulePage } from "@/pages/module-page";
 import { MovementsPage } from "@/pages/movements-page";
 import { PosPage } from "@/pages/pos-page";
 import { ProductsPage } from "@/pages/products-page";
 import { PurchaseFormPage } from "@/pages/purchase-form-page";
 import { PurchasesPage } from "@/pages/purchases-page";
+import { ReportsPage } from "@/pages/reports-page";
+import { ReturnsPage } from "@/pages/returns-page";
 import { SalesCancellationPage } from "@/pages/sales-cancellation-page";
 import { SupplierFormPage } from "@/pages/supplier-form-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
@@ -22,7 +27,15 @@ import { UsersPage } from "@/pages/users-page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { isRouteAllowedForRole, navigationItems, type AppNavigationItem, type AppRouteKey } from "./navigation";
+import {
+  ADMINISTRATIVE_RETURNS_PATH,
+  PREPARED_INTERNAL_DOCUMENTS_PATH,
+  SIAT_SETTINGS_PATH,
+  isRouteAllowedForRole,
+  navigationItems,
+  type AppNavigationItem,
+  type AppRouteKey
+} from "./navigation";
 
 type AppRoutesProps = {
   user: AuthenticatedUser;
@@ -31,13 +44,18 @@ type AppRoutesProps = {
 const routePages: Partial<Record<AppRouteKey, ComponentType>> = {
   adjustments: AdjustmentsPage,
   alerts: AlertsPage,
+  audit: AuditPage,
   batches: BatchesPage,
   cash: CashPage,
   dashboard: DashboardPage,
+  exports: ExportsPage,
+  invoices: InvoicesPage,
   movements: MovementsPage,
   pos: PosPage,
   products: ProductsPage,
   purchases: PurchasesPage,
+  reports: ReportsPage,
+  returns: ReturnsPage,
   salesCancellations: SalesCancellationPage,
   supervision: AdministrativeSupervisionPage,
   suppliers: SuppliersPage,
@@ -114,6 +132,18 @@ function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
 }
 
 export function getRouteTitle(pathname: string) {
+  if (pathname === PREPARED_INTERNAL_DOCUMENTS_PATH) {
+    return "Comprobantes internos";
+  }
+
+  if (pathname === ADMINISTRATIVE_RETURNS_PATH) {
+    return "Devoluciones administrativas";
+  }
+
+  if (pathname === SIAT_SETTINGS_PATH) {
+    return "Configuración SIAT";
+  }
+
   if (pathname === "/suppliers/new") {
     return "Nuevo proveedor";
   }

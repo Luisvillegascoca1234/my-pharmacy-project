@@ -3,51 +3,70 @@ title: Roles y responsabilidades
 description: Responsabilidades operativas de superadmin, admin y vendedor.
 ---
 
-Los roles delimitan qué acciones puede realizar cada perfil dentro de la farmacia. Esta separación reduce riesgos operativos, protege información sensible y permite que las operaciones críticas queden reservadas a usuarios con responsabilidad administrativa.
+Los roles delimitan que acciones puede realizar cada perfil dentro de la farmacia. Esta separacion reduce riesgos operativos, protege informacion sensible y permite que las acciones criticas queden reservadas a usuarios con responsabilidad administrativa.
 
 ## Superadmin
 
-El superadmin representa la máxima autoridad del sistema. Administra usuarios, roles, configuraciones globales, parámetros fiscales y auditoria completa. También puede ejecutar acciones administrativas sensibles, como revisar reportes generales, gestionar catálogos críticos y autorizar operaciones que afecten la trazabilidad.
+El superadmin representa la maxima autoridad administrativa del sistema. Tiene acceso completo a configuracion, usuarios, auditoria y funciones administrativas de cierre.
 
-### Responsabilidades principales
+Responsabilidades principales:
 
-- Gestionar usuarios y estados de acceso.
-- Administrar roles y permisos.
-- Revisar auditoria completa.
-- Configurar criterios globales de operación.
-- Gestionar parámetros fiscales cuando se habilite facturacion SIAT.
-- Acceder a reportes administrativos y analíticos.
+- Gestionar usuarios, roles y accesos.
+- Revisar auditoria completa de acciones sensibles.
+- Consultar reportes operativos y exportaciones CSV.
+- Preparar y cancelar comprobantes internos.
+- Registrar devoluciones administrativas totales.
+- Supervisar ventas, cajas, anulaciones y pendientes POS.
+- Gestionar catalogos, compras, inventario, ajustes y proveedores.
+
+La auditoria completa queda reservada a superadmin porque puede contener datos de investigacion administrativa, filtros de usuario, entidad afectada y metadata sensible.
 
 ## Admin
 
-El admin se encarga de la operación administrativa diaria de la farmacia. Gestiona productos, unidades, proveedores, compras, inventario, reportes y acciones de control. Su rol está orientado a mantener la consistencia entre abastecimiento, stock disponible y evidencia administrativa.
+El admin se encarga de la operacion administrativa diaria de la farmacia. Su rol esta orientado a mantener consistencia entre abastecimiento, stock disponible, caja, reportes y evidencia documental.
 
-### Responsabilidades principales
+Responsabilidades principales:
 
-- Registrar y actualizar productos farmacéuticos.
-- Gestionar unidades de medida y conversiones.
-- Administrar proveedores.
-- Crear, recibir y anular compras según reglas.
-- Supervisar lotes, vencimientos y stock.
-- Autorizar ajustes, devoluciones y anulaciones controladas.
-- Revisar reportes operativos.
+- Registrar y actualizar productos farmaceuticos.
+- Gestionar unidades, proveedores y compras recibidas.
+- Supervisar lotes, vencimientos, movimientos y ajustes.
+- Revisar reportes operativos y descargar CSV.
+- Preparar y cancelar comprobantes internos.
+- Registrar devoluciones administrativas totales.
+- Supervisar cajas, ventas anulables y pendientes de mostrador.
+- Autorizar correcciones con motivo cuando la regla lo permite.
+
+El admin no administra roles globales ni accede a auditoria completa cuando esa informacion esta reservada a superadmin.
 
 ## Vendedor
 
-El vendedor atiende el flujo de mostrador. Su responsabilidad central es consultar productos, registrar ventas, cobrar y emitir comprobantes cuando corresponda. Este rol debe operar con información suficiente para vender correctamente, pero sin capacidad para modificar reglas críticas del negocio.
+El vendedor atiende el flujo de mostrador. Su responsabilidad central es vender correctamente, cobrar en efectivo, manejar su caja y conservar evidencia de la atencion.
 
-### Responsabilidades principales
+Responsabilidades principales:
 
 - Consultar productos y disponibilidad.
 - Registrar ventas en el punto de venta.
+- Usar seleccion FEFO automatica sin elegir lote manualmente.
 - Cobrar ventas al contado.
-- Consultar alertas operativas básicas.
-- Participar en apertura o cierre de caja cuando el proceso lo requiera.
+- Guardar y retomar pendientes POS propios.
+- Abrir y cerrar su caja cuando corresponda.
+- Consultar ventas y anulaciones permitidas segun reglas de caja abierta.
 
-## Restricciones relevantes
+## Bloqueos del vendedor
 
-El vendedor no debe modificar costos, ajustar inventario manualmente, anular facturas, crear usuarios, cambiar roles ni alterar configuraciones fiscales. Estas restricciones evitan que la misma persona que realiza la venta pueda modificar unilateralmente datos que explican inventario, margen o cumplimiento tributario.
+El vendedor no debe gestionar comprobantes internos preparados, devoluciones administrativas, reportes administrativos, exportaciones CSV, auditoria, usuarios, roles, proveedores, compras, ajustes manuales ni configuracion. Tampoco debe modificar costos o alterar inventario fuera de los flujos permitidos.
+
+Esta separacion evita que la misma persona que atiende la venta pueda modificar unilateralmente datos que explican margen, stock, auditoria o cierre administrativo.
+
+## Navegacion por area
+
+- **Operacion:** disponible para vendedor, admin y superadmin, con supervision administrativa reservada a admin y superadmin.
+- **Inventario:** consulta general disponible segun pantalla; movimientos y ajustes quedan bajo responsabilidad administrativa.
+- **Compras:** gestionada por admin y superadmin.
+- **Facturacion:** comprobantes internos y devoluciones administrativas para admin y superadmin; configuracion SIAT solo para superadmin cuando corresponda.
+- **Analisis:** reportes y exportaciones para admin y superadmin; auditoria completa para superadmin.
+- **Administracion:** usuarios, roles y configuracion global bajo superadmin.
 
 ## Resultado esperado
 
-La farmacia debe operar con responsabilidades claras. Cada usuario debe contar con acceso suficiente para cumplir su función, pero sin exponer procesos sensibles a cambios no autorizados.
+Cada usuario debe contar con acceso suficiente para cumplir su funcion, sin exponer procesos sensibles a cambios no autorizados. La farmacia debe poder explicar quien vendio, quien superviso, quien preparo documentos, quien autorizo devoluciones y quien descargo informacion.

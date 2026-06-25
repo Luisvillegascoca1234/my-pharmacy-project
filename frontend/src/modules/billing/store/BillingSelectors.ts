@@ -1,0 +1,50 @@
+import type { BillingStore } from "./BillingStore";
+
+export const selectBillingState = (state: BillingStore) => ({
+  cancelReason: state.cancelReason,
+  cancelStatus: state.cancelStatus,
+  detailStatus: state.detailStatus,
+  error: state.error,
+  invoiceableFromDate: state.invoiceableFromDate,
+  invoiceablePagination: state.invoiceablePagination,
+  invoiceableSales: state.invoiceableSales,
+  invoiceableSalesStatus: state.invoiceableSalesStatus,
+  invoiceableSearch: state.invoiceableSearch,
+  invoiceableSellerUserId: state.invoiceableSellerUserId,
+  invoiceableToDate: state.invoiceableToDate,
+  lastPreparedInvoice: state.lastPreparedInvoice,
+  preparedInvoiceFromDate: state.preparedInvoiceFromDate,
+  preparedInvoicePagination: state.preparedInvoicePagination,
+  preparedInvoices: state.preparedInvoices,
+  preparedInvoicesStatus: state.preparedInvoicesStatus,
+  preparedInvoiceSaleId: state.preparedInvoiceSaleId,
+  preparedInvoiceSearch: state.preparedInvoiceSearch,
+  preparedInvoiceStatus: state.preparedInvoiceStatus,
+  preparedInvoiceToDate: state.preparedInvoiceToDate,
+  prepareStatus: state.prepareStatus,
+  selectedPreparedInvoice: state.selectedPreparedInvoice,
+  selectedPreparedInvoiceId: state.selectedPreparedInvoiceId
+});
+
+export const selectBillingActions = (state: BillingStore) => ({
+  cancelSelectedPreparedInvoice: state.cancelSelectedPreparedInvoice,
+  clearCancellation: state.clearCancellation,
+  clearPreparation: state.clearPreparation,
+  loadInvoiceableSales: state.loadInvoiceableSales,
+  loadPreparedInvoice: state.loadPreparedInvoice,
+  loadPreparedInvoices: state.loadPreparedInvoices,
+  prepareInvoice: state.prepareInvoice,
+  reset: state.reset,
+  selectPreparedInvoice: state.selectPreparedInvoice,
+  setInvoiceableFromDate: state.setInvoiceableFromDate,
+  setInvoiceablePage: state.setInvoiceablePage,
+  setInvoiceableSearch: state.setInvoiceableSearch,
+  setInvoiceableSellerUserId: state.setInvoiceableSellerUserId,
+  setInvoiceableToDate: state.setInvoiceableToDate,
+  setPreparedInvoiceFromDate: state.setPreparedInvoiceFromDate,
+  setPreparedInvoicePage: state.setPreparedInvoicePage,
+  setPreparedInvoiceSaleId: state.setPreparedInvoiceSaleId,
+  setPreparedInvoiceSearch: state.setPreparedInvoiceSearch,
+  setPreparedInvoiceStatus: state.setPreparedInvoiceStatus,
+  setPreparedInvoiceToDate: state.setPreparedInvoiceToDate
+});

@@ -3,13 +3,13 @@ title: Alertas operativas
 description: Condiciones que requieren atencion administrativa o de mostrador.
 ---
 
-Las alertas operativas ayudan a detectar situaciones que requieren acción antes de convertirse en pérdidas, errores de venta o incumplimientos administrativos. En farmacia, las alertas más importantes se relacionan con stock, vencimiento, caja y facturación.
+Las alertas operativas ayudan a detectar situaciones que requieren accion antes de convertirse en perdidas, errores de venta o incumplimientos administrativos. En farmacia, las alertas mas importantes se relacionan con stock, vencimiento, caja y documentacion interna.
 
-La pantalla **Alertas** ya calcula avisos desde el inventario real para stock bajo, productos agotados, lotes próximos a vencer y lotes vencidos. Los avisos de caja y facturación se consideran señales operativas previstas para etapas posteriores.
+La pantalla **Alertas** calcula avisos desde el inventario real para stock bajo, productos agotados, lotes proximos a vencer y lotes vencidos. Cualquier alerta fiscal SIAT real, QR fiscal o CUFD funcional queda fuera del alcance V1.
 
 ## Stock bajo
 
-La alerta de stock bajo indica que la cantidad disponible de un producto llegó o se aproxima al mínimo definido. Sirve para planificar reposición antes de quedarse sin disponibilidad.
+La alerta de stock bajo indica que la cantidad disponible de un producto llego o se aproxima al minimo definido. Sirve para planificar reposicion antes de quedarse sin disponibilidad.
 
 ## Producto agotado
 
@@ -17,37 +17,37 @@ Un producto agotado no tiene stock disponible apto para venta. Esta alerta ayuda
 
 ## Lote proximo a vencer
 
-Un lote próximo a vencer requiere atención temprana. Puede motivar rotación prioritaria, revisión de precios, devolución a proveedor si corresponde o decisión administrativa sobre su venta.
+Un lote proximo a vencer requiere atencion temprana. Puede motivar rotacion prioritaria, revision de precios, devolucion a proveedor si corresponde o decision administrativa sobre su venta.
 
 ## Lote vencido
 
-Un lote vencido no debe venderse. La alerta debe permitir aislarlo operativamente y explicar su tratamiento posterior, como ajuste, merma o registro de pérdida.
+Un lote vencido no debe venderse. La alerta debe permitir aislarlo operativamente y explicar su tratamiento posterior, como ajuste, merma o registro de perdida.
 
 ## Caja abierta sin cerrar
 
-Una caja que permanece abierta fuera del horario operativo puede indicar omisión de cierre o riesgo de inconsistencia en ingresos.
+Una caja que permanece abierta fuera del horario operativo puede indicar omision de cierre o riesgo de inconsistencia en ingresos. Antes de corregir ventas, revisar si la caja sigue abierta o ya fue cerrada.
 
-## Observaciones fiscales
+## Documentacion administrativa
 
-Facturas rechazadas, observadas o pendientes de validación deben alertarse porque pueden afectar cumplimiento tributario y conciliación administrativa.
+Los comprobantes internos preparados y las devoluciones administrativas deben revisarse desde sus pantallas correspondientes. Una venta con comprobante interno activo puede requerir cancelacion documental antes de una devolucion administrativa total.
 
 ## Otras alertas utiles
 
 - Compra en borrador pendiente.
 - Producto sin precio de venta.
 - Producto sin registro sanitario cuando aplique.
-- CUFD no disponible o próximo a vencer.
 - Diferencia de caja fuera de tolerancia.
+- Lote disponible con vencimiento cercano.
 
 ## Resultado esperado
 
-Las alertas deben orientar la acción. No deben ser simples mensajes decorativos, sino señales que ayuden a decidir qué revisar, qué corregir y qué priorizar.
+Las alertas deben orientar la accion. No deben ser simples mensajes decorativos, sino senales que ayuden a decidir que revisar, que corregir y que priorizar.
 
 ## Uso recomendado
 
-1. Abrir **Operación > Alertas**.
-2. Revisar el conteo de alertas críticas y preventivas.
+1. Abrir **Operacion > Alertas**.
+2. Revisar el conteo de alertas criticas y preventivas.
 3. Identificar el producto, lote, vencimiento y disponible.
-4. Para productos agotados, planificar reposición o revisar compras pendientes.
-5. Para lotes próximos a vencer, priorizar rotación, devolución acordada con proveedor o revisión administrativa.
+4. Para productos agotados, planificar reposicion o revisar compras pendientes.
+5. Para lotes proximos a vencer, priorizar rotacion, devolucion acordada con proveedor o revision administrativa.
 6. Para lotes vencidos, evitar venta y registrar el tratamiento operativo correspondiente.

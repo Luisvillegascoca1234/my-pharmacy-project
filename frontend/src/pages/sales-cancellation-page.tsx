@@ -54,12 +54,14 @@ const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium"
 
 const saleStatusLabels: Record<CancelableSaleStatus, string> = {
   cancelled: "Anulada",
-  confirmed: "Confirmada"
+  confirmed: "Confirmada",
+  returned: "Devuelta"
 };
 
 const paymentStatusLabels: Record<CancelablePaymentStatus, string> = {
   cancelled: "Anulado",
   paid: "Pagado",
+  refunded: "Reembolsado",
   reverted: "Revertido"
 };
 
@@ -83,7 +85,7 @@ const errorMessages: Record<SalesDataErrorCode, string> = {
   validation: "Ingresa un motivo de anulación válido."
 };
 
-const statusOptions: SalesStatusFilter[] = ["all", "confirmed", "cancelled"];
+const statusOptions: SalesStatusFilter[] = ["all", "confirmed", "cancelled", "returned"];
 
 export function SalesCancellationPage() {
   const sales = useSales();

@@ -23,6 +23,11 @@ interface CodexRunnerCallbacks {
   onEvent?: (event: CodexJsonEvent) => void
 }
 
+interface CodexCommand {
+  command: string
+  argsPrefix: string[]
+}
+
 function cleanLine(value: string): string {
   return stripVTControlCharacters(value).trim()
 }
@@ -60,22 +65,43 @@ function summarizeEvent(event: CodexJsonEvent): string | null {
   return null
 }
 
-function getCodexExecutable(): string {
-  if (process.platform !== 'win32') {
-    return 'codex'
+function findFirstExisting(paths: Array<string | undefined>): string | undefined {
+  return paths.find((candidate): candidate is string => Boolean(candidate) && fs.existsSync(candidate))
+}
+
+function getCodexCommand(): CodexCommand {
+  if (process.env.CODEX_EXECUTABLE) {
+    return { command: process.env.CODEX_EXECUTABLE, argsPrefix: [] }
   }
 
-  const candidates = [
-    process.env.CODEX_EXECUTABLE,
+  if (process.platform !== 'win32') {
+    return { command: 'codex', argsPrefix: [] }
+  }
+
+  const nativeExecutable = findFirstExisting([
     process.env.LOCALAPPDATA
       ? path.join(process.env.LOCALAPPDATA, 'OpenAI', 'Codex', 'bin', 'codex.exe')
       : undefined,
     process.env.USERPROFILE
       ? path.join(process.env.USERPROFILE, 'AppData', 'Local', 'OpenAI', 'Codex', 'bin', 'codex.exe')
       : undefined,
-  ].filter((candidate): candidate is string => Boolean(candidate))
+  ])
 
-  return candidates.find((candidate) => fs.existsSync(candidate)) ?? 'codex.exe'
+  if (nativeExecutable) {
+    return { command: nativeExecutable, argsPrefix: [] }
+  }
+
+  const npmCodexScript = findFirstExisting([
+    process.env.APPDATA
+      ? path.join(process.env.APPDATA, 'npm', 'node_modules', '@openai', 'codex', 'bin', 'codex.js')
+      : undefined,
+  ])
+
+  if (npmCodexScript) {
+    return { command: process.execPath, argsPrefix: [npmCodexScript] }
+  }
+
+  return { command: 'codex', argsPrefix: [] }
 }
 
 export function runCodexTicket(
@@ -94,8 +120,9 @@ export function runCodexTicket(
   }
 
   args.push(prompt)
+  const codexCommand = getCodexCommand()
 
-  const child = spawn(getCodexExecutable(), args, {
+  const child = spawn(codexCommand.command, [...codexCommand.argsPrefix, ...args], {
     cwd: repoRoot,
     env: {
       ...process.env,
