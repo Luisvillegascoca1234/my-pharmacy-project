@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RoleNameSchema } from "./role-catalog.schema.js";
 import { UserStatusSchema } from "./user.schema.js";
 
 export const LoginRequestSchema = z.object({
@@ -13,19 +14,20 @@ export const AuthenticatedUserSchema = z.object({
   email: z.string().email(),
   fullName: z.string(),
   status: UserStatusSchema,
-  role: z.object({
-    id: z.string(),
-    name: z.string(),
-    displayName: z.string()
-  }),
-  permissions: z.array(z.string())
-});
+  role: z
+    .object({
+      id: z.string(),
+      name: RoleNameSchema,
+      displayName: z.string()
+    })
+    .strict()
+}).strict();
 
 export type AuthenticatedUser = z.infer<typeof AuthenticatedUserSchema>;
 
 export const AuthSessionSchema = z.object({
   token: z.string().min(1),
   user: AuthenticatedUserSchema
-});
+}).strict();
 
 export type AuthSession = z.infer<typeof AuthSessionSchema>;

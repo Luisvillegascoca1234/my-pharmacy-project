@@ -1,6 +1,6 @@
 # 01 — [BACKEND] TB-01 — Publicar el catalogo fijo de roles y facultades
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** BACKEND
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-01 — El superadministrador consulta la matriz institucional de roles
@@ -23,3 +23,5 @@ El servidor publica una representacion estable y validada de los tres roles inst
 
 ## Comments
 
+- Implementado el catalogo fijo y ordenado de roles y facultades, con contrato compartido, autorizacion exclusiva para Superadministrador, manejo controlado de inconsistencias, pruebas backend especificas y documentacion OpenAPI.
+- Validaciones reportadas: typecheck de shared y backend aprobados; suite especifica de roles 7/7; `git diff --check` aprobado. La suite backend global conserva tres fallas ajenas en fixtures fechados de `pending-carts.service.spec.ts`.

@@ -1,6 +1,6 @@
 # 05 — [UI] TB-02 — Adaptar sesion y usuarios al contrato basado en rol
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** UI
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-02 — La identidad autenticada depende unicamente del rol fijo
@@ -22,3 +22,5 @@ El cliente inicia y restaura sesiones utilizando exclusivamente la identidad y e
 
 ## Comments
 
+- Adaptados login, restauracion de sesion y gestion de usuarios al contrato basado exclusivamente en identidad y rol institucional; eliminadas las referencias cliente a permisos obsoletos y normalizados los errores visibles en espanol.
+- Validaciones reportadas: typecheck frontend aprobado, suite frontend completa 83/83, busqueda sin referencias obsoletas en `frontend/src` y `git diff --check -- frontend/src` aprobado. Sin QA visual.

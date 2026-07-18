@@ -1,6 +1,6 @@
 # 12 — [CODE REVIEW] TB-04 — Revisar y corregir pertenencia y supervision
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** CODE REVIEW
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-04 — Las operaciones compartidas respetan pertenencia y supervision
@@ -23,3 +23,5 @@ Las reglas contextuales y su comunicacion quedan revisadas y corregidas como cie
 
 ## Comments
 
+- Revisado y corregido TB-04 integralmente: dia operativo boliviano para anulaciones, capacidades `canCancel` y `canClose` obligatorias en contratos/OpenAPI, y eliminacion de contexto de rol redundante en caja.
+- Validaciones reportadas: typechecks shared/backend/frontend aprobados; backend TB-04 47/47; frontend especifico 9/9; suites completas backend 188/188 y frontend 121/121; `git diff --check` y revision estatica aprobados. Sin QA visual.

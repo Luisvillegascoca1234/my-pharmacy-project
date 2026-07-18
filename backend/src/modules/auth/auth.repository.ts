@@ -1,21 +1,20 @@
-import type { User } from "@prisma/client";
-import { AuthenticatedUserSchema, type AuthenticatedUser } from "@pharmacy-pos/shared";
+import {
+  AuthenticatedUserSchema,
+  type AuthenticatedUser,
+  type RoleName,
+  type UserStatus
+} from "@pharmacy-pos/shared";
 import { prisma } from "../../infrastructure/prisma/prisma.client.js";
 
-type UserWithRolePermissions = {
+type AuthIdentityRecord = {
   id: string;
   email: string;
   fullName: string;
-  status: User["status"];
+  status: UserStatus;
   role: {
     id: string;
-    name: string;
+    name: RoleName;
     displayName: string;
-    permissions: Array<{
-      permission: {
-        key: string;
-      };
-    }>;
   };
 };
 
@@ -23,17 +22,7 @@ export class AuthRepository {
   findUserByEmail(email: string) {
     return prisma.user.findUnique({
       where: { email },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true
-              }
-            }
-          }
-        }
-      }
+      include: { role: true }
     });
   }
 
@@ -43,17 +32,7 @@ export class AuthRepository {
         id,
         status: "active"
       },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true
-              }
-            }
-          }
-        }
-      }
+      include: { role: true }
     });
   }
 
@@ -91,7 +70,7 @@ export class AuthRepository {
   }
 }
 
-export function toAuthenticatedUser(user: UserWithRolePermissions): AuthenticatedUser {
+export function toAuthenticatedUser(user: AuthIdentityRecord): AuthenticatedUser {
   return AuthenticatedUserSchema.parse({
     id: user.id,
     email: user.email,
@@ -101,7 +80,6 @@ export function toAuthenticatedUser(user: UserWithRolePermissions): Authenticate
       id: user.role.id,
       name: user.role.name,
       displayName: user.role.displayName
-    },
-    permissions: user.role.permissions.map((rolePermission) => rolePermission.permission.key)
+    }
   });
 }

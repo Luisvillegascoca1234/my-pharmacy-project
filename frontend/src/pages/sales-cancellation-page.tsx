@@ -19,7 +19,6 @@ import type {
   CancelableSale,
   CancelableSaleStatus,
   CancelableSaleSummary,
-  SaleCancellationBlockReason,
   SalesDataErrorCode,
   SalesStatusFilter
 } from "@/modules/sales";
@@ -46,6 +45,8 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { OperationalScopeNotice, SupervisionOnly } from "@/components/operational-scope-notice";
+import { getSaleCancellationBlockMessage, getSupervisedSellerFilter, isSaleCancellationAllowed } from "./sales-cancellation-policy";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
@@ -65,17 +66,9 @@ const paymentStatusLabels: Record<CancelablePaymentStatus, string> = {
   reverted: "Revertido"
 };
 
-const cancellationBlockLabels: Record<SaleCancellationBlockReason, string> = {
-  "already-cancelled": "La venta ya fue anulada.",
-  "cash-session-closed": "La caja asociada ya fue cerrada.",
-  forbidden: "Tu usuario no tiene permiso para anular esta venta.",
-  "not-current-day": "La venta ya no corresponde al turno permitido.",
-  unknown: "El backend no habilitó esta anulación."
-};
-
 const errorMessages: Record<SalesDataErrorCode, string> = {
   "cash-session-closed": "La caja asociada ya fue cerrada. El detalle se mantiene como historial operativo.",
-  forbidden: "No tienes permiso para consultar o anular esta venta.",
+  forbidden: "Esta venta pertenece a otro usuario y no está disponible en tu alcance propio.",
   "not-current-day": "La venta ya no corresponde al turno permitido.",
   "not-found": "No se encontró la venta solicitada.",
   "sale-already-cancelled": "La venta ya fue anulada previamente.",
@@ -102,7 +95,7 @@ export function SalesCancellationPage() {
   const isLoadingDetail = sales.detailStatus === "loading";
   const isCancelling = sales.cancelStatus === "loading";
   const selectedSale = sales.selectedSale;
-  const canCancelSelectedSale = Boolean(selectedSale?.canCancel && selectedSale.status !== "cancelled");
+  const canCancelSelectedSale = isSaleCancellationAllowed(selectedSale);
   const visibleError = sales.error ? errorMessages[sales.error.code] : null;
   const successSale = sales.lastCancelledSale;
 
@@ -118,7 +111,7 @@ export function SalesCancellationPage() {
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     sales.setSearch(searchInput);
-    sales.setSellerUserId(sales.canSupervise ? sellerInput : "");
+    sales.setSellerUserId(getSupervisedSellerFilter(sales.canSupervise, sellerInput));
     sales.setCashSessionId(cashSessionInput);
   }
 
@@ -167,7 +160,7 @@ export function SalesCancellationPage() {
     setCancelReasonError(null);
 
     if (!canCancelSelectedSale) {
-      setCancelReasonError(getCancellationBlockMessage(selectedSale));
+      setCancelReasonError(getSaleCancellationBlockMessage(selectedSale));
       return;
     }
 
@@ -212,11 +205,17 @@ export function SalesCancellationPage() {
         </div>
       </div>
 
+      <OperationalScopeNotice
+        canSupervise={sales.canSupervise}
+        ownRecordsDescription="El servidor limita este listado a tus ventas y evalúa cada anulación según caja, pertenencia, fecha y estado."
+        supervisionDescription="Puedes filtrar ventas de otros vendedores; cada anulación se habilita únicamente según la evaluación del servidor."
+      />
+
       {!sales.canUse ? (
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
-          <AlertTitle>Permiso insuficiente</AlertTitle>
-          <AlertDescription>Tu usuario no tiene permisos para consultar ventas de mostrador.</AlertDescription>
+          <AlertTitle>Área no disponible</AlertTitle>
+          <AlertDescription>El rol de tu usuario no incluye la consulta de ventas de mostrador.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -225,7 +224,7 @@ export function SalesCancellationPage() {
           <BadgeCheck aria-hidden="true" />
           <AlertTitle>Venta anulada</AlertTitle>
           <AlertDescription>
-            {successSale.correlativeCode} quedó anulada. Caja, pago e inventario quedan recalculados por backend.
+            {successSale.correlativeCode} quedó anulada. El servidor registró las reversas de caja, pago e inventario.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -292,14 +291,14 @@ export function SalesCancellationPage() {
             </form>
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-              {sales.canSupervise ? (
+              <SupervisionOnly allowed={sales.canSupervise}>
                 <Input
                   disabled={!sales.canUse}
                   placeholder="ID de vendedor"
                   value={sellerInput}
                   onChange={(event) => setSellerInput(event.currentTarget.value)}
                 />
-              ) : null}
+              </SupervisionOnly>
               <Input
                 disabled={!sales.canUse}
                 placeholder="ID de caja"
@@ -337,7 +336,7 @@ export function SalesCancellationPage() {
                           <EmptyTitle>{isLoadingList ? "Cargando ventas" : "Sin ventas visibles"}</EmptyTitle>
                           <EmptyDescription>
                             {isLoadingList
-                              ? "Consultando ventas de mostrador según permisos y filtros actuales."
+                              ? "Consultando ventas de mostrador según el alcance del rol y los filtros actuales."
                               : "Ajusta filtros o abre una venta por ID si necesitas revisar un comprobante específico."}
                           </EmptyDescription>
                         </EmptyHeader>
@@ -547,7 +546,7 @@ function SaleDetailPanel({
           <SaleInfo label="Vendedor" value={`${sale.sellerUser.fullName} · ${sale.sellerUser.email}`} />
           <SaleInfo label="ID de venta" value={sale.id} />
           <SaleInfo label="Caja" value={sale.cashSessionId} />
-          <SaleInfo label="Anulación" value={canCancel ? "Permitida" : getCancellationBlockMessage(sale)} />
+          <SaleInfo label="Anulación" value={canCancel ? "Permitida" : getSaleCancellationBlockMessage(sale)} />
         </div>
 
         <div className="grid gap-2 sm:grid-cols-3">
@@ -620,7 +619,7 @@ function SaleDetailPanel({
               value={cancelReason}
               onChange={(event) => onCancelReasonChange(event.currentTarget.value)}
             />
-            <FieldDescription>{canCancel ? "Obligatorio. Queda asociado al historial de la venta." : getCancellationBlockMessage(sale)}</FieldDescription>
+            <FieldDescription>{canCancel ? "Obligatorio. Queda asociado al historial de la venta." : getSaleCancellationBlockMessage(sale)}</FieldDescription>
             <FieldError>{cancelReasonError}</FieldError>
           </Field>
           <Button disabled={!canCancel || isCancelling} type="submit" variant="destructive">
@@ -717,18 +716,6 @@ function AmountLine({ label, value }: { label: string; value: string }) {
       <span className="font-semibold text-foreground">{value}</span>
     </div>
   );
-}
-
-function getCancellationBlockMessage(sale: CancelableSale | null) {
-  if (!sale) {
-    return "Selecciona una venta para evaluar la anulación.";
-  }
-
-  if (sale.status === "cancelled") {
-    return cancellationBlockLabels["already-cancelled"];
-  }
-
-  return cancellationBlockLabels[sale.cancellationBlockedReason ?? "unknown"];
 }
 
 function formatMoney(value: number) {

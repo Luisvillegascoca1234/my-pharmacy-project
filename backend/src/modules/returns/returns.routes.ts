@@ -8,7 +8,7 @@ import {
   listSaleReturns
 } from "./returns.controller.js";
 
-export const canUseReturns = requireRole(["superadmin", "admin"]);
+export const canUseReturns = requireRole("returns");
 
 export const returnsRoutes = Router();
 

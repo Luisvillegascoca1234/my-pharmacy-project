@@ -1,7 +1,6 @@
 ---
 name: to-tickets
-description: Expand a canonical feature spec into independent, strictly sequential TODO/DONE ticket files: Backend, UI, and corrective Code Review for each tracer bullet, followed by corrective Computer Use QA and user documentation. Use only after to-spec has published the spec.
-disable-model-invocation: true
+description: "Expand a canonical feature spec into independent, strictly sequential TODO/DONE ticket files: Backend, UI, and corrective Code Review for each tracer bullet, followed by orchestrator-owned corrective Computer Use QA and user documentation. Use only after to-spec has published the spec."
 ---
 
 # To Tickets
@@ -25,6 +24,7 @@ Turn a canonical spec into the ordered execution chain that delivers it. Preserv
 - Start with `TB-01 Backend`, which has no blocker.
 - Never make an earlier tracer bullet depend on a later tracer bullet.
 - Never allow parallel execution between tracer bullets.
+- Assign every QA ticket to the orchestrator for direct execution. Never delegate QA to a subagent.
 
 ## Process
 
@@ -68,6 +68,8 @@ After the last tracer bullet's Code Review, create one **QA** ticket covering th
 
 The QA ticket must:
 
+- declare `**Execution owner:** ORCHESTRATOR` immediately after its objective metadata;
+- require the orchestrator to execute QA directly and never create or assign a subagent for it;
 - read the root `AGENTS.md` before acting;
 - treat the generated QA ticket as the explicit authorization required by `AGENTS.md`;
 - assume the development server is already running when `AGENTS.md` says so;
@@ -78,6 +80,7 @@ The QA ticket must:
 - finish only when all in-scope journeys pass.
 
 QA is corrective, not report-only. It may modify code and remains `TODO` until corrections and rechecks are complete.
+The orchestrator-only execution rule is mandatory even when the surrounding delivery workflow delegates every other ticket to a fresh subagent.
 
 ### 4. Append user documentation
 
@@ -133,6 +136,7 @@ Do not close or modify the canonical spec while publishing tickets.
 
 **Status:** TODO
 **Objective:** <BACKEND | UI | CODE REVIEW | QA | DOCS>
+<For QA only: **Execution owner:** ORCHESTRATOR>
 **Spec:** [<Spec title>](../spec.md)
 **Tracer bullet:** <TB-NN — name | All tracer bullets>
 **Blocked by:** <linked previous ticket | None — start here>
@@ -155,6 +159,7 @@ Describe the behavior or corrective result this ticket must leave behind. Do not
 
 **Status:** TODO
 **Objective:** <BACKEND | UI | CODE REVIEW | QA | DOCS>
+<For QA only: **Execution owner:** ORCHESTRATOR>
 **Spec:** <stable spec link or identifier>
 **Tracer bullet:** <TB-NN — name | All tracer bullets>
 
@@ -177,3 +182,5 @@ Avoid specific file paths and implementation snippets in tickets. The only excep
 ## Completing tickets
 
 Work only the current lowest-numbered available ticket. Set `Status` to `DONE` only after its acceptance criteria are satisfied. For an external tracker, close the issue at the same time. The next ticket becomes available only after that transition.
+
+Execute a QA ticket directly as the orchestrator. Do not spawn, assign, or hand it off to a subagent. Continue using the configured delegation workflow for non-QA tickets.

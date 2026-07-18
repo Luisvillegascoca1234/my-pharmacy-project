@@ -8,6 +8,7 @@ import {
   testTransactionClient
 } from "../../tests/utils/service-fakes.js";
 import { InventoryService } from "./inventory.service.js";
+import type { InventoryBatchRecord, InventoryBatchWithPurchaseItem } from "./inventory.types.js";
 
 describe("InventoryService purchase receipt and cancellation rules", () => {
   it("creates exactly one active batch and purchase_received movement for each tracked item", async () => {
@@ -160,3 +161,76 @@ describe("InventoryService purchase receipt and cancellation rules", () => {
     );
   });
 });
+
+describe("InventoryService role-safe inventory queries", () => {
+  it("omits inventory costs from operational stock, batch and FEFO responses by default", async () => {
+    const inventoryRepository = new FakeInventoryRepository();
+    const service = new InventoryService(inventoryRepository);
+    inventoryRepository.batches.push(
+      makeReadableInventoryBatch({
+        availableQuantity: decimal(8),
+        baseUnitCost: decimal(3.5),
+        expirationDate: new Date("2027-01-01T00:00:00.000Z")
+      }) as unknown as InventoryBatchWithPurchaseItem
+    );
+
+    const stock = await service.listStock({ page: 1, pageSize: 20 });
+    const batches = await service.listProductBatches("product-1");
+    const fefo = await service.getFefoPreview("product-1", 2);
+
+    expect(stock.data[0]).not.toHaveProperty("totalValue");
+    expect(stock.data[0]).not.toHaveProperty("averageUnitCost");
+    expect(batches[0]).not.toHaveProperty("baseUnitCost");
+    expect(fefo.allocations[0]).not.toHaveProperty("unitCostBase");
+  });
+
+  it("includes inventory costs for administrative queries", async () => {
+    const inventoryRepository = new FakeInventoryRepository();
+    const service = new InventoryService(inventoryRepository);
+    inventoryRepository.batches.push(
+      makeReadableInventoryBatch({
+        availableQuantity: decimal(8),
+        baseUnitCost: decimal(3.5),
+        expirationDate: new Date("2027-01-01T00:00:00.000Z")
+      }) as unknown as InventoryBatchWithPurchaseItem
+    );
+
+    const stock = await service.listStock({ page: 1, pageSize: 20 }, true);
+    const batches = await service.listProductBatches("product-1", true);
+    const fefo = await service.getFefoPreview("product-1", 2, true);
+
+    expect(stock.data[0]).toMatchObject({ averageUnitCost: 3.5, totalValue: 28 });
+    expect(batches[0]).toMatchObject({ baseUnitCost: 3.5 });
+    expect(fefo.allocations[0]).toMatchObject({ unitCostBase: 3.5 });
+  });
+});
+
+function makeReadableInventoryBatch(overrides: Partial<InventoryBatchRecord> = {}): InventoryBatchRecord {
+  const batch = makeInventoryBatchRecord();
+
+  return {
+    ...batch,
+    product: {
+      id: batch.productId,
+      internalCode: "MED-001",
+      commercialName: "Paracetamol 500 mg",
+      genericName: "Paracetamol",
+      minimumStock: decimal(5),
+      baseUnit: {
+        id: "unit-1",
+        name: "Unidad",
+        abbreviation: "u"
+      }
+    },
+    purchaseItem: {
+      id: batch.purchaseItemId,
+      purchaseId: "purchase-1",
+      purchase: {
+        supplier: {
+          businessName: "Proveedor farmacéutico"
+        }
+      }
+    },
+    ...overrides
+  };
+}

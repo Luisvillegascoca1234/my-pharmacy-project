@@ -1,6 +1,6 @@
 # 02 — [UI] TB-01 — Construir la pantalla Roles y facultades
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** UI
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-01 — El superadministrador consulta la matriz institucional de roles
@@ -23,3 +23,5 @@ El Superadministrador consulta una superficie de solo lectura que resume los tre
 
 ## Comments
 
+- Implementada la pantalla exclusiva de Superadministrador con tres responsabilidades institucionales, matriz de seis areas y cuatro niveles, notas de pertenencia y supervision, adaptacion a espacios estrechos y estados diferenciados de carga y error.
+- Validaciones reportadas: typecheck frontend aprobado, pruebas focalizadas 4/4 y suite frontend completa 68/68. No se realizo QA visual.

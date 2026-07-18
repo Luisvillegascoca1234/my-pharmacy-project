@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { PosProduct } from "@pharmacy-pos/shared";
+import { isFeatureAllowed, type PosProduct } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectPosActions, selectPosState } from "../store/PosSelectors";
@@ -9,17 +9,13 @@ type UsePosOptions = {
   autoSearchProducts?: boolean;
 };
 
-function canUsePos(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin" || roleName === "seller";
-}
-
 export function usePos(options: UsePosOptions = {}) {
   const { autoSearchProducts = false } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const posState = usePosStore(useShallow(selectPosState));
   const posActions = usePosStore(useShallow(selectPosActions));
-  const canSell = canUsePos(user?.role.name);
+  const canSell = isFeatureAllowed(user?.role.name, "pos");
 
   const searchProducts = useCallback(
     async (signal?: AbortSignal) => {

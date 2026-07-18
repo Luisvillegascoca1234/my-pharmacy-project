@@ -3,7 +3,7 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { closeCashSession, getCurrentCashSession, listCashSessions, openCashSession } from "./cash.controller.js";
 
-const canUseCashSessions = requireRole(["superadmin", "admin", "seller"]);
+const canUseCashSessions = requireRole("cash");
 
 export const cashSessionsRoutes = Router();
 

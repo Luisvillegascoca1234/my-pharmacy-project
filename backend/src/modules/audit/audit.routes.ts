@@ -3,7 +3,7 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { listAuditLogs } from "./audit.controller.js";
 
-export const canReadAuditLogs = requireRole(["superadmin"]);
+export const canReadAuditLogs = requireRole("audit");
 
 export const auditRoutes = Router();
 

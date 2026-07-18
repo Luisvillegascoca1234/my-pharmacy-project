@@ -3,7 +3,8 @@ import {
   CreateInventoryAdjustmentSchema,
   FefoPreviewQuerySchema,
   InventoryMovementsQuerySchema,
-  InventoryStockQuerySchema
+  InventoryStockQuerySchema,
+  isFeatureAllowed
 } from "@pharmacy-pos/shared";
 import { InventoryService } from "./inventory.service.js";
 
@@ -13,7 +14,7 @@ export async function listStock(request: Request, response: Response, next: Next
   try {
     const query = InventoryStockQuerySchema.parse(request.query);
 
-    response.json(await inventoryService.listStock(query));
+    response.json(await inventoryService.listStock(query, canReadInventoryCosts(request)));
   } catch (error) {
     next(error);
   }
@@ -21,7 +22,7 @@ export async function listStock(request: Request, response: Response, next: Next
 
 export async function listProductBatches(request: Request, response: Response, next: NextFunction) {
   try {
-    response.json(await inventoryService.listProductBatches(request.params.productId));
+    response.json(await inventoryService.listProductBatches(request.params.productId, canReadInventoryCosts(request)));
   } catch (error) {
     next(error);
   }
@@ -51,10 +52,14 @@ export async function getFefoPreview(request: Request, response: Response, next:
   try {
     const query = FefoPreviewQuerySchema.parse(request.query);
 
-    response.json(await inventoryService.getFefoPreview(request.params.productId, query.quantity));
+    response.json(await inventoryService.getFefoPreview(request.params.productId, query.quantity, canReadInventoryCosts(request)));
   } catch (error) {
     next(error);
   }
+}
+
+function canReadInventoryCosts(request: Request) {
+  return isFeatureAllowed(request.authenticatedUser?.role.name, "inventoryCosts");
 }
 
 function getAuditContext(request: Request) {

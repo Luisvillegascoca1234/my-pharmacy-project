@@ -126,7 +126,7 @@ export class InventoryService {
     }
   }
 
-  async listStock(query: InventoryStockQuery): Promise<InventoryStockListResponse> {
+  async listStock(query: InventoryStockQuery, includeCosts = false): Promise<InventoryStockListResponse> {
     const batches = await this.inventoryRepository.listBatches({
       productId: query.productId,
       search: query.search
@@ -134,7 +134,9 @@ export class InventoryService {
     const groupedStock = Array.from(groupStockItems(batches).values()).filter((item) => !query.status || item.status === query.status);
     const page = query.page;
     const pageSize = query.pageSize;
-    const data = groupedStock.slice((page - 1) * pageSize, page * pageSize);
+    const data = groupedStock
+      .slice((page - 1) * pageSize, page * pageSize)
+      .map((item) => (includeCosts ? item : omitStockCosts(item)));
 
     return {
       data,
@@ -147,10 +149,10 @@ export class InventoryService {
     };
   }
 
-  async listProductBatches(productId: string): Promise<InventoryBatch[]> {
+  async listProductBatches(productId: string, includeCosts = false): Promise<InventoryBatch[]> {
     const batches = await this.inventoryRepository.listBatches({ productId });
 
-    return batches.map(toInventoryBatch);
+    return batches.map((batch) => toInventoryBatch(batch, includeCosts));
   }
 
   async listMovements(query: InventoryMovementsQuery): Promise<InventoryMovementsListResponse> {
@@ -254,7 +256,7 @@ export class InventoryService {
     });
   }
 
-  async getFefoPreview(productId: string, requestedQuantity?: number): Promise<FefoPreview> {
+  async getFefoPreview(productId: string, requestedQuantity?: number, includeCosts = false): Promise<FefoPreview> {
     const batches = await this.inventoryRepository.listFefoBatches(productId, toDateOnlyStart(new Date()));
     const requested = requestedQuantity === undefined ? undefined : new Prisma.Decimal(requestedQuantity);
     let remaining = requested;
@@ -279,7 +281,7 @@ export class InventoryService {
         expirationDate: batch.expirationDate ? toDateOnly(batch.expirationDate) : undefined,
         availableQuantity: Number(batch.availableQuantity),
         allocatedQuantity: Number(allocatedQuantity),
-        unitCostBase: Number(batch.baseUnitCost)
+        ...(includeCosts ? { unitCostBase: Number(batch.baseUnitCost) } : {})
       };
     });
 
@@ -396,7 +398,7 @@ function getStockStatus(availableQuantity: number, minimumStock: number, expirat
   return "available";
 }
 
-function toInventoryBatch(batch: InventoryBatchRecord): InventoryBatch {
+function toInventoryBatch(batch: InventoryBatchRecord, includeCosts: boolean): InventoryBatch {
   return {
     id: batch.id,
     productId: batch.productId,
@@ -406,13 +408,19 @@ function toInventoryBatch(batch: InventoryBatchRecord): InventoryBatch {
     supplierName: batch.purchaseItem.purchase.supplier.businessName,
     originalQuantity: Number(batch.originalQuantity),
     availableQuantity: Number(batch.availableQuantity),
-    baseUnitCost: Number(batch.baseUnitCost),
+    ...(includeCosts ? { baseUnitCost: Number(batch.baseUnitCost) } : {}),
     batchNumber: batch.batchNumber ?? undefined,
     expirationDate: batch.expirationDate ? toDateOnly(batch.expirationDate) : undefined,
     status: batch.status,
     createdAt: batch.createdAt.toISOString(),
     updatedAt: batch.updatedAt.toISOString()
   };
+}
+
+function omitStockCosts(item: InventoryStockItem): InventoryStockItem {
+  const { averageUnitCost: _averageUnitCost, totalValue: _totalValue, ...operationalStock } = item;
+
+  return operationalStock;
 }
 
 function toInventoryMovement(movement: InventoryMovementRecord): InventoryMovement {

@@ -98,6 +98,7 @@ export const openApiDocument = {
       "UNSUPPORTED_TIMEZONE",
       "INVALID_REPORT_DATE_RANGE",
       "INVALID_EXPORT_DATE_RANGE",
+      "ROLE_CATALOG_CONFIGURATION_INCONSISTENT",
       "FORBIDDEN"
     ],
     administrativeClosureV1Evidence: {
@@ -331,18 +332,21 @@ export const openApiDocument = {
     "/roles": {
       get: {
         tags: ["Roles"],
-        summary: "List roles available for user assignment",
-        description: "Available to superadmin users.",
+        summary: "Read the fixed institutional role and faculty catalog",
+        description:
+          "Available only to superadmin users. Returns exactly superadmin, admin, and seller in stable order with their fixed pharmaceutical faculties. The catalog is informational and cannot be edited at runtime.",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": {
-            description: "Roles ordered by display name",
+            description: "The complete fixed role catalog in institutional order",
             content: {
               "application/json": {
                 schema: {
                   type: "array",
+                  minItems: 3,
+                  maxItems: 3,
                   items: {
-                    $ref: "#/components/schemas/UserRole"
+                    $ref: "#/components/schemas/RoleCatalogEntry"
                   }
                 }
               }
@@ -353,6 +357,24 @@ export const openApiDocument = {
           },
           "403": {
             $ref: "#/components/responses/Forbidden"
+          },
+          "500": {
+            description: "The persisted roles do not contain exactly the fixed institutional catalog",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ApiError"
+                },
+                example: {
+                  message: "The persisted role catalog is inconsistent with the fixed role policy.",
+                  code: "ROLE_CATALOG_CONFIGURATION_INCONSISTENT",
+                  details: {
+                    expectedRoleNames: ["superadmin", "admin", "seller"],
+                    actualRoleNames: ["admin", "superadmin"]
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4021,18 +4043,21 @@ export const openApiDocument = {
             type: "string"
           },
           name: {
-            type: "string",
-            example: "superadmin"
+            $ref: "#/components/schemas/RoleName"
           },
           displayName: {
             type: "string",
-            example: "Superadmin"
+            example: "Superadministrador"
           }
         }
       },
       UserStatus: {
         type: "string",
         enum: ["active", "inactive", "blocked"]
+      },
+      RoleName: {
+        type: "string",
+        enum: ["superadmin", "admin", "seller"]
       },
       UserRole: {
         type: "object",
@@ -4042,18 +4067,75 @@ export const openApiDocument = {
             type: "string"
           },
           name: {
-            type: "string",
-            example: "admin"
+            $ref: "#/components/schemas/RoleName"
           },
           displayName: {
             type: "string",
-            example: "Admin"
+            example: "Administrador"
+          }
+        }
+      },
+      RoleScopeLevel: {
+        type: "string",
+        enum: ["full_access", "operational_access", "own_records_only", "no_access"]
+      },
+      RoleFaculty: {
+        type: "object",
+        required: ["area", "areaLabel", "level", "description"],
+        properties: {
+          area: {
+            type: "string",
+            enum: [
+              "counter_operations",
+              "pharmaceutical_catalog",
+              "inventory_traceability",
+              "supply",
+              "administrative_closure_analysis",
+              "system_governance"
+            ]
+          },
+          areaLabel: {
+            type: "string",
+            example: "Inventario y trazabilidad"
+          },
+          level: {
+            $ref: "#/components/schemas/RoleScopeLevel"
+          },
+          description: {
+            type: "string"
+          }
+        }
+      },
+      RoleCatalogEntry: {
+        type: "object",
+        required: ["id", "name", "displayName", "responsibility", "faculties"],
+        properties: {
+          id: {
+            type: "string"
+          },
+          name: {
+            $ref: "#/components/schemas/RoleName"
+          },
+          displayName: {
+            type: "string",
+            example: "Superadministrador"
+          },
+          responsibility: {
+            type: "string"
+          },
+          faculties: {
+            type: "array",
+            minItems: 6,
+            maxItems: 6,
+            items: {
+              $ref: "#/components/schemas/RoleFaculty"
+            }
           }
         }
       },
       User: {
         type: "object",
-        required: ["id", "email", "fullName", "roleId", "role", "permissions", "status", "createdAt", "updatedAt"],
+        required: ["id", "email", "fullName", "roleId", "role", "status", "createdAt", "updatedAt"],
         properties: {
           id: {
             type: "string"
@@ -4070,12 +4152,6 @@ export const openApiDocument = {
           },
           role: {
             $ref: "#/components/schemas/UserRole"
-          },
-          permissions: {
-            type: "array",
-            items: {
-              type: "string"
-            }
           },
           status: {
             $ref: "#/components/schemas/UserStatus"
@@ -4164,7 +4240,7 @@ export const openApiDocument = {
       },
       AuthenticatedUser: {
         type: "object",
-        required: ["id", "email", "fullName", "status", "role", "permissions"],
+        required: ["id", "email", "fullName", "status", "role"],
         properties: {
           id: {
             type: "string"
@@ -4182,12 +4258,6 @@ export const openApiDocument = {
           },
           role: {
             $ref: "#/components/schemas/AuthRole"
-          },
-          permissions: {
-            type: "array",
-            items: {
-              type: "string"
-            }
           }
         }
       },
@@ -4419,6 +4489,7 @@ export const openApiDocument = {
           { $ref: "#/components/schemas/CashSession" },
           {
             type: "object",
+            required: ["canClose"],
             properties: {
               canClose: {
                 type: "boolean",
@@ -5821,6 +5892,7 @@ export const openApiDocument = {
           { $ref: "#/components/schemas/Sale" },
           {
             type: "object",
+            required: ["canCancel", "payment", "status"],
             properties: {
               canCancel: {
                 type: "boolean",
@@ -5857,6 +5929,7 @@ export const openApiDocument = {
         type: "object",
         required: [
           "id",
+          "canCancel",
           "cashSessionCorrelativeCode",
           "cashSessionId",
           "confirmedAt",

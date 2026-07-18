@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RoleNameSchema } from "./role-catalog.schema.js";
 
 const optionalText = z.string().trim().optional().nullable().transform((value) => value || undefined);
 const password = z.string().min(6).max(128);
@@ -8,9 +9,9 @@ export type UserStatus = z.infer<typeof UserStatusSchema>;
 
 export const UserRoleSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: RoleNameSchema,
   displayName: z.string()
-});
+}).strict();
 
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
@@ -20,12 +21,11 @@ export const UserSchema = z.object({
   fullName: z.string(),
   roleId: z.string(),
   role: UserRoleSchema,
-  permissions: z.array(z.string()).default([]),
   status: UserStatusSchema,
   lastLoginAt: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string()
-});
+}).strict();
 
 export type User = z.infer<typeof UserSchema>;
 

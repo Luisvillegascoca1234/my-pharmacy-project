@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectReportsActions, selectReportsState } from "../store/ReportsSelectors";
@@ -10,17 +11,13 @@ type UseReportsOptions = {
   autoLoadInventoryValuation?: boolean;
 };
 
-function canUseReports(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
-
 export function useReports(options: UseReportsOptions = {}) {
   const { autoLoadDailySales = false, autoLoadExpiringProducts = false, autoLoadInventoryValuation = false } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const reportsState = useReportsStore(useShallow(selectReportsState));
   const reportsActions = useReportsStore(useShallow(selectReportsActions));
-  const canReadReports = canUseReports(user?.role.name);
+  const canReadReports = isFeatureAllowed(user?.role.name, "reports");
 
   const loadDailySalesReport = useCallback(
     async (signal?: AbortSignal) => {

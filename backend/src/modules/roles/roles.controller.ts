@@ -1,19 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
-import { RolesRepository } from "./roles.repository.js";
+import { RolesService } from "./roles.service.js";
 
-const rolesRepository = new RolesRepository();
+const rolesService = new RolesService();
 
 export async function listRoles(_request: Request, response: Response, next: NextFunction) {
   try {
-    const roles = await rolesRepository.listRoles();
-
-    response.json(
-      roles.map((role) => ({
-        id: role.id,
-        name: role.name,
-        displayName: role.displayName
-      }))
-    );
+    response.json(await rolesService.listRoles());
   } catch (error) {
     next(error);
   }

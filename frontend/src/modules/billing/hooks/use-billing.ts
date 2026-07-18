@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectBillingActions, selectBillingState } from "../store/BillingSelectors";
@@ -10,17 +11,13 @@ type UseBillingOptions = {
   autoLoadPreparedInvoices?: boolean;
 };
 
-function canUseAdministrativeBilling(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
-
 export function useBilling(options: UseBillingOptions = {}) {
   const { autoLoadInvoiceableSales = false, autoLoadPreparedInvoices = true } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const billingState = useBillingStore(useShallow(selectBillingState));
   const billingActions = useBillingStore(useShallow(selectBillingActions));
-  const canUseBilling = canUseAdministrativeBilling(user?.role.name);
+  const canUseBilling = isFeatureAllowed(user?.role.name, "invoices");
 
   const loadInvoiceableSales = useCallback(
     async (signal?: AbortSignal) => {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Alert } from "@pharmacy-pos/shared";
-import { selectAuthToken, useAuthStore } from "@/modules/auth";
+import { isFeatureAllowed, type Alert } from "@pharmacy-pos/shared";
+import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { alertsFacade } from "../facades/alertsFacade";
 
 type RequestStatus = "error" | "idle" | "loading" | "success";
@@ -11,6 +11,8 @@ function isAbortError(error: unknown) {
 
 export function useAlerts() {
   const token = useAuthStore(selectAuthToken);
+  const user = useAuthStore(selectAuthUser);
+  const canReadAlerts = isFeatureAllowed(user?.role.name, "alerts");
   const [items, setItems] = useState<Alert[]>([]);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [status, setStatus] = useState<RequestStatus>("idle");
@@ -18,7 +20,7 @@ export function useAlerts() {
 
   const loadAlerts = useCallback(
     async (signal?: AbortSignal) => {
-      if (!token) {
+      if (!token || !canReadAlerts) {
         setItems([]);
         setGeneratedAt(null);
         setStatus("idle");
@@ -43,7 +45,7 @@ export function useAlerts() {
         setStatus("error");
       }
     },
-    [token]
+    [canReadAlerts, token]
   );
 
   useEffect(() => {

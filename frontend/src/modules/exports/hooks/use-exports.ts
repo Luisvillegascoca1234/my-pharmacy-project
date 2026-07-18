@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectExportsActions, selectExportsState } from "../store/ExportsSelectors";
 import { useExportsStore } from "../store/ExportsStore";
-
-function canUseExports(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
 
 export function useExports() {
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const exportsState = useExportsStore(useShallow(selectExportsState));
   const exportsActions = useExportsStore(useShallow(selectExportsActions));
-  const canDownloadExports = canUseExports(user?.role.name);
+  const canDownloadExports = isFeatureAllowed(user?.role.name, "exports");
 
   const downloadSalesCsv = useCallback(
     async (signal?: AbortSignal) => {

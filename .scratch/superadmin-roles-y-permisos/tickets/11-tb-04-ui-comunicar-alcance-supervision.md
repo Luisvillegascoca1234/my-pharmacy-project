@@ -1,6 +1,6 @@
 # 11 — [UI] TB-04 — Comunicar alcance propio y facultades de supervision
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** UI
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-04 — Las operaciones compartidas respetan pertenencia y supervision
@@ -22,3 +22,5 @@ Las superficies de caja, ventas y pendientes comunican con claridad si el usuari
 
 ## Comments
 
+- Comunicados alcance propio y supervision administrativa en caja, ventas y pendientes, con copy consistente, controles por rol y acciones derivadas exclusivamente de `canCancel`, `cancellationBlockedReason` y `canClose` del servidor.
+- Validaciones reportadas: typecheck frontend aprobado, suite frontend completa 121/121, pruebas especificas finales 9/9 y `git diff --check` sin errores. Sin QA visual.

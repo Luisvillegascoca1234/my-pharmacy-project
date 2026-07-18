@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type { Sale } from "@pharmacy-pos/shared";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { captureHttpError, expectHttpError } from "../../tests/utils/http-error.js";
 import type { SalesService } from "../sales/sales.service.js";
 import { PendingCartsService } from "./pending-carts.service.js";
@@ -20,6 +20,11 @@ const auditContext = {
   ipAddress: "127.0.0.1",
   userAgent: "vitest"
 };
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-06-01T12:00:00.000Z"));
+});
 
 afterEach(() => {
   vi.useRealTimers();
@@ -103,6 +108,53 @@ describe("PendingCartsService lifecycle and revalidation rules", () => {
         entityId: "pending-cart-1"
       })
     ]);
+  });
+
+  it("blocks sellers from editing or converting another seller's pending cart", async () => {
+    const editRepository = new FakePendingCartsRepository();
+    editRepository.seedProducts([makeProduct()]);
+    editRepository.seedCarts([makeCart({ ownerUserId: "seller-2" })]);
+    const editSalesService = new FakeSalesService();
+    const editService = new PendingCartsService(asPendingCartsRepository(editRepository), editSalesService.asSalesService());
+
+    const editError = await captureHttpError(() =>
+      editService.updatePendingCart(
+        "pending-cart-1",
+        { items: [{ productId: "product-1", quantity: 1 }] },
+        auditContext
+      )
+    );
+
+    expectHttpError(editError, {
+      code: "PENDING_CART_ACCESS_FORBIDDEN",
+      statusCode: 403
+    });
+    expect(editRepository.auditLogs).toHaveLength(0);
+    expect(editSalesService.createSaleCalls).toHaveLength(0);
+
+    const convertRepository = new FakePendingCartsRepository();
+    convertRepository.seedProducts([makeProduct()]);
+    convertRepository.seedCarts([makeCart({ ownerUserId: "seller-2" })]);
+    const convertSalesService = new FakeSalesService();
+    const convertService = new PendingCartsService(
+      asPendingCartsRepository(convertRepository),
+      convertSalesService.asSalesService()
+    );
+
+    const convertError = await captureHttpError(() =>
+      convertService.convertPendingCart(
+        "pending-cart-1",
+        { payment: { method: "cash", receivedAmount: 10 } },
+        auditContext
+      )
+    );
+
+    expectHttpError(convertError, {
+      code: "PENDING_CART_CONVERT_FORBIDDEN",
+      statusCode: 403
+    });
+    expect(convertRepository.auditLogs).toHaveLength(0);
+    expect(convertSalesService.createSaleCalls).toHaveLength(0);
   });
 
   it("discards active and expired carts only for the owner or an administrator", async () => {
@@ -217,6 +269,31 @@ describe("PendingCartsService lifecycle and revalidation rules", () => {
       })
     );
     expect(adminResult.data).toEqual([
+      expect.objectContaining({
+        id: "pending-cart-2",
+        ownerUserId: "seller-2"
+      })
+    ]);
+  });
+
+  it.each(["admin", "superadmin"] as const)("allows %s users to supervise another seller's pending carts", async (roleName) => {
+    const repository = new FakePendingCartsRepository();
+    repository.seedProducts([makeProduct()]);
+    repository.seedCarts([
+      makeCart({ id: "pending-cart-1", ownerUserId: "seller-1" }),
+      makeCart({ id: "pending-cart-2", ownerUserId: "seller-2" })
+    ]);
+    const service = new PendingCartsService(asPendingCartsRepository(repository), new FakeSalesService().asSalesService());
+
+    const result = await service.listPendingCarts(
+      { includeAll: true, page: 1, pageSize: 20, sellerUserId: "seller-2" },
+      {
+        actorUserId: `${roleName}-1`,
+        actorRoleName: roleName
+      }
+    );
+
+    expect(result.data).toEqual([
       expect.objectContaining({
         id: "pending-cart-2",
         ownerUserId: "seller-2"

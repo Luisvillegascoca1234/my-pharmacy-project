@@ -3,10 +3,10 @@ import type { CreateUser, ResetUserPassword, UpdateUser, UpdateUserStatus, User,
 import { UserSchema } from "@pharmacy-pos/shared";
 import { HttpError } from "../../common/http/http-error.js";
 import { UsersRepository } from "./users.repository.js";
-import type { AuditContext, UserWithRolePermissions } from "./users.types.js";
+import type { AuditContext, UsersRepositoryPort, UserWithRole } from "./users.types.js";
 
 export class UsersService {
-  constructor(private readonly usersRepository = new UsersRepository()) {}
+  constructor(private readonly usersRepository: UsersRepositoryPort = new UsersRepository()) {}
 
   async getCurrentUser(userId: string): Promise<User> {
     const user = await this.usersRepository.findUserById(userId);
@@ -76,8 +76,8 @@ export class UsersService {
     }
 
     if (input.roleId) {
-      await this.ensureRoleExists(input.roleId);
-      await this.ensureCanChangeRole(currentUser, input.roleId);
+      const nextRole = await this.ensureRoleExists(input.roleId);
+      await this.ensureCanChangeRole(currentUser, nextRole);
     }
 
     const user = await this.usersRepository.updateUser(id, {
@@ -153,23 +153,23 @@ export class UsersService {
     if (!role) {
       throw new HttpError(400, "Role does not exist.", "ROLE_NOT_FOUND");
     }
+
+    return role;
   }
 
-  private async ensureCanChangeRole(user: UserWithRolePermissions, nextRoleId: string) {
-    if (user.roleId === nextRoleId || user.role.name !== "superadmin" || user.status !== "active") {
+  private async ensureCanChangeRole(user: UserWithRole, nextRole: UserWithRole["role"]) {
+    if (user.roleId === nextRole.id || user.role.name !== "superadmin" || user.status !== "active") {
       return;
     }
 
-    const nextRole = await this.usersRepository.findRoleById(nextRoleId);
-
-    if (nextRole?.name === "superadmin") {
+    if (nextRole.name === "superadmin") {
       return;
     }
 
     await this.ensureAnotherActiveSuperadminExists(user.id);
   }
 
-  private async ensureCanChangeStatus(user: UserWithRolePermissions, nextStatus: UpdateUserStatus["status"]) {
+  private async ensureCanChangeStatus(user: UserWithRole, nextStatus: UpdateUserStatus["status"]) {
     if (user.status === nextStatus || user.role.name !== "superadmin" || user.status !== "active" || nextStatus === "active") {
       return;
     }
@@ -190,7 +190,7 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function toUser(user: UserWithRolePermissions): User {
+function toUser(user: UserWithRole): User {
   return UserSchema.parse({
     id: user.id,
     email: user.email,
@@ -201,7 +201,6 @@ function toUser(user: UserWithRolePermissions): User {
       name: user.role.name,
       displayName: user.role.displayName
     },
-    permissions: user.role.permissions.map((rolePermission) => rolePermission.permission.key),
     status: user.status,
     lastLoginAt: user.lastLoginAt?.toISOString(),
     createdAt: user.createdAt.toISOString(),
@@ -209,7 +208,7 @@ function toUser(user: UserWithRolePermissions): User {
   });
 }
 
-function buildUserUpdateMetadata(before: UserWithRolePermissions, after: UserWithRolePermissions) {
+function buildUserUpdateMetadata(before: UserWithRole, after: UserWithRole) {
   return {
     before: {
       email: before.email,

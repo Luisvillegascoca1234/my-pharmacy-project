@@ -1,72 +1,110 @@
 ---
-title: Roles y responsabilidades
-description: Responsabilidades operativas de superadmin, admin y vendedor.
+title: Roles y facultades
+description: Responsabilidades institucionales y alcance operativo de Superadministrador, Administrador y Vendedor.
 ---
 
-Los roles delimitan que acciones puede realizar cada perfil dentro de la farmacia. Esta separacion reduce riesgos operativos, protege informacion sensible y permite que las acciones criticas queden reservadas a usuarios con responsabilidad administrativa.
+La farmacia trabaja con tres roles institucionales: **Superadministrador**, **Administrador** y **Vendedor**. Cada rol delimita responsabilidades estables para proteger la trazabilidad de lotes, los costos, la caja, la dispensación y la información administrativa sensible.
 
-## Superadmin
+Las facultades son fijas. No se crean permisos particulares ni excepciones por usuario. El Superadministrador puede cambiar el rol asignado a una cuenta desde la gestión de usuarios, pero no modifica las facultades que corresponden a ese rol.
 
-El superadmin representa la maxima autoridad administrativa del sistema. Tiene acceso completo a configuracion, usuarios, auditoria y funciones administrativas de cierre.
+## Responsabilidades institucionales
 
-Responsabilidades principales:
+### Superadministrador
 
-- Gestionar usuarios, roles y accesos.
-- Revisar auditoria completa de acciones sensibles.
-- Consultar reportes operativos y exportaciones CSV.
-- Preparar y cancelar comprobantes internos.
-- Registrar devoluciones administrativas totales.
-- Supervisar ventas, cajas, anulaciones y pendientes POS.
-- Gestionar catalogos, compras, inventario, ajustes y proveedores.
+Gobierna el sistema, administra identidades y supervisa integralmente la operación farmacéutica.
 
-La auditoria completa queda reservada a superadmin porque puede contener datos de investigacion administrativa, filtros de usuario, entidad afectada y metadata sensible.
+Sus responsabilidades comprenden:
 
-## Admin
+- Administrar usuarios y asignar uno de los tres roles institucionales.
+- Consultar la matriz de **Roles y facultades**, que es informativa y de solo lectura.
+- Supervisar ventas, cajas, pendientes POS y operaciones administrativas de todo el personal.
+- Gestionar el catálogo farmacéutico, abastecimiento, inventario por lote, costos y trazabilidad.
+- Consultar reportes, exportaciones y auditoría completa.
+- Administrar la configuración global y la configuración SIAT disponible.
 
-El admin se encarga de la operacion administrativa diaria de la farmacia. Su rol esta orientado a mantener consistencia entre abastecimiento, stock disponible, caja, reportes y evidencia documental.
+### Administrador
 
-Responsabilidades principales:
+Dirige la operación cotidiana, el abastecimiento y la supervisión administrativa de la farmacia.
 
-- Registrar y actualizar productos farmaceuticos.
-- Gestionar unidades, proveedores y compras recibidas.
-- Supervisar lotes, vencimientos, movimientos y ajustes.
-- Revisar reportes operativos y descargar CSV.
-- Preparar y cancelar comprobantes internos.
-- Registrar devoluciones administrativas totales.
-- Supervisar cajas, ventas anulables y pendientes de mostrador.
-- Autorizar correcciones con motivo cuando la regla lo permite.
+Sus responsabilidades comprenden:
 
-El admin no administra roles globales ni accede a auditoria completa cuando esa informacion esta reservada a superadmin.
+- Administrar productos, unidades y catálogos requeridos para la dispensación.
+- Gestionar proveedores, compras y recepción de mercadería.
+- Controlar lotes, vencimientos, movimientos, costos y ajustes de inventario.
+- Supervisar cajas, ventas y pendientes POS de otros usuarios.
+- Ejecutar cierres administrativos, preparar comprobantes internos, registrar devoluciones y consultar reportes y exportaciones.
 
-## Vendedor
+El Administrador no gestiona usuarios ni roles, no modifica la configuración global o SIAT y no consulta la auditoría completa.
 
-El vendedor atiende el flujo de mostrador. Su responsabilidad central es vender correctamente, cobrar en efectivo, manejar su caja y conservar evidencia de la atencion.
+### Vendedor
 
-Responsabilidades principales:
+Atiende la dispensación en mostrador y opera exclusivamente sus propios registros comerciales y de caja.
 
-- Consultar productos y disponibilidad.
-- Registrar ventas en el punto de venta.
-- Usar seleccion FEFO automatica sin elegir lote manualmente.
-- Cobrar ventas al contado.
-- Guardar y retomar pendientes POS propios.
-- Abrir y cerrar su caja cuando corresponda.
-- Consultar ventas y anulaciones permitidas segun reglas de caja abierta.
+Sus responsabilidades comprenden:
 
-## Bloqueos del vendedor
+- Consultar productos, unidades, stock, lotes y alertas operativas básicas.
+- Registrar y cobrar ventas en el punto de venta.
+- Guardar y retomar sus propios pendientes POS.
+- Abrir, consultar y cerrar su propia caja.
+- Consultar sus propias ventas y solicitar su anulación cuando cumplen las condiciones operativas.
 
-El vendedor no debe gestionar comprobantes internos preparados, devoluciones administrativas, reportes administrativos, exportaciones CSV, auditoria, usuarios, roles, proveedores, compras, ajustes manuales ni configuracion. Tampoco debe modificar costos o alterar inventario fuera de los flujos permitidos.
+El Vendedor no gestiona abastecimiento, costos, movimientos completos ni ajustes de inventario. Tampoco accede a comprobantes internos administrativos, devoluciones, reportes, exportaciones, usuarios, roles, configuración, SIAT o auditoría completa.
 
-Esta separacion evita que la misma persona que atiende la venta pueda modificar unilateralmente datos que explican margen, stock, auditoria o cierre administrativo.
+## Niveles de alcance
 
-## Navegacion por area
+- **Acceso total:** permite administrar y supervisar integralmente las funciones declaradas para el área.
+- **Acceso operativo:** permite realizar o consultar las tareas necesarias para la operación farmacéutica, sin conceder gobierno integral del área.
+- **Solo registros propios:** limita la operación a los registros asociados al usuario autenticado, como su caja, sus ventas y sus pendientes POS.
+- **Sin acceso:** el área no está disponible para el rol. Una ruta directa tampoco concede acceso adicional.
 
-- **Operacion:** disponible para vendedor, admin y superadmin, con supervision administrativa reservada a admin y superadmin.
-- **Inventario:** consulta general disponible segun pantalla; movimientos y ajustes quedan bajo responsabilidad administrativa.
-- **Compras:** gestionada por admin y superadmin.
-- **Facturacion:** comprobantes internos y devoluciones administrativas para admin y superadmin; configuracion SIAT solo para superadmin cuando corresponda.
-- **Analisis:** reportes y exportaciones para admin y superadmin; auditoria completa para superadmin.
-- **Administracion:** usuarios, roles y configuracion global bajo superadmin.
+Estos niveles explican el alcance de cada rol; no son permisos configurables ni opciones que puedan activarse individualmente.
+
+## Matriz de facultades por área
+
+| Área funcional | Superadministrador | Administrador | Vendedor |
+| --- | --- | --- | --- |
+| **Operación de mostrador** | **Acceso total.** Opera y supervisa ventas, cajas y registros de todo el personal. | **Acceso operativo.** Opera el mostrador y supervisa ventas, cajas y pendientes de otros usuarios. | **Solo registros propios.** Opera el POS, sus pendientes, su caja y sus ventas bajo las reglas vigentes. |
+| **Catálogo farmacéutico** | **Acceso total.** Administra productos, unidades y catálogos de dispensación. | **Acceso total.** Administra productos, unidades y catálogos requeridos para la dispensación. | **Acceso operativo.** Consulta productos y unidades necesarios para la dispensación. |
+| **Inventario y trazabilidad** | **Acceso total.** Consulta y gestiona lotes, movimientos, costos, ajustes y alertas. | **Acceso total.** Gestiona lotes, movimientos, costos, ajustes y alertas operativas. | **Acceso operativo.** Consulta stock, lotes y alertas básicas, sin gestionar movimientos ni costos. |
+| **Abastecimiento** | **Acceso total.** Administra proveedores, compras y recepción de mercadería. | **Acceso total.** Gestiona proveedores, compras y recepción de mercadería. | **Sin acceso.** No gestiona proveedores, compras ni recepciones. |
+| **Cierre administrativo y análisis** | **Acceso total.** Supervisa cierres, comprobantes internos, devoluciones, reportes y exportaciones. | **Acceso total.** Ejecuta cierres, comprobantes internos, devoluciones, reportes y exportaciones. | **Sin acceso.** No accede a comprobantes internos administrativos, devoluciones, reportes ni exportaciones. |
+| **Gobierno del sistema** | **Acceso total.** Administra usuarios, roles asignados, configuración global, SIAT y auditoría completa. | **Sin acceso.** No administra usuarios, roles, configuración global, SIAT ni auditoría completa. | **Sin acceso.** No administra usuarios, roles, configuración global, SIAT ni auditoría completa. |
+
+## Pertenencia y supervisión
+
+La facultad de abrir una pantalla no reemplaza las reglas de pertenencia, estado y trazabilidad de cada operación.
+
+### Alcance propio del Vendedor
+
+El Vendedor consulta y opera únicamente:
+
+- Su sesión de caja.
+- Sus ventas de mostrador.
+- Sus carritos pendientes.
+
+No puede consultar ni operar cajas, ventas o pendientes pertenecientes a otro vendedor. En las pantallas correspondientes, el sistema identifica este alcance como **Solo registros propios**.
+
+### Supervisión administrativa
+
+El Administrador y el Superadministrador pueden consultar registros de otros vendedores en las superficies de supervisión. Esto permite controlar cajas, ventas y pendientes POS sin cambiar la pertenencia original de los registros.
+
+Las acciones sensibles conservan la identificación del vendedor responsable, la caja asociada, el motivo de la operación y la trazabilidad farmacéutica correspondiente.
+
+## Anulación de ventas
+
+La anulación POS corrige una venta reciente sin borrar su historia ni perder la trazabilidad de los lotes dispensados.
+
+- El **Vendedor** solo puede anular una venta propia, realizada durante el día y asociada a una caja que continúe abierta.
+- El **Administrador** y el **Superadministrador** pueden anular una venta de otro vendedor únicamente mientras la caja asociada permanezca abierta.
+- Toda anulación exige un motivo y conserva la evidencia de reversa del pago y la reposición a los lotes originales.
+- Si la caja asociada está cerrada, la venta ya no admite anulación operativa. El sistema comunica este bloqueo sin sugerir que pueda resolverse cambiando un permiso.
+
+## Asignación de roles
+
+Solo el Superadministrador puede cambiar el rol de una cuenta desde **Usuarios**. La persona adopta las facultades completas del nuevo rol en su siguiente experiencia autenticada; no se seleccionan facultades individuales.
+
+La pantalla **Roles y facultades** sirve para consultar y explicar la política institucional. No permite crear, editar, eliminar ni guardar roles o facultades.
 
 ## Resultado esperado
 
-Cada usuario debe contar con acceso suficiente para cumplir su funcion, sin exponer procesos sensibles a cambios no autorizados. La farmacia debe poder explicar quien vendio, quien superviso, quien preparo documentos, quien autorizo devoluciones y quien descargo informacion.
+Cada integrante del personal dispone del acceso necesario para cumplir su responsabilidad sin exponer procesos sensibles. La farmacia puede distinguir con claridad quién atendió la dispensación, quién supervisó una operación, quién administró el abastecimiento y quién ejerció funciones exclusivas de gobierno.

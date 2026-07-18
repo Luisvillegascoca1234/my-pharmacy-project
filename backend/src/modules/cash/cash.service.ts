@@ -62,14 +62,10 @@ export type CashSessionsRepositoryPort = {
   ): Promise<unknown>;
 };
 
-type CashSessionContext = AuditContext & {
-  actorRoleName?: string;
-};
-
 export class CashSessionsService {
   constructor(private readonly cashSessionsRepository: CashSessionsRepositoryPort = new CashSessionsRepository()) {}
 
-  async listCashSessions(query: CashSessionsQuery, context: CashSessionContext): Promise<CashSessionsListResponse> {
+  async listCashSessions(query: CashSessionsQuery, context: AuditContext): Promise<CashSessionsListResponse> {
     const actorUserId = this.getAuthenticatedUserId(context, "list cash sessions");
     const actor = await this.cashSessionsRepository.findUserById(actorUserId);
 

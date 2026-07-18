@@ -1,9 +1,10 @@
 import type { User, UserRole, UserStatus } from "@pharmacy-pos/shared";
 
 export type UsersAdminStatus = "idle" | "loading" | "success" | "error";
+export type UsersAdminErrorCode = "load_failed";
 
 export type UsersAdminState = {
-  error: string | null;
+  errorCode: UsersAdminErrorCode | null;
   roleId: string;
   roles: UserRole[];
   search: string;
@@ -13,7 +14,7 @@ export type UsersAdminState = {
 };
 
 export const initialUsersAdminState: UsersAdminState = {
-  error: null,
+  errorCode: null,
   roleId: "all",
   roles: [],
   search: "",

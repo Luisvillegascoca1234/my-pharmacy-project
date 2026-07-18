@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed, type CreateProductCategory, type CreateUnit } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectUnitsCatalogActions, selectUnitsCatalogState } from "../store/UnitsCatalogSelectors";
@@ -8,20 +9,48 @@ export function useUnitsCatalog() {
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const { categories, error, status, units } = useUnitsCatalogStore(useShallow(selectUnitsCatalogState));
-  const { loadCatalog: loadCatalogFromStore, reset, saveCategory, saveUnit } = useUnitsCatalogStore(useShallow(selectUnitsCatalogActions));
+  const {
+    loadCatalog: loadCatalogFromStore,
+    reset,
+    saveCategory: saveCategoryToStore,
+    saveUnit: saveUnitToStore
+  } = useUnitsCatalogStore(useShallow(selectUnitsCatalogActions));
 
-  const canManage = user?.role.name === "superadmin" || user?.role.name === "admin";
+  const canRead = isFeatureAllowed(user?.role.name, "units");
+  const canManage = isFeatureAllowed(user?.role.name, "unitManagement");
 
   const loadCatalog = useCallback(
     async (signal?: AbortSignal) => {
-      if (!token) {
+      if (!token || !canRead) {
         reset();
         return;
       }
 
       await loadCatalogFromStore(signal);
     },
-    [loadCatalogFromStore, reset, token]
+    [canRead, loadCatalogFromStore, reset, token]
+  );
+
+  const saveUnit = useCallback(
+    async (input: CreateUnit) => {
+      if (!token || !canManage) {
+        return;
+      }
+
+      await saveUnitToStore(input);
+    },
+    [canManage, saveUnitToStore, token]
+  );
+
+  const saveCategory = useCallback(
+    async (input: CreateProductCategory) => {
+      if (!token || !canManage) {
+        return;
+      }
+
+      await saveCategoryToStore(input);
+    },
+    [canManage, saveCategoryToStore, token]
   );
 
   useEffect(() => {

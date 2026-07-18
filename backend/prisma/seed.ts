@@ -1,35 +1,7 @@
 import bcrypt from "bcryptjs";
-import { BASE_ROLES } from "@pharmacy-pos/shared";
 import "../src/config/env.js";
 import { prisma } from "../src/infrastructure/prisma/prisma.client.js";
-
-const basePermissions = [
-  {
-    key: "auth.session.read",
-    module: "auth",
-    description: "Read the current authenticated session"
-  },
-  {
-    key: "roles.manage",
-    module: "roles",
-    description: "Manage system roles and permissions"
-  },
-  {
-    key: "users.manage",
-    module: "users",
-    description: "Manage system users"
-  },
-  {
-    key: "catalogs.read",
-    module: "catalogs",
-    description: "Read product catalogs, units, and products"
-  },
-  {
-    key: "catalogs.manage",
-    module: "catalogs",
-    description: "Manage product catalogs, units, and products"
-  }
-];
+import { synchronizeInstitutionalRoles } from "./institutional-roles.js";
 
 const pharmacyUnits = [
   {
@@ -202,30 +174,7 @@ const pharmacyUnits = [
 async function main() {
   await resetDatabase();
 
-  const permissions = await Promise.all(
-    basePermissions.map((permission) =>
-      prisma.permission.upsert({
-        where: { key: permission.key },
-        update: permission,
-        create: permission
-      })
-    )
-  );
-
-  const roles = await Promise.all(
-    BASE_ROLES.map((roleName) =>
-      prisma.role.upsert({
-        where: { name: roleName },
-        update: {
-          displayName: toDisplayName(roleName)
-        },
-        create: {
-          name: roleName,
-          displayName: toDisplayName(roleName)
-        }
-      })
-    )
-  );
+  const roles = await synchronizeInstitutionalRoles(prisma.role);
 
   const superadminRole = roles.find((role) => role.name === "superadmin");
   const adminRole = roles.find((role) => role.name === "admin");
@@ -235,19 +184,9 @@ async function main() {
     throw new Error("Base roles were not created.");
   }
 
-  await assignPermissions(superadminRole.id, permissions.map((permission) => permission.id));
-  await assignPermissions(
-    adminRole.id,
-    permissions.filter((permission) => ["catalogs.read", "catalogs.manage"].includes(permission.key)).map((permission) => permission.id)
-  );
-  await assignPermissions(
-    sellerRole.id,
-    permissions.filter((permission) => permission.key === "catalogs.read").map((permission) => permission.id)
-  );
-
   const passwordHash = await bcrypt.hash("admin", 12);
 
-  await prisma.user.upsert({
+  const superadminUser = await prisma.user.upsert({
     where: {
       email: "admin@admin.com"
     },
@@ -266,13 +205,69 @@ async function main() {
     }
   });
 
-  await seedPharmacyUnits();
+  const adminUser = await seedDevelopmentUser({
+    email: "admin@farmacia.local",
+    fullName: "Administrador de farmacia",
+    passwordHash,
+    roleId: adminRole.id
+  });
+  const sellerUser = await seedDevelopmentUser({
+    email: "vendedor@farmacia.local",
+    fullName: "Vendedor de mostrador",
+    passwordHash,
+    roleId: sellerRole.id
+  });
 
-  console.log("Seed completed. Superadmin: admin@admin.com / admin");
+  await seedPharmacyUnits();
+  await seedOperationalPharmacy({
+    adminUserId: adminUser.id,
+    sellerUserId: sellerUser.id,
+    superadminUserId: superadminUser.id
+  });
+
+  console.log("Seed completed. Development credentials (password: admin):");
+  console.log("- Superadmin: admin@admin.com");
+  console.log("- Admin: admin@farmacia.local");
+  console.log("- Seller: vendedor@farmacia.local");
+}
+
+function seedDevelopmentUser(input: {
+  email: string;
+  fullName: string;
+  passwordHash: string;
+  roleId: string;
+}) {
+  return prisma.user.upsert({
+    where: {
+      email: input.email
+    },
+    update: {
+      fullName: input.fullName,
+      passwordHash: input.passwordHash,
+      roleId: input.roleId,
+      status: "active"
+    },
+    create: {
+      email: input.email,
+      fullName: input.fullName,
+      passwordHash: input.passwordHash,
+      roleId: input.roleId,
+      status: "active"
+    }
+  });
 }
 
 async function resetDatabase() {
   await prisma.$transaction([
+    prisma.saleReturnItem.deleteMany(),
+    prisma.saleReturn.deleteMany(),
+    prisma.preparedInvoiceItem.deleteMany(),
+    prisma.preparedInvoice.deleteMany(),
+    prisma.pendingCartItem.deleteMany(),
+    prisma.pendingCart.deleteMany(),
+    prisma.saleItemBatch.deleteMany(),
+    prisma.payment.deleteMany(),
+    prisma.saleItem.deleteMany(),
     prisma.sale.deleteMany(),
     prisma.cashSession.deleteMany(),
     prisma.inventoryAdjustment.deleteMany(),
@@ -286,10 +281,7 @@ async function resetDatabase() {
     prisma.productCategory.deleteMany(),
     prisma.unit.deleteMany(),
     prisma.auditLog.deleteMany(),
-    prisma.user.deleteMany(),
-    prisma.rolePermission.deleteMany(),
-    prisma.permission.deleteMany(),
-    prisma.role.deleteMany()
+    prisma.user.deleteMany()
   ]);
 }
 
@@ -317,31 +309,152 @@ async function seedPharmacyUnits() {
   }
 }
 
-function assignPermissions(roleId: string, permissionIds: string[]) {
-  return Promise.all(
-    permissionIds.map((permissionId) =>
-      prisma.rolePermission.upsert({
-        where: {
-          roleId_permissionId: {
-            roleId,
-            permissionId
+async function seedOperationalPharmacy(input: {
+  adminUserId: string;
+  sellerUserId: string;
+  superadminUserId: string;
+}) {
+  const baseUnit = await prisma.unit.findUniqueOrThrow({
+    where: {
+      abbreviation: "UND"
+    }
+  });
+  const expirationDate = new Date(Date.UTC(new Date().getUTCFullYear() + 2, 11, 31));
+
+  await prisma.$transaction(async (tx) => {
+    const category = await tx.productCategory.create({
+      data: {
+        name: "Analgésicos y antipiréticos",
+        description: "Medicamentos para el alivio del dolor y la reducción de la fiebre.",
+        status: "active"
+      }
+    });
+    const supplier = await tx.supplier.create({
+      data: {
+        businessName: "Distribuidora Farmacéutica Demo",
+        nit: "1020304050",
+        phone: "70000000",
+        address: "Santa Cruz de la Sierra",
+        contactName: "Representante comercial",
+        status: "active"
+      }
+    });
+    const product = await tx.product.create({
+      data: {
+        internalCode: "MED-0001",
+        barcode: "7770000000011",
+        commercialName: "Paracetamol 500 mg",
+        genericName: "Paracetamol",
+        description: "Comprimido analgésico y antipirético de dispensación habitual.",
+        type: "medicine",
+        categoryId: category.id,
+        baseUnitId: baseUnit.id,
+        supplierId: supplier.id,
+        laboratoryName: "Laboratorio Demo",
+        sanitaryRegistration: "REG-DEMO-001",
+        isMedicine: true,
+        isOverTheCounter: true,
+        requiresPrescription: false,
+        minimumStock: 20,
+        salePrice: 5,
+        status: "active",
+        units: {
+          create: {
+            unitId: baseUnit.id,
+            conversionFactor: 1
+          }
+        }
+      }
+    });
+    const purchase = await tx.purchase.create({
+      data: {
+        supplierId: supplier.id,
+        purchaseDate: new Date(),
+        status: "received",
+        totalAmount: 200,
+        createdByUserId: input.adminUserId,
+        receivedByUserId: input.adminUserId,
+        receivedAt: new Date(),
+        notes: "Compra inicial generada por el seed de desarrollo.",
+        receiveNotes: "Stock operativo inicial para pruebas y demostraciones.",
+        items: {
+          create: {
+            productId: product.id,
+            unitId: baseUnit.id,
+            quantity: 100,
+            unitCost: 2,
+            conversionFactor: 1,
+            baseQuantity: 100,
+            baseUnitCost: 2,
+            lineTotal: 200,
+            isInventoryTracked: true,
+            batchNumber: "LOTE-DEMO-001",
+            expirationDate
+          }
+        }
+      },
+      include: {
+        items: true
+      }
+    });
+    const purchaseItem = purchase.items[0];
+
+    if (!purchaseItem) {
+      throw new Error("The development purchase item was not created.");
+    }
+
+    const batch = await tx.inventoryBatch.create({
+      data: {
+        purchaseItemId: purchaseItem.id,
+        productId: product.id,
+        originalQuantity: 100,
+        availableQuantity: 100,
+        baseUnitCost: 2,
+        batchNumber: "LOTE-DEMO-001",
+        expirationDate,
+        status: "active"
+      }
+    });
+
+    await tx.inventoryMovement.create({
+      data: {
+        batchId: batch.id,
+        productId: product.id,
+        type: "purchase_received",
+        quantityBase: 100,
+        unitCostBase: 2,
+        referenceType: "purchase",
+        referenceId: purchase.id,
+        referenceItemId: purchaseItem.id,
+        actorUserId: input.adminUserId,
+        reason: "Stock operativo inicial del entorno de desarrollo."
+      }
+    });
+    await tx.auditLog.createMany({
+      data: [
+        {
+          action: "PURCHASE_RECEIVED",
+          actorUserId: input.adminUserId,
+          entityType: "Purchase",
+          entityId: purchase.id,
+          metadata: {
+            source: "development_seed",
+            totalAmount: 200
           }
         },
-        update: {},
-        create: {
-          roleId,
-          permissionId
+        {
+          action: "DEVELOPMENT_SEED_COMPLETED",
+          actorUserId: input.superadminUserId,
+          entityType: "User",
+          entityId: input.sellerUserId,
+          metadata: {
+            productCode: product.internalCode,
+            sellerReady: true
+          }
         }
-      })
-    )
-  );
-}
-
-function toDisplayName(value: string) {
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+      ]
+    });
+  });
 }
 
 main().catch((error) => {

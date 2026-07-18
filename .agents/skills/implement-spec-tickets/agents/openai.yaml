@@ -1,4 +1,4 @@
 interface:
   display_name: "Implement Spec Tickets"
-  short_description: "Run every spec ticket in a new Codex task"
+  short_description: "Run spec tickets sequentially with orchestrator-owned QA"
   default_prompt: "Use $implement-spec-tickets with this spec reference to launch its sequential implementation in a new Codex task."

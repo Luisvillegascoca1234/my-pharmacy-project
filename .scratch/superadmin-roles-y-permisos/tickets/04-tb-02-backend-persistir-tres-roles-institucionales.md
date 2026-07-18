@@ -1,6 +1,6 @@
 # 04 — [BACKEND] TB-02 — Persistir unicamente los tres roles institucionales
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** BACKEND
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-02 — La identidad autenticada depende unicamente del rol fijo
@@ -24,3 +24,5 @@ La persistencia, autenticacion y administracion de usuarios reconocen unicamente
 
 ## Comments
 
+- Restringida la persistencia a los tres roles institucionales mediante enum, migracion progresiva y seed idempotente; autenticacion y usuarios dejaron de consultar o exponer permisos dinamicos.
+- Validaciones reportadas: Prisma valido y cliente generado; typechecks/build aprobados; pruebas focalizadas TB-01/TB-02 17/17; `git diff --check` aprobado. La suite backend global conserva tres fallas temporales ajenas en carritos pendientes.

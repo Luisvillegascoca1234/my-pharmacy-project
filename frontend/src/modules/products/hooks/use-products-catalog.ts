@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { CreateProduct, UpdateProductUnits } from "@pharmacy-pos/shared";
+import { isFeatureAllowed, type CreateProduct, type UpdateProductUnits } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectProductsCatalogActions, selectProductsCatalogState } from "../store/ProductsCatalogSelectors";
@@ -12,18 +12,19 @@ export function useProductsCatalog() {
   const { loadCatalog: loadCatalogFromStore, reset, saveProduct: saveProductToStore, saveProductUnits: saveProductUnitsToStore, setSearch } =
     useProductsCatalogStore(useShallow(selectProductsCatalogActions));
 
-  const canManage = user?.role.name === "superadmin" || user?.role.name === "admin";
+  const canRead = isFeatureAllowed(user?.role.name, "products");
+  const canManage = isFeatureAllowed(user?.role.name, "productManagement");
 
   const loadCatalog = useCallback(
     async (signal?: AbortSignal) => {
-      if (!token) {
+      if (!token || !canRead) {
         reset();
         return;
       }
 
       await loadCatalogFromStore(search, canManage, signal);
     },
-    [canManage, loadCatalogFromStore, reset, search, token]
+    [canManage, canRead, loadCatalogFromStore, reset, search, token]
   );
 
   useEffect(() => {
@@ -36,24 +37,24 @@ export function useProductsCatalog() {
 
   const saveProduct = useCallback(
     async (input: CreateProduct, productId?: string) => {
-      if (!token) {
+      if (!token || !canManage) {
         return;
       }
 
       await saveProductToStore(input, productId);
     },
-    [saveProductToStore, token]
+    [canManage, saveProductToStore, token]
   );
 
   const saveProductUnits = useCallback(
     async (productId: string, input: UpdateProductUnits) => {
-      if (!token) {
+      if (!token || !canManage) {
         return;
       }
 
       await saveProductUnitsToStore(productId, input);
     },
-    [saveProductUnitsToStore, token]
+    [canManage, saveProductUnitsToStore, token]
   );
 
   return useMemo(

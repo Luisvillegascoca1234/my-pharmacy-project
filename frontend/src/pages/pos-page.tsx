@@ -49,6 +49,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useCashSession } from "@/modules/cash";
+import { OperationalScopeNotice } from "@/components/operational-scope-notice";
 import {
   type PendingCart,
   type PendingCartDataError,
@@ -81,7 +82,7 @@ const errorMessages: Record<PosDataErrorCode, string> = {
 
 const pendingErrorMessages: Record<PendingCartDataErrorCode, string> = {
   "cash-session-closed": "Abre una caja propia para cobrar este pendiente.",
-  forbidden: "No tienes permiso para operar este pendiente.",
+  forbidden: "Este pendiente pertenece a otro usuario y no está disponible en tu alcance propio.",
   "pending-expired": "Este pendiente expiró y no puede cobrarse.",
   "price-changed": "El precio cambió. Revisa el total vigente antes de cobrar.",
   "product-not-saleable": "Un producto del pendiente ya no está disponible para venta.",
@@ -208,7 +209,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
     setPendingFeedback(null);
 
     if (isSearchLocked) {
-      setLocalError("La búsqueda requiere permiso de venta de mostrador.");
+      setLocalError("El rol de tu usuario no incluye la venta de mostrador.");
       return;
     }
 
@@ -413,11 +414,19 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
         </div>
       </div>
 
+      {focus === "pending" ? (
+        <OperationalScopeNotice
+          canSupervise={pending.canSupervise}
+          ownRecordsDescription="El servidor limita esta bandeja a tus pendientes de mostrador; solo puedes retomarlos, cobrarlos o descartarlos según su estado efectivo."
+          supervisionDescription="En esta bandeja operas pendientes propios. Los pendientes de otros vendedores se consultan desde Supervisión POS."
+        />
+      ) : null}
+
       {!pos.canSell ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>Permiso insuficiente</AlertTitle>
-          <AlertDescription>Tu usuario no tiene permisos para operar ventas de mostrador.</AlertDescription>
+          <AlertTitle>Área no disponible</AlertTitle>
+          <AlertDescription>El rol de tu usuario no incluye la operación de ventas de mostrador.</AlertDescription>
         </Alert>
       ) : null}
 

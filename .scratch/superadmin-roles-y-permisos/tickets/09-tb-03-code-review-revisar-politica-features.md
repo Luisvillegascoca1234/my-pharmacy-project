@@ -1,6 +1,6 @@
 # 09 — [CODE REVIEW] TB-03 — Revisar y corregir la politica de features
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** CODE REVIEW
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-03 — Cada feature aplica la misma politica explicita de roles
@@ -23,3 +23,5 @@ La politica de acceso queda revisada y corregida de extremo a extremo. Backend y
 
 ## Comments
 
+- Revisada y corregida la politica de features de extremo a extremo: middleware, rutas, navegacion, accesos directos y hooks consumen el manifiesto compartido, sin listas de roles ni fallbacks permisivos duplicados.
+- Validaciones reportadas: typechecks shared/backend/frontend aprobados; backend relevante 40/40; frontend relevante 76/76; accesos directos 23/23; suite frontend 112/112; `git diff --check` aprobado. Sin QA visual.

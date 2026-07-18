@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import type { CloseSupervisedCashSession } from "../types/cashSupervisionTypes";
@@ -9,17 +10,13 @@ type UseCashSupervisionOptions = {
   autoLoadList?: boolean;
 };
 
-function canSuperviseCash(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
-
 export function useCashSupervision(options: UseCashSupervisionOptions = {}) {
   const { autoLoadList = true } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const cashSupervisionState = useCashSupervisionStore(useShallow(selectCashSupervisionState));
   const cashSupervisionActions = useCashSupervisionStore(useShallow(selectCashSupervisionActions));
-  const canSupervise = canSuperviseCash(user?.role.name);
+  const canSupervise = isFeatureAllowed(user?.role.name, "supervision");
 
   const loadCashSessions = useCallback(
     async (signal?: AbortSignal) => {

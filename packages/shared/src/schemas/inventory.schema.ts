@@ -43,7 +43,7 @@ export const InventoryBatchSchema = z.object({
   supplierName: z.string().optional(),
   originalQuantity: z.number().min(0),
   availableQuantity: z.number().min(0),
-  baseUnitCost: z.number().min(0),
+  baseUnitCost: z.number().min(0).optional(),
   batchNumber: z.string().optional(),
   expirationDate: pureDate.optional(),
   status: InventoryBatchStatusSchema,
@@ -63,8 +63,8 @@ export const InventoryStockItemSchema = z.object({
   expirationDate: pureDate.optional(),
   totalOriginalQuantity: z.number().min(0),
   totalAvailableQuantity: z.number().min(0),
-  totalValue: z.number().min(0),
-  averageUnitCost: z.number().min(0),
+  totalValue: z.number().min(0).optional(),
+  averageUnitCost: z.number().min(0).optional(),
   layerCount: z.number().int().min(0),
   status: InventoryStockStatusSchema,
   oldestLayerCreatedAt: z.string()
@@ -149,7 +149,7 @@ export const FefoAllocationSchema = z.object({
   expirationDate: pureDate.optional(),
   availableQuantity: z.number().min(0),
   allocatedQuantity: z.number().min(0),
-  unitCostBase: z.number().min(0)
+  unitCostBase: z.number().min(0).optional()
 });
 
 export type FefoAllocation = z.infer<typeof FefoAllocationSchema>;

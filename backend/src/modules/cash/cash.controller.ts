@@ -14,7 +14,7 @@ const cashSessionsService = new CashSessionsService();
 export async function listCashSessions(request: Request, response: Response, next: NextFunction) {
   try {
     const query = CashSessionsQuerySchema.parse(request.query);
-    const result = await cashSessionsService.listCashSessions(query, getCashSessionContext(request));
+    const result = await cashSessionsService.listCashSessions(query, getAuditContext(request));
 
     response.json(CashSessionsListResponseSchema.parse(result));
   } catch (error) {
@@ -59,12 +59,5 @@ function getAuditContext(request: Request) {
     actorUserId: request.authenticatedUser?.id,
     ipAddress: request.ip,
     userAgent: request.get("user-agent")
-  };
-}
-
-function getCashSessionContext(request: Request) {
-  return {
-    ...getAuditContext(request),
-    actorRoleName: request.authenticatedUser?.role.name
   };
 }

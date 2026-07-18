@@ -3,8 +3,8 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { createUnit, listUnits } from "./units.controller.js";
 
-const canReadCatalogs = requireRole(["superadmin", "admin", "seller"]);
-const canManageCatalogs = requireRole(["superadmin", "admin"]);
+const canReadCatalogs = requireRole("units");
+const canManageCatalogs = requireRole("unitManagement");
 
 export const unitsRoutes = Router();
 

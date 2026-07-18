@@ -65,7 +65,7 @@ export const CurrentCashSessionSchema = z.object({
 export type CurrentCashSession = z.infer<typeof CurrentCashSessionSchema>;
 
 export const SupervisableCashSessionSchema = CashSessionSchema.extend({
-  canClose: z.boolean().optional()
+  canClose: z.boolean()
 });
 
 export type SupervisableCashSession = z.infer<typeof SupervisableCashSessionSchema>;

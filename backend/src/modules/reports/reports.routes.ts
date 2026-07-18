@@ -7,7 +7,7 @@ import {
   getInventoryValuationReport
 } from "./reports.controller.js";
 
-export const canReadReports = requireRole(["superadmin", "admin"]);
+export const canReadReports = requireRole("reports");
 
 export const reportsRoutes = Router();
 

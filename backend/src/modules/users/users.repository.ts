@@ -1,21 +1,19 @@
-import type { Prisma, UserStatus } from "@prisma/client";
+import { Prisma, type UserStatus } from "@prisma/client";
 import { prisma } from "../../infrastructure/prisma/prisma.client.js";
-import type { AuditContext, UserWithRolePermissions } from "./users.types.js";
+import type {
+  AuditContext,
+  CreateUserRecord,
+  UpdateUserRecord,
+  UsersRepositoryPort,
+  UserWithRole
+} from "./users.types.js";
 
-const userInclude = {
-  role: {
-    include: {
-      permissions: {
-        include: {
-          permission: true
-        }
-      }
-    }
-  }
-} satisfies Prisma.UserInclude;
+const userInclude = Prisma.validator<Prisma.UserInclude>()({
+  role: true
+});
 
-export class UsersRepository {
-  listUsers(filters: { search?: string; roleId?: string; status?: UserStatus }): Promise<UserWithRolePermissions[]> {
+export class UsersRepository implements UsersRepositoryPort {
+  listUsers(filters: { search?: string; roleId?: string; status?: UserStatus }): Promise<UserWithRole[]> {
     const normalizedSearch = filters.search?.trim();
 
     return prisma.user.findMany({
@@ -26,8 +24,7 @@ export class UsersRepository {
           ? [
               { email: { contains: normalizedSearch, mode: "insensitive" } },
               { fullName: { contains: normalizedSearch, mode: "insensitive" } },
-              { role: { is: { displayName: { contains: normalizedSearch, mode: "insensitive" } } } },
-              { role: { is: { name: { contains: normalizedSearch, mode: "insensitive" } } } }
+              { role: { is: { displayName: { contains: normalizedSearch, mode: "insensitive" } } } }
             ]
           : undefined
       },
@@ -38,7 +35,7 @@ export class UsersRepository {
     });
   }
 
-  findUserById(id: string): Promise<UserWithRolePermissions | null> {
+  findUserById(id: string): Promise<UserWithRole | null> {
     return prisma.user.findUnique({
       where: { id },
       include: userInclude
@@ -63,12 +60,6 @@ export class UsersRepository {
     });
   }
 
-  findRoleByName(name: string) {
-    return prisma.role.findUnique({
-      where: { name }
-    });
-  }
-
   countActiveSuperadmins(exceptUserId?: string) {
     return prisma.user.count({
       where: {
@@ -83,14 +74,14 @@ export class UsersRepository {
     });
   }
 
-  createUser(input: Prisma.UserUncheckedCreateInput): Promise<UserWithRolePermissions> {
+  createUser(input: CreateUserRecord): Promise<UserWithRole> {
     return prisma.user.create({
       data: input,
       include: userInclude
     });
   }
 
-  updateUser(id: string, input: Prisma.UserUncheckedUpdateInput): Promise<UserWithRolePermissions> {
+  updateUser(id: string, input: UpdateUserRecord): Promise<UserWithRole> {
     return prisma.user.update({
       where: { id },
       data: input,
@@ -98,7 +89,7 @@ export class UsersRepository {
     });
   }
 
-  updateUserStatus(id: string, status: UserStatus): Promise<UserWithRolePermissions> {
+  updateUserStatus(id: string, status: UserStatus): Promise<UserWithRole> {
     return prisma.user.update({
       where: { id },
       data: { status },

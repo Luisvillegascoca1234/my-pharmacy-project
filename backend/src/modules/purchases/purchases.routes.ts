@@ -10,7 +10,7 @@ import {
   updatePurchase
 } from "./purchases.controller.js";
 
-const canManagePurchases = requireRole(["superadmin", "admin"]);
+const canManagePurchases = requireRole("purchases");
 
 export const purchasesRoutes = Router();
 

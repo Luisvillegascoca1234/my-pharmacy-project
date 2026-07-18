@@ -18,6 +18,7 @@ import { ProductsPage } from "@/pages/products-page";
 import { PurchaseFormPage } from "@/pages/purchase-form-page";
 import { PurchasesPage } from "@/pages/purchases-page";
 import { ReportsPage } from "@/pages/reports-page";
+import { RolesPage } from "@/pages/roles-page";
 import { ReturnsPage } from "@/pages/returns-page";
 import { SalesCancellationPage } from "@/pages/sales-cancellation-page";
 import { SupplierFormPage } from "@/pages/supplier-form-page";
@@ -55,8 +56,9 @@ const routePages: Partial<Record<AppRouteKey, ComponentType>> = {
   products: ProductsPage,
   purchases: PurchasesPage,
   reports: ReportsPage,
+  roles: RolesPage,
   returns: ReturnsPage,
-  salesCancellations: SalesCancellationPage,
+  sales: SalesCancellationPage,
   supervision: AdministrativeSupervisionPage,
   suppliers: SuppliersPage,
   units: UnitsPage,
@@ -83,16 +85,36 @@ export function AppRoutes({ user }: AppRoutesProps) {
           <Route element={<SupplierFormPage mode="create" />} path="/suppliers/new" />
           <Route element={<SupplierFormPage mode="detail" />} path="/suppliers/:id" />
         </>
-      ) : null}
+      ) : (
+        <>
+          <Route element={<RouteAccessDeniedPage item={getNavigationItem("suppliers")} />} path="/suppliers/new" />
+          <Route element={<RouteAccessDeniedPage item={getNavigationItem("suppliers")} />} path="/suppliers/:id" />
+        </>
+      )}
       {canAccessPurchases ? (
         <>
           <Route element={<PurchaseFormPage mode="create" />} path="/purchases/new" />
           <Route element={<PurchaseFormPage mode="detail" />} path="/purchases/:id" />
         </>
-      ) : null}
+      ) : (
+        <>
+          <Route element={<RouteAccessDeniedPage item={getNavigationItem("purchases")} />} path="/purchases/new" />
+          <Route element={<RouteAccessDeniedPage item={getNavigationItem("purchases")} />} path="/purchases/:id" />
+        </>
+      )}
       <Route element={<Navigate replace to={allowedItems[0]?.path ?? "/dashboard"} />} path="*" />
     </Routes>
   );
+}
+
+function getNavigationItem(key: AppRouteKey): AppNavigationItem {
+  const item = navigationItems.find((candidate) => candidate.key === key);
+
+  if (!item) {
+    throw new Error(`Missing navigation metadata for declared feature: ${key}`);
+  }
+
+  return item;
 }
 
 function buildNavigationRouteElement(item: AppNavigationItem) {
@@ -105,7 +127,7 @@ function buildNavigationRouteElement(item: AppNavigationItem) {
   return Page ? <Page /> : <ModulePage description={item.description} icon={item.icon} title={item.label} />;
 }
 
-function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
+export function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
   const navigate = useNavigate();
 
   return (

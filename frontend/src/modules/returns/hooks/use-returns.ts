@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectReturnsActions, selectReturnsState } from "../store/ReturnsSelectors";
@@ -10,17 +11,13 @@ type UseReturnsOptions = {
   autoLoadSaleReturns?: boolean;
 };
 
-function canUseAdministrativeReturns(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
-
 export function useReturns(options: UseReturnsOptions = {}) {
   const { autoLoadReturnableSales = false, autoLoadSaleReturns = true } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const returnsState = useReturnsStore(useShallow(selectReturnsState));
   const returnsActions = useReturnsStore(useShallow(selectReturnsActions));
-  const canUseReturns = canUseAdministrativeReturns(user?.role.name);
+  const canUseReturns = isFeatureAllowed(user?.role.name, "returns");
 
   const loadReturnableSales = useCallback(
     async (signal?: AbortSignal) => {

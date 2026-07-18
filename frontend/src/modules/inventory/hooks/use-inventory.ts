@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type {
-  CreateInventoryAdjustment,
-  FefoPreview,
-  InventoryAdjustment,
-  InventoryBatch,
-  InventoryMovement,
-  InventoryMovementType,
-  InventoryStockItem,
-  InventoryStockStatus,
-  PaginationMeta
+import {
+  isFeatureAllowed,
+  type CreateInventoryAdjustment,
+  type FefoPreview,
+  type InventoryAdjustment,
+  type InventoryBatch,
+  type InventoryMovement,
+  type InventoryMovementType,
+  type InventoryStockItem,
+  type InventoryStockStatus,
+  type PaginationMeta
 } from "@pharmacy-pos/shared";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { inventoryFacade } from "../facades/inventoryFacade";
@@ -35,7 +36,7 @@ function getErrorMessage(error: unknown) {
 export function useInventoryStock() {
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
-  const canRead = Boolean(token && user);
+  const canRead = Boolean(token && isFeatureAllowed(user?.role.name, "batches"));
   const [items, setItems] = useState<InventoryStockItem[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>(initialPagination);
   const [search, setSearchValue] = useState("");
@@ -124,7 +125,7 @@ export function useInventoryStock() {
 export function useInventoryMovements() {
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
-  const canRead = Boolean(token && user);
+  const canRead = Boolean(token && isFeatureAllowed(user?.role.name, "movements"));
   const [items, setItems] = useState<InventoryMovement[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>(initialPagination);
   const [search, setSearchValue] = useState("");
@@ -200,13 +201,15 @@ export function useInventoryMovements() {
 
 export function useInventoryBatches(productId: string | null) {
   const token = useAuthStore(selectAuthToken);
+  const user = useAuthStore(selectAuthUser);
+  const canRead = Boolean(token && isFeatureAllowed(user?.role.name, "batches"));
   const [items, setItems] = useState<InventoryBatch[]>([]);
   const [status, setStatus] = useState<RequestStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
   const loadBatches = useCallback(
     async (signal?: AbortSignal) => {
-      if (!token || !productId) {
+      if (!canRead || !productId) {
         setItems([]);
         setStatus("idle");
         return;
@@ -229,7 +232,7 @@ export function useInventoryBatches(productId: string | null) {
         setStatus("error");
       }
     },
-    [productId, token]
+    [canRead, productId]
   );
 
   useEffect(() => {
@@ -246,7 +249,7 @@ export function useInventoryBatches(productId: string | null) {
 export function useInventoryAdjustment() {
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
-  const canAdjust = user?.role.name === "superadmin" || user?.role.name === "admin";
+  const canAdjust = isFeatureAllowed(user?.role.name, "adjustments");
   const [status, setStatus] = useState<RequestStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [adjustment, setAdjustment] = useState<InventoryAdjustment | null>(null);
@@ -282,12 +285,14 @@ export function useInventoryAdjustment() {
 
 export function useFefoPreview(productId: string | null, quantity?: number) {
   const token = useAuthStore(selectAuthToken);
+  const user = useAuthStore(selectAuthUser);
+  const canRead = Boolean(token && isFeatureAllowed(user?.role.name, "batches"));
   const [data, setData] = useState<FefoPreview | null>(null);
   const [status, setStatus] = useState<RequestStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token || !productId) {
+    if (!canRead || !productId) {
       setData(null);
       setStatus("idle");
       return;
@@ -318,7 +323,7 @@ export function useFefoPreview(productId: string | null, quantity?: number) {
     void loadPreview();
 
     return () => controller.abort();
-  }, [productId, quantity, token]);
+  }, [canRead, productId, quantity]);
 
   return useMemo(() => ({ data, error, status }), [data, error, status]);
 }

@@ -11,8 +11,8 @@ import {
   updateProductUnits
 } from "./products.controller.js";
 
-const canReadCatalogs = requireRole(["superadmin", "admin", "seller"]);
-const canManageCatalogs = requireRole(["superadmin", "admin"]);
+const canReadCatalogs = requireRole("products");
+const canManageCatalogs = requireRole("productManagement");
 
 export const productCategoriesRoutes = Router();
 export const productsRoutes = Router();

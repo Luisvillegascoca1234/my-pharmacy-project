@@ -58,6 +58,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { OperationalScopeNotice } from "@/components/operational-scope-notice";
+import { getSaleCancellationBlockMessage, isSaleCancellationAllowed } from "./sales-cancellation-policy";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
@@ -73,7 +75,7 @@ const cashErrorMessages: Record<CashSupervisionDataErrorCode, string> = {
   "already-closed": "La caja ya fue cerrada. Actualiza la supervisión antes de continuar.",
   "amount-invalid": "El monto contado final debe ser mayor o igual a cero y tener hasta dos decimales.",
   "cash-session-closed": "La caja ya no está abierta para cierre administrativo.",
-  forbidden: "No tienes permiso para supervisar o cerrar esta caja.",
+  forbidden: "Esta caja no está disponible para supervisión o cierre con el alcance actual.",
   "not-found": "No se encontró la caja solicitada.",
   "session-invalid": "Tu sesión no permite supervisar caja. Vuelve a iniciar sesión.",
   unknown: "No se pudo completar la supervisión de caja. Intenta nuevamente."
@@ -88,7 +90,7 @@ const saleStatusLabels: Record<SalesStatusFilter, string> = {
 
 const saleErrorMessages: Record<SalesDataErrorCode, string> = {
   "cash-session-closed": "La caja asociada ya fue cerrada.",
-  forbidden: "No tienes permiso para consultar esta venta.",
+  forbidden: "Esta venta no está disponible dentro del alcance de supervisión actual.",
   "not-current-day": "La venta ya no corresponde al turno permitido.",
   "not-found": "No se encontró la venta solicitada.",
   "sale-already-cancelled": "La venta ya fue anulada.",
@@ -108,7 +110,7 @@ const pendingStatusLabels: Record<PendingCartStatusFilter, string> = {
 
 const pendingErrorMessages: Record<PendingCartDataErrorCode, string> = {
   "cash-session-closed": "La caja activa no permite completar esta operación.",
-  forbidden: "No tienes permiso para supervisar pendientes.",
+  forbidden: "Este pendiente no está disponible dentro del alcance de supervisión actual.",
   "not-found": "No se encontró el pendiente solicitado.",
   "pending-expired": "El pendiente ya venció.",
   "price-changed": "El pendiente tiene cambios de precio pendientes de revisión.",
@@ -328,11 +330,17 @@ export function AdministrativeSupervisionPage() {
         </div>
       </div>
 
+      <OperationalScopeNotice
+        canSupervise={canUseAdministrativeViews}
+        ownRecordsDescription="Esta superficie no está disponible para alcance propio."
+        supervisionDescription="Puedes consultar caja, ventas y pendientes de otros vendedores; cada intervención depende de la evaluación efectiva del servidor."
+      />
+
       {!canUseAdministrativeViews ? (
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Acceso denegado</AlertTitle>
-          <AlertDescription>Tu usuario no tiene permisos para supervisión administrativa de caja, ventas y pendientes.</AlertDescription>
+          <AlertDescription>El rol de tu usuario no incluye supervisión administrativa de caja, ventas y pendientes.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -895,7 +903,7 @@ function CashClosePanel({
     );
   }
 
-  const canClose = selectedCashSession.status === "open" && selectedCashSession.canClose !== false;
+  const canClose = selectedCashSession.canClose === true;
 
   return (
     <Card>
@@ -1069,7 +1077,14 @@ function SaleSupervisionDetailPanel({ isLoading, onOpenCancellationFlow, sale }:
           ))}
           {sale.items.length > 4 ? <p className="text-xs text-muted-foreground">+{sale.items.length - 4} ítems adicionales.</p> : null}
         </div>
-        <Button disabled={!sale.canCancel || sale.status === "cancelled"} type="button" onClick={() => onOpenCancellationFlow(sale.id)}>
+        {!isSaleCancellationAllowed(sale) ? (
+          <Alert>
+            <AlertCircle aria-hidden="true" />
+            <AlertTitle>Anulación bloqueada</AlertTitle>
+            <AlertDescription>{getSaleCancellationBlockMessage(sale)}</AlertDescription>
+          </Alert>
+        ) : null}
+        <Button disabled={!isSaleCancellationAllowed(sale)} type="button" onClick={() => onOpenCancellationFlow(sale.id)}>
           <Ban aria-hidden="true" />
           Abrir anulación
         </Button>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectSalesActions, selectSalesState } from "../store/SalesSelectors";
@@ -8,22 +9,14 @@ type UseSalesOptions = {
   autoLoadList?: boolean;
 };
 
-function canUseSales(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin" || roleName === "seller";
-}
-
-function canSuperviseSales(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
-
 export function useSales(options: UseSalesOptions = {}) {
   const { autoLoadList = true } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const salesState = useSalesStore(useShallow(selectSalesState));
   const salesActions = useSalesStore(useShallow(selectSalesActions));
-  const canUse = canUseSales(user?.role.name);
-  const canSupervise = canSuperviseSales(user?.role.name);
+  const canUse = isFeatureAllowed(user?.role.name, "sales");
+  const canSupervise = isFeatureAllowed(user?.role.name, "supervision");
 
   const loadSales = useCallback(
     async (signal?: AbortSignal) => {

@@ -177,7 +177,7 @@ export const CancelablePaymentSchema = PaymentSchema.omit({ status: true }).exte
 export type CancelablePayment = z.infer<typeof CancelablePaymentSchema>;
 
 export const CancelableSaleSchema = SaleSchema.omit({ payment: true, status: true }).extend({
-  canCancel: z.boolean().optional(),
+  canCancel: z.boolean(),
   cancellationBlockedReason: SaleCancellationBlockReasonSchema.optional(),
   cancelReason: z.string().optional(),
   cancelledAt: z.string().optional(),

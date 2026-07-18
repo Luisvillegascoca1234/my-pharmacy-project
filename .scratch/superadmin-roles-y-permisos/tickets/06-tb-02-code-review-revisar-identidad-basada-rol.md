@@ -1,6 +1,6 @@
 # 06 — [CODE REVIEW] TB-02 — Revisar y corregir la identidad basada en rol
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** CODE REVIEW
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-02 — La identidad autenticada depende unicamente del rol fijo
@@ -23,3 +23,5 @@ La eliminacion del modelo dinamico queda revisada de extremo a extremo. Persiste
 
 ## Comments
 
+- Revisado y corregido TB-02 de extremo a extremo: rechazo explicito de contratos heredados con permisos, eliminacion de fallbacks y duplicacion, acciones de usuarios tipadas y persistencia encapsulada sin filtrar Prisma.
+- Validaciones reportadas: Prisma generado y valido; typecheck completo aprobado; backend focalizado 10/10; frontend focalizado 8/8 y completo 83/83; escaneo y `git diff --check` sin hallazgos. La suite backend conserva tres fallas temporales ajenas en `pending-carts`.

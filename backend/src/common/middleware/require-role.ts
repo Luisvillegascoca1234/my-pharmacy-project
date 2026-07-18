@@ -1,13 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
-import type { BaseRole } from "@pharmacy-pos/shared";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { HttpError } from "../http/http-error.js";
 
-export function requireRole(allowedRoles: BaseRole[]) {
+export function requireRole(feature: string) {
   return (request: Request, _response: Response, next: NextFunction) => {
     const roleName = request.authenticatedUser?.role.name;
 
-    if (!roleName || !allowedRoles.includes(roleName as BaseRole)) {
-      next(new HttpError(403, "You do not have permission to perform this action.", "FORBIDDEN"));
+    if (!isFeatureAllowed(roleName, feature)) {
+      next(new HttpError(403, "No tienes autorización para realizar esta acción.", "FORBIDDEN"));
       return;
     }
 

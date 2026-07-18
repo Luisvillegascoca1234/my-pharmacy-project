@@ -3,7 +3,7 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { createSupplier, getSupplier, listSuppliers, updateSupplier } from "./suppliers.controller.js";
 
-const canManageSuppliers = requireRole(["superadmin", "admin"]);
+const canManageSuppliers = requireRole("suppliers");
 
 export const suppliersRoutes = Router();
 

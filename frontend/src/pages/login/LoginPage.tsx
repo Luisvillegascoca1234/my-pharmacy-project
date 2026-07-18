@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { selectAuthError, selectAuthStatus, selectAuthUser, useAuthStore } from "@/modules/auth";
+import { selectAuthErrorCode, selectAuthStatus, selectAuthUser, useAuthStore } from "@/modules/auth";
+import { getAuthErrorMessage } from "./auth-error-messages";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
   const status = useAuthStore(selectAuthStatus);
   const user = useAuthStore(selectAuthUser);
-  const authError = useAuthStore(selectAuthError);
+  const authErrorCode = useAuthStore(selectAuthErrorCode);
+  const authError = getAuthErrorMessage(authErrorCode);
   const [email, setEmail] = useState("admin@admin.com");
   const [password, setPassword] = useState("admin");
   const [validationError, setValidationError] = useState<string | null>(null);

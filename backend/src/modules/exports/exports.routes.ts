@@ -6,7 +6,7 @@ import {
   downloadSalesCsv
 } from "./exports.controller.js";
 
-export const canDownloadExports = requireRole(["superadmin", "admin"]);
+export const canDownloadExports = requireRole("exports");
 
 export const exportsRoutes = Router();
 

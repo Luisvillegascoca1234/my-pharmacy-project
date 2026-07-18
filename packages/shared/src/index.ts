@@ -1,5 +1,26 @@
 export { BASE_ROLES } from "./constants/roles.js";
 export type { BaseRole } from "./constants/roles.js";
+export { FEATURE_ACCESS_POLICY, getAllowedRoles, isFeatureAllowed } from "./constants/feature-access-policy.js";
+export type { FeatureKey } from "./constants/feature-access-policy.js";
+export { FIXED_ROLE_CATALOG } from "./constants/role-catalog.js";
+export {
+  ROLE_FACULTY_AREAS,
+  ROLE_SCOPE_LEVELS,
+  RoleCatalogEntrySchema,
+  RoleFacultyAreaSchema,
+  RoleFacultySchema,
+  RoleNameSchema,
+  RolesCatalogResponseSchema,
+  RoleScopeLevelSchema
+} from "./schemas/role-catalog.schema.js";
+export type {
+  RoleCatalogEntry,
+  RoleFaculty,
+  RoleFacultyArea,
+  RoleName,
+  RolesCatalogResponse,
+  RoleScopeLevel
+} from "./schemas/role-catalog.schema.js";
 export { ApiErrorSchema } from "./schemas/api-error.schema.js";
 export type { ApiError } from "./schemas/api-error.schema.js";
 export { AlertSchema, AlertsListResponseSchema, AlertSeveritySchema, AlertTypeSchema } from "./schemas/alert.schema.js";

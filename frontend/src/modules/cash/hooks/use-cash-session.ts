@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { CloseCashSession, OpenCashSession } from "@pharmacy-pos/shared";
+import { isFeatureAllowed, type CloseCashSession, type OpenCashSession } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectCashActions, selectCashState } from "../store/CashSelectors";
@@ -9,17 +9,14 @@ type UseCashSessionOptions = {
   autoLoadCurrent?: boolean;
 };
 
-function canUseCashSession(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin" || roleName === "seller";
-}
-
 export function useCashSession(options: UseCashSessionOptions = {}) {
   const { autoLoadCurrent = true } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const cashState = useCashStore(useShallow(selectCashState));
   const cashActions = useCashStore(useShallow(selectCashActions));
-  const canUseCash = canUseCashSession(user?.role.name);
+  const canUseCash = isFeatureAllowed(user?.role.name, "cash");
+  const canSupervise = isFeatureAllowed(user?.role.name, "supervision");
 
   const loadCurrentCashSession = useCallback(
     async (signal?: AbortSignal) => {
@@ -72,12 +69,13 @@ export function useCashSession(options: UseCashSessionOptions = {}) {
   return useMemo(
     () => ({
       ...cashState,
+      canSupervise,
       canUseCash,
       closeOwnCashSession,
       loadCurrentCashSession,
       openCashSession,
       reset: cashActions.reset
     }),
-    [canUseCash, cashActions.reset, cashState, closeOwnCashSession, loadCurrentCashSession, openCashSession]
+    [canSupervise, canUseCash, cashActions.reset, cashState, closeOwnCashSession, loadCurrentCashSession, openCashSession]
   );
 }

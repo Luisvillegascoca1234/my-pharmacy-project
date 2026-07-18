@@ -9,7 +9,7 @@ import {
   updatePendingCart
 } from "./pending-carts.controller.js";
 
-const canUsePendingCarts = requireRole(["superadmin", "admin", "seller"]);
+const canUsePendingCarts = requireRole("pendingCarts");
 
 export const pendingCartsRoutes = Router();
 

@@ -50,7 +50,6 @@ function setAuthRole(roleName: "admin" | "seller" | "superadmin") {
       email: `${roleName}@example.com`,
       fullName: `${roleName} user`,
       id: `${roleName}-user`,
-      permissions: [],
       role: {
         displayName: roleName,
         id: `${roleName}-role`,
@@ -198,7 +197,7 @@ describe("exports store and selectors", () => {
   });
 });
 
-describe("exports expected errors and permissions", () => {
+describe("exports expected errors and role access", () => {
   beforeEach(() => {
     resetExportsStore();
     useAuthStore.getState().reset();

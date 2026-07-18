@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectAuditActions, selectAuditState } from "../store/AuditSelectors";
@@ -8,17 +9,13 @@ type UseAuditOptions = {
   autoLoad?: boolean;
 };
 
-function canUseAudit(roleName?: string): boolean {
-  return roleName === "superadmin";
-}
-
 export function useAudit(options: UseAuditOptions = {}) {
   const { autoLoad = true } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const auditState = useAuditStore(useShallow(selectAuditState));
   const auditActions = useAuditStore(useShallow(selectAuditActions));
-  const canReadAudit = canUseAudit(user?.role.name);
+  const canReadAudit = isFeatureAllowed(user?.role.name, "audit");
 
   const loadAuditLogs = useCallback(
     async (signal?: AbortSignal) => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { CreateSupplier, UpdateSupplier } from "@pharmacy-pos/shared";
+import { isFeatureAllowed, type CreateSupplier, type UpdateSupplier } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectSuppliersActions, selectSuppliersState } from "../store/SuppliersSelectors";
@@ -15,7 +15,7 @@ export function useSuppliers(options: UseSuppliersOptions = {}) {
   const user = useAuthStore(selectAuthUser);
   const supplierState = useSuppliersStore(useShallow(selectSuppliersState));
   const supplierActions = useSuppliersStore(useShallow(selectSuppliersActions));
-  const canManage = user?.role.name === "superadmin" || user?.role.name === "admin";
+  const canManage = isFeatureAllowed(user?.role.name, "suppliers");
 
   const loadSuppliers = useCallback(
     async (signal?: AbortSignal) => {

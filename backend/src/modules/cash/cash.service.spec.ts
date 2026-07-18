@@ -153,7 +153,7 @@ describe("CashSessionsService", () => {
 
     const result = await service.listCashSessions(
       { page: 1, pageSize: 20, openedByUserId: "seller-2" },
-      { ...auditContext, actorRoleName: "seller" }
+      auditContext
     );
 
     expect(cashSessionsRepository.listCashSessionsCalls).toEqual([
@@ -170,7 +170,7 @@ describe("CashSessionsService", () => {
     );
   });
 
-  it.each(["admin", "superadmin"])("lists supervisable cash sessions for %s users", async (roleName) => {
+  it.each(["admin", "superadmin"] as const)("lists supervisable cash sessions for %s users", async (roleName) => {
     const cashSessionsRepository = new FakeCashSessionsRepository();
     cashSessionsRepository.seedUsers([
       makeActor({ id: "admin-1", role: { name: roleName } }),
@@ -181,7 +181,7 @@ describe("CashSessionsService", () => {
 
     const result = await service.listCashSessions(
       { page: 1, pageSize: 20, openedByUserId: "seller-1", status: "open" },
-      { ...auditContext, actorUserId: "admin-1", actorRoleName: roleName }
+      { ...auditContext, actorUserId: "admin-1" }
     );
 
     expect(cashSessionsRepository.listCashSessionsCalls).toEqual([
@@ -336,7 +336,7 @@ describe("CashSessionsService", () => {
     expect(cashSessionsRepository.auditLogs).toHaveLength(0);
   });
 
-  it.each(["admin", "superadmin"])("allows %s users to close another user's cash session", async (roleName) => {
+  it.each(["admin", "superadmin"] as const)("allows %s users to close another user's cash session", async (roleName) => {
     const cashSessionsRepository = new FakeCashSessionsRepository();
     cashSessionsRepository.seedUsers([
       makeActor({ id: "admin-1", role: { name: roleName } }),

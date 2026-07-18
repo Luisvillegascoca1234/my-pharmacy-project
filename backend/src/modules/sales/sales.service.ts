@@ -33,6 +33,7 @@ import type {
 const ZERO_DECIMAL = new Prisma.Decimal(0);
 const SALE_CORRELATIVE_PREFIX = "V";
 const SALE_CORRELATIVE_DIGITS = 6;
+const BOLIVIA_UTC_OFFSET_HOURS = 4;
 const ADMIN_ROLE_NAMES = new Set(["admin", "superadmin"]);
 
 type MutableSaleFefoBatch = SaleFefoBatchRecord & {
@@ -603,7 +604,7 @@ export class SalesService {
       });
     }
 
-    if (!isSameUtcDate(sale.confirmedAt, new Date())) {
+    if (!isSameBoliviaDate(sale.confirmedAt, new Date())) {
       throw new HttpError(403, "Seller users can only cancel current-day sales.", "SALE_CANCEL_NOT_CURRENT_DAY", {
         saleId: sale.id,
         confirmedAt: sale.confirmedAt.toISOString()
@@ -797,6 +798,10 @@ function getCancellationBlockedReason(sale: SaleWithRelations, actorUserId: stri
     return "already-cancelled";
   }
 
+  if (sale.status !== "confirmed") {
+    return "unknown";
+  }
+
   if (sale.cashSession.status !== "open" || sale.cashSession.closedAt) {
     return "cash-session-closed";
   }
@@ -809,7 +814,7 @@ function getCancellationBlockedReason(sale: SaleWithRelations, actorUserId: stri
     return "forbidden";
   }
 
-  if (!isSameUtcDate(sale.confirmedAt, new Date())) {
+  if (!isSameBoliviaDate(sale.confirmedAt, new Date())) {
     return "not-current-day";
   }
 
@@ -927,6 +932,12 @@ function toDateOnly(value: Date) {
   return value.toISOString().slice(0, 10);
 }
 
-function isSameUtcDate(left: Date, right: Date) {
-  return toDateOnly(left) === toDateOnly(right);
+function isSameBoliviaDate(left: Date, right: Date) {
+  return toBoliviaDateOnly(left) === toBoliviaDateOnly(right);
+}
+
+function toBoliviaDateOnly(value: Date) {
+  const boliviaTime = value.getTime() - BOLIVIA_UTC_OFFSET_HOURS * 60 * 60 * 1000;
+
+  return new Date(boliviaTime).toISOString().slice(0, 10);
 }

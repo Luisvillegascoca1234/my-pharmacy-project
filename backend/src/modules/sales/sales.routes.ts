@@ -3,7 +3,7 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { cancelSale, createSale, getSale, listSales } from "./sales.controller.js";
 
-const canUseSales = requireRole(["superadmin", "admin", "seller"]);
+const canUseSales = requireRole("sales");
 
 export const salesRoutes = Router();
 

@@ -1,4 +1,4 @@
-import type { CreateUser, UpdateUser, User, UserRole, UsersQuery } from "@pharmacy-pos/shared";
+import type { UsersQuery } from "@pharmacy-pos/shared";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { usersFacade } from "../facades/usersFacade";
@@ -12,8 +12,13 @@ export const useUsersAdminStore = create<UsersAdminStore>()(
     (set, get) => ({
       ...initialUsersAdminState,
 
+      async createUser(input) {
+        await usersFacade.create(input);
+        await get().loadUsers();
+      },
+
       async loadUsers(signal) {
-        set({ error: null, status: "loading" }, false, "loadUsers:start");
+        set({ errorCode: null, status: "loading" }, false, "loadUsers:start");
 
         try {
           const state = get();
@@ -26,10 +31,10 @@ export const useUsersAdminStore = create<UsersAdminStore>()(
 
           set(
             {
-              error: null,
-              roles: roles.map(mapRoleDisplayName),
+              errorCode: null,
+              roles,
               status: "success",
-              users: users.map(mapUserRoleDisplayName)
+              users
             },
             false,
             "loadUsers:success"
@@ -41,7 +46,7 @@ export const useUsersAdminStore = create<UsersAdminStore>()(
 
           set(
             {
-              error: error instanceof Error ? error.message : "No se pudieron cargar los usuarios.",
+              errorCode: "load_failed",
               status: "error"
             },
             false,
@@ -56,16 +61,6 @@ export const useUsersAdminStore = create<UsersAdminStore>()(
 
       async resetPassword(userId, input) {
         await usersFacade.resetPassword(userId, input);
-      },
-
-      async saveUser(input, userId) {
-        if (userId) {
-          await usersFacade.update(userId, input as UpdateUser);
-        } else {
-          await usersFacade.create(input as CreateUser);
-        }
-
-        await get().loadUsers();
       },
 
       setRoleId(roleId) {
@@ -83,6 +78,11 @@ export const useUsersAdminStore = create<UsersAdminStore>()(
       async updateStatus(userId, status) {
         await usersFacade.updateStatus(userId, { status });
         await get().loadUsers();
+      },
+
+      async updateUser(userId, input) {
+        await usersFacade.update(userId, input);
+        await get().loadUsers();
       }
     }),
     { name: "UsersAdminStore" }
@@ -91,24 +91,4 @@ export const useUsersAdminStore = create<UsersAdminStore>()(
 
 export function resetUsersAdminStore() {
   useUsersAdminStore.getState().reset();
-}
-
-const roleDisplayNamesByName: Record<string, string> = {
-  superadmin: "Superadministrador",
-  admin: "Administrador",
-  seller: "Vendedor"
-};
-
-function mapRoleDisplayName(role: UserRole): UserRole {
-  return {
-    ...role,
-    displayName: roleDisplayNamesByName[role.name] ?? role.displayName
-  };
-}
-
-function mapUserRoleDisplayName(user: User): User {
-  return {
-    ...user,
-    role: mapRoleDisplayName(user.role)
-  };
 }

@@ -1,6 +1,6 @@
 # 03 — [CODE REVIEW] TB-01 — Revisar y corregir la matriz institucional
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** CODE REVIEW
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-01 — El superadministrador consulta la matriz institucional de roles
@@ -23,3 +23,5 @@ El tracer bullet completo queda revisado y corregido como una rebanada funcional
 
 ## Comments
 
+- Revisado y corregido TB-01 de extremo a extremo: inconsistencia de configuracion diferenciada, validacion controlada de identificadores persistidos, limpieza de codigo y copy farmaceutico consistente.
+- Validaciones reportadas: typechecks shared/backend/frontend aprobados; roles backend 8/8; roles y pantalla frontend 8/8; suite frontend 72/72; `git diff --check` aprobado. La suite backend global conserva tres fallas ajenas en fixtures fechados de `pending-carts`.

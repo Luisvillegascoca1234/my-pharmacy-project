@@ -1,6 +1,6 @@
 # 08 — [UI] TB-03 — Alinear navegacion y acceso directo por rol
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** UI
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-03 — Cada feature aplica la misma politica explicita de roles
@@ -23,3 +23,5 @@ La navegacion y las rutas del cliente aplican la misma politica que el servidor.
 
 ## Comments
 
+- Alineadas navegacion y rutas cliente con `FEATURE_ACCESS_POLICY`, incluida la visibilidad por rol, la exclusividad de Roles y facultades y la denegacion por omision para accesos directos y features sin politica.
+- Validaciones reportadas: typecheck frontend aprobado, pruebas focalizadas de navegacion y rutas 16/16, suite frontend completa 93/93 y `git diff --check` aprobado. Sin QA visual.

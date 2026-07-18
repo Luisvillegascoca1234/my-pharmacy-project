@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { CreateUser, ResetUserPassword, UpdateUser, UserStatus } from "@pharmacy-pos/shared";
+import {
+  isFeatureAllowed,
+  type CreateUser,
+  type ResetUserPassword,
+  type UpdateUser,
+  type UserStatus
+} from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectUsersAdminActions, selectUsersAdminState } from "../store/UsersAdminSelectors";
@@ -8,19 +14,20 @@ import { useUsersAdminStore } from "../store/UsersAdminStore";
 export function useUsersAdmin() {
   const token = useAuthStore(selectAuthToken);
   const authUser = useAuthStore(selectAuthUser);
-  const { error, roleId, roles, search, status, statusFilter, users } = useUsersAdminStore(useShallow(selectUsersAdminState));
+  const { errorCode, roleId, roles, search, status, statusFilter, users } = useUsersAdminStore(useShallow(selectUsersAdminState));
   const {
+    createUser: createUserInStore,
     loadUsers: loadUsersFromStore,
     reset,
     resetPassword: resetPasswordFromStore,
-    saveUser: saveUserToStore,
     setRoleId,
     setSearch,
     setStatusFilter,
-    updateStatus: updateStatusInStore
+    updateStatus: updateStatusInStore,
+    updateUser: updateUserInStore
   } = useUsersAdminStore(useShallow(selectUsersAdminActions));
 
-  const canManage = authUser?.role.name === "superadmin";
+  const canManage = isFeatureAllowed(authUser?.role.name, "users");
 
   const loadUsers = useCallback(
     async (signal?: AbortSignal) => {
@@ -42,15 +49,26 @@ export function useUsersAdmin() {
     return () => controller.abort();
   }, [loadUsers]);
 
-  const saveUser = useCallback(
-    async (input: CreateUser | UpdateUser, userId?: string) => {
+  const createUser = useCallback(
+    async (input: CreateUser) => {
       if (!token || !canManage) {
         return;
       }
 
-      await saveUserToStore(input, userId);
+      await createUserInStore(input);
     },
-    [canManage, saveUserToStore, token]
+    [canManage, createUserInStore, token]
+  );
+
+  const updateUser = useCallback(
+    async (userId: string, input: UpdateUser) => {
+      if (!token || !canManage) {
+        return;
+      }
+
+      await updateUserInStore(userId, input);
+    },
+    [canManage, token, updateUserInStore]
   );
 
   const updateStatus = useCallback(
@@ -78,7 +96,8 @@ export function useUsersAdmin() {
   return useMemo(
     () => ({
       canManage,
-      error,
+      createUser,
+      errorCode,
       roleId,
       roles,
       search,
@@ -90,17 +109,17 @@ export function useUsersAdmin() {
       users,
       reload: loadUsers,
       resetPassword,
-      saveUser,
-      updateStatus
+      updateStatus,
+      updateUser
     }),
     [
       canManage,
-      error,
+      createUser,
+      errorCode,
       loadUsers,
       resetPassword,
       roleId,
       roles,
-      saveUser,
       search,
       setRoleId,
       setSearch,
@@ -108,6 +127,7 @@ export function useUsersAdmin() {
       status,
       statusFilter,
       updateStatus,
+      updateUser,
       users
     ]
   );

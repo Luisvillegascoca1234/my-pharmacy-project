@@ -3,12 +3,13 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { createUser, getCurrentUser, getUser, listUsers, resetUserPassword, updateUser, updateUserStatus } from "./users.controller.js";
 
-const canManageUsers = requireRole(["superadmin"]);
+const canManageUsers = requireRole("users");
+const canReadAuthenticatedSession = requireRole("authenticatedSession");
 
 export const usersRoutes = Router();
 
 usersRoutes.use(authenticateRequest);
-usersRoutes.get("/me", getCurrentUser);
+usersRoutes.get("/me", canReadAuthenticatedSession, getCurrentUser);
 usersRoutes.get("/", canManageUsers, listUsers);
 usersRoutes.get("/:id", canManageUsers, getUser);
 usersRoutes.post("/", canManageUsers, createUser);

@@ -9,7 +9,7 @@ import {
   prepareInvoiceFromSale
 } from "./billing.controller.js";
 
-export const canUseBilling = requireRole(["superadmin", "admin"]);
+export const canUseBilling = requireRole("invoices");
 
 export const billingRoutes = Router();
 

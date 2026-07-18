@@ -1,6 +1,6 @@
 # 07 — [BACKEND] TB-03 — Aplicar la politica compartida en todas las rutas
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** BACKEND
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-03 — Cada feature aplica la misma politica explicita de roles
@@ -23,3 +23,5 @@ Todas las superficies HTTP aplican una politica unica y explicita mediante roles
 
 ## Comments
 
+- Centralizada la autorizacion HTTP en un manifiesto compartido con denegacion por omision; todas las rutas protegidas consumen `requireRole` y se alinearon las restricciones institucionales, incluido el ocultamiento de costos para Vendedor.
+- Validaciones reportadas: typechecks shared/backend/frontend aprobados; pruebas focalizadas 40/40; revision estatica sin listas inline ni `requirePermission`. La suite backend global conserva tres fallas temporales ajenas en `pending-carts`.

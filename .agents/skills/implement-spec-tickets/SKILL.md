@@ -1,6 +1,6 @@
 ---
 name: implement-spec-tickets
-description: Create a separate Codex task that implements every ticket already published for a canonical to-spec feature, using one fresh subagent per ticket in the existing strict sequence and an orchestrator-owned TODO-to-DONE transition. Use after to-tickets has published the approved ticket chain and the user wants the complete spec implemented automatically in a new task.
+description: Create a separate Codex task that implements every ticket already published for a canonical to-spec feature in strict sequence, using one fresh subagent per non-QA ticket, direct orchestrator execution for QA, and an orchestrator-owned TODO-to-DONE transition. Use after to-tickets has published the approved ticket chain and the user wants the complete spec implemented automatically in a new task.
 ---
 
 # Implement Spec Tickets
@@ -25,12 +25,14 @@ Launch the planned implementation in a separate project task. Do not implement t
    - a `local` environment;
    - the rendered template as its initial prompt;
    - no model or reasoning override unless the user explicitly requested one.
-5. Do not wait for, supervise, or duplicate the implementation from the calling task. The new task owns the `/goal` and its subagents.
+5. Do not wait for, supervise, or duplicate the implementation from the calling task. The new task owns the `/goal`, its non-QA subagents, and direct QA execution.
 6. Return the created task identifier and emit the app's created-thread directive so the user can open it.
 
 ## Guardrails
 
 - Never remove `/goal` from the rendered prompt.
 - Never use a worktree unless the user explicitly requests one.
-- Never replace the one-subagent-per-ticket sequence with parallel execution.
+- Use one fresh subagent for every non-QA ticket and never execute those tickets in parallel.
+- Detect QA by `Objective: QA` even when a legacy ticket lacks `Execution owner: ORCHESTRATOR`.
+- Execute QA directly in the orchestrator task. Never spawn, assign, or hand a QA ticket to a subagent.
 - Never invoke or refer to obsolete sprint ticket-selection workflows.

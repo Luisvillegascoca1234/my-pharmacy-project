@@ -1,4 +1,4 @@
-import type { CreateUser, ResetUserPassword, UpdateUser, UpdateUserStatus, User, UserRole, UsersQuery } from "@pharmacy-pos/shared";
+import type { CreateUser, ResetUserPassword, UpdateUser, UpdateUserStatus, User, UsersQuery } from "@pharmacy-pos/shared";
 import { axiosApi } from "@/api";
 
 export const usersApi = {
@@ -17,8 +17,8 @@ export const usersApi = {
     return response.data;
   },
 
-  async listRoles(signal?: AbortSignal): Promise<UserRole[]> {
-    const response = await axiosApi.get<UserRole[]>("/roles", { signal });
+  async listRoles(signal?: AbortSignal): Promise<unknown> {
+    const response = await axiosApi.get<unknown>("/roles", { signal });
 
     return response.data;
   },

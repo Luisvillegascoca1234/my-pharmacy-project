@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
+import { isFeatureAllowed } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import type { DiscardPendingCart, PendingCart, PendingCartDraft, PendingCartItemInput } from "../types/pendingCartTypes";
@@ -10,22 +11,14 @@ type UsePendingCartsOptions = {
   includeAllForSupervision?: boolean;
 };
 
-function canUsePendingCarts(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin" || roleName === "seller";
-}
-
-function canSupervisePendingCarts(roleName?: string): boolean {
-  return roleName === "superadmin" || roleName === "admin";
-}
-
 export function usePendingCarts(options: UsePendingCartsOptions = {}) {
   const { autoLoadList = true, includeAllForSupervision = false } = options;
   const token = useAuthStore(selectAuthToken);
   const user = useAuthStore(selectAuthUser);
   const pendingState = usePendingCartsStore(useShallow(selectPendingCartsState));
   const pendingActions = usePendingCartsStore(useShallow(selectPendingCartsActions));
-  const canUse = canUsePendingCarts(user?.role.name);
-  const canSupervise = canSupervisePendingCarts(user?.role.name);
+  const canUse = isFeatureAllowed(user?.role.name, "pendingCarts");
+  const canSupervise = isFeatureAllowed(user?.role.name, "supervision");
 
   useEffect(() => {
     pendingActions.setIncludeAll(includeAllForSupervision && canSupervise);

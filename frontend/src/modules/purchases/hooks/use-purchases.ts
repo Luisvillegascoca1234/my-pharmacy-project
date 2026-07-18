@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import type { CancelPurchase, ReceivePurchase } from "@pharmacy-pos/shared";
+import { isFeatureAllowed, type CancelPurchase, type ReceivePurchase } from "@pharmacy-pos/shared";
 import { useShallow } from "zustand/react/shallow";
 import { selectAuthToken, selectAuthUser, useAuthStore } from "@/modules/auth";
 import { selectPurchasesActions, selectPurchasesState } from "../store/PurchasesSelectors";
@@ -15,7 +15,7 @@ export function usePurchases(options: UsePurchasesOptions = {}) {
   const user = useAuthStore(selectAuthUser);
   const purchaseState = usePurchasesStore(useShallow(selectPurchasesState));
   const purchaseActions = usePurchasesStore(useShallow(selectPurchasesActions));
-  const canManage = user?.role.name === "superadmin" || user?.role.name === "admin";
+  const canManage = isFeatureAllowed(user?.role.name, "purchases");
 
   const loadPurchases = useCallback(
     async (signal?: AbortSignal) => {

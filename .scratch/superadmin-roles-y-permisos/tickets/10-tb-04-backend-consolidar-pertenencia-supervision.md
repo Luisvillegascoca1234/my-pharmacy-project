@@ -1,6 +1,6 @@
 # 10 — [BACKEND] TB-04 — Consolidar las reglas de pertenencia y supervision
 
-**Status:** TODO
+**Status:** DONE
 **Objective:** BACKEND
 **Spec:** [Roles y facultades](../spec.md)
 **Tracer bullet:** TB-04 — Las operaciones compartidas respetan pertenencia y supervision
@@ -23,3 +23,5 @@ Las operaciones compartidas aplican consistentemente el alcance del actor autent
 
 ## Comments
 
+- Consolidadas las reglas contextuales de pertenencia y supervision para caja, ventas y carritos pendientes, incluidas anulaciones por actor, fecha, estado de caja y estado de venta, con auditoria y trazabilidad transaccional preservadas.
+- Validaciones reportadas: pruebas dirigidas 46/46, suite backend completa 187/187, typecheck backend y `git diff --check` aprobados. Los fixtures temporales de pendientes quedaron deterministas dentro del alcance.

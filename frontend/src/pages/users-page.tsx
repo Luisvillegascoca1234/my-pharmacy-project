@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUsersAdmin } from "@/modules/users";
+import { getUserManagementErrorMessage, getUsersLoadErrorMessage } from "./users/user-management-errors";
 
 type UserFormState = {
   email: string;
@@ -55,6 +56,7 @@ export function UsersPage() {
   const [passwordForm, setPasswordForm] = useState<PasswordFormState>(emptyPasswordForm);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const loadError = getUsersLoadErrorMessage(admin.errorCode);
 
   const selectedUser = useMemo(() => admin.users.find((user) => user.id === selectedUserId) ?? null, [admin.users, selectedUserId]);
   const defaultRoleId = admin.roles[0]?.id ?? "";
@@ -97,7 +99,7 @@ export function UsersPage() {
           roleId: form.roleId
         };
 
-        await admin.saveUser(input, selectedUser.id);
+        await admin.updateUser(selectedUser.id, input);
       } else {
         const input: CreateUser = {
           email: form.email,
@@ -106,7 +108,7 @@ export function UsersPage() {
           password: form.password
         };
 
-        await admin.saveUser(input);
+        await admin.createUser(input);
       }
 
       setSelectedUserId(null);
@@ -115,7 +117,7 @@ export function UsersPage() {
         roleId: defaultRoleId
       });
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "No se pudo guardar el usuario.");
+      setSubmitError(getUserManagementErrorMessage(error, "No se pudo guardar el usuario."));
     }
   }
 
@@ -125,7 +127,7 @@ export function UsersPage() {
     try {
       await admin.updateStatus(userId, status);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "No se pudo cambiar el estado del usuario.");
+      setSubmitError(getUserManagementErrorMessage(error, "No se pudo cambiar el estado del usuario."));
     }
   }
 
@@ -143,7 +145,7 @@ export function UsersPage() {
       setPasswordUser(null);
       setPasswordForm(emptyPasswordForm);
     } catch (error) {
-      setPasswordError(error instanceof Error ? error.message : "No se pudo resetear la contraseña.");
+      setPasswordError(getUserManagementErrorMessage(error, "No se pudo restablecer la contraseña."));
     }
   }
 
@@ -157,7 +159,7 @@ export function UsersPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Usuarios</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Gestión de accesos, roles operativos y estados de cuenta para el sistema.
+              Gestión de cuentas y asignación de los tres roles institucionales de la farmacia.
             </p>
           </div>
         </div>
@@ -168,10 +170,10 @@ export function UsersPage() {
         </div>
       </div>
 
-      {admin.error || submitError ? (
+      {loadError || submitError ? (
         <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <ShieldAlert aria-hidden="true" className="size-4" />
-          {submitError ?? admin.error}
+          {submitError ?? loadError}
         </div>
       ) : null}
 
@@ -246,7 +248,7 @@ export function UsersPage() {
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setPasswordUser(user)}>
                           <KeyRound aria-hidden="true" />
-                          Resetear
+                          Restablecer
                         </Button>
                         {user.status !== "active" ? (
                           <Button size="sm" variant="outline" onClick={() => void handleStatusChange(user.id, "active")}>
@@ -285,7 +287,7 @@ export function UsersPage() {
         <Card>
           <CardHeader>
             <CardTitle>{selectedUser ? "Editar usuario" : "Nuevo usuario"}</CardTitle>
-            <CardDescription>Asigna el rol operativo y el estado inicial de acceso.</CardDescription>
+            <CardDescription>Asigna una responsabilidad institucional sin configurar facultades individuales.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -348,7 +350,7 @@ export function UsersPage() {
       <Dialog open={Boolean(passwordUser)} onOpenChange={(open) => (!open ? setPasswordUser(null) : undefined)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Resetear contraseña</DialogTitle>
+            <DialogTitle>Restablecer contraseña</DialogTitle>
             <DialogDescription>{passwordUser ? `Define una nueva contraseña para ${passwordUser.fullName}.` : ""}</DialogDescription>
           </DialogHeader>
           <form className="grid gap-4" onSubmit={handlePasswordSubmit}>

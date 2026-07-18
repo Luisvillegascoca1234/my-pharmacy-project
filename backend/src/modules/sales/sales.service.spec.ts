@@ -370,7 +370,7 @@ describe("SalesService sale list access", () => {
     ]);
   });
 
-  it.each(["admin", "superadmin"])("lists all sales with operational filters for %s users", async (roleName) => {
+  it.each(["admin", "superadmin"] as const)("lists all sales with operational filters for %s users", async (roleName) => {
     const salesRepository = new FakeSalesRepository();
     salesRepository.seedSales([
       makeSale({ id: "sale-1", sellerUserId: "seller-1", cashSessionId: "cash-session-1" }),
@@ -577,6 +577,55 @@ describe("SalesService sale cancellation reversal", () => {
     expect(salesRepository.inventoryMovements).toHaveLength(0);
   });
 
+  it("evaluates a seller cancellation against the Bolivia operational date", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T02:30:00.000Z"));
+    const salesRepository = new FakeSalesRepository();
+
+    salesRepository.seedSales([makeSale({ confirmedAt: new Date("2026-05-31T23:30:00.000Z") })]);
+    const service = new SalesService(salesRepository);
+
+    const sale = await service.getSale("sale-1", {
+      actorUserId: "seller-1",
+      actorRoleName: "seller"
+    });
+
+    expect(sale).toEqual(
+      expect.objectContaining({
+        canCancel: true,
+        cancellationBlockedReason: undefined
+      })
+    );
+  });
+
+  it("blocks sellers from cancelling their own sale from a previous day", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-01T15:00:00.000Z"));
+    const salesRepository = new FakeSalesRepository();
+
+    salesRepository.seedUsers([makeActor()]);
+    salesRepository.seedSales([makeSale({ confirmedAt: new Date("2026-05-31T15:00:00.000Z") })]);
+    const service = new SalesService(salesRepository);
+
+    const error = await captureHttpError(() =>
+      service.cancelSale(
+        "sale-1",
+        { cancelReason: "Venta de turno anterior" },
+        {
+          actorUserId: "seller-1",
+          actorRoleName: "seller"
+        }
+      )
+    );
+
+    expectHttpError(error, {
+      code: "SALE_CANCEL_NOT_CURRENT_DAY",
+      statusCode: 403
+    });
+    expect(salesRepository.auditLogs).toHaveLength(0);
+    expect(salesRepository.inventoryMovements).toHaveLength(0);
+  });
+
   it("rejects cancellation when the source cash session is closed", async () => {
     const salesRepository = new FakeSalesRepository();
 
@@ -690,6 +739,37 @@ describe("SalesService sale cancellation reversal", () => {
       code: "SALE_ALREADY_CANCELLED",
       statusCode: 409
     });
+  });
+
+  it("reports a returned sale as blocked and rejects another cancellation", async () => {
+    const salesRepository = new FakeSalesRepository();
+
+    salesRepository.seedUsers([makeActor({ id: "admin-1", email: "admin@example.com" })]);
+    salesRepository.seedSales([makeSale({ status: "returned" })]);
+    const service = new SalesService(salesRepository);
+    const context = {
+      actorUserId: "admin-1",
+      actorRoleName: "admin"
+    } as const;
+
+    const sale = await service.getSale("sale-1", context);
+    const error = await captureHttpError(() =>
+      service.cancelSale("sale-1", { cancelReason: "Intento de segunda reversa" }, context)
+    );
+
+    expect(sale).toEqual(
+      expect.objectContaining({
+        canCancel: false,
+        cancellationBlockedReason: "unknown",
+        status: "returned"
+      })
+    );
+    expectHttpError(error, {
+      code: "SALE_NOT_CANCELABLE",
+      statusCode: 409
+    });
+    expect(salesRepository.auditLogs).toHaveLength(0);
+    expect(salesRepository.inventoryMovements).toHaveLength(0);
   });
 });
 

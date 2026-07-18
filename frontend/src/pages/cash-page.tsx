@@ -10,6 +10,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { OperationalScopeNotice } from "@/components/operational-scope-notice";
 import { useCashSession } from "@/modules/cash";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
@@ -27,7 +28,7 @@ const errorMessages: Record<CashDataErrorCode, string> = {
   "already-closed": "La caja ya fue cerrada. Actualiza el estado antes de continuar.",
   "already-open": "Ya tienes una caja abierta. Cierra la caja actual antes de abrir otra.",
   "amount-invalid": "Revisa los montos ingresados. Deben ser números mayores o iguales a cero con hasta dos decimales.",
-  forbidden: "No tienes permiso para cerrar esta caja.",
+  forbidden: "Esta caja pertenece a otro usuario y no puede cerrarse desde la operación propia.",
   "not-found": "No se encontró una caja abierta para completar la operación.",
   "session-invalid": "Tu sesión no permite operar caja en este momento. Vuelve a iniciar sesión.",
   unknown: "No se pudo completar la operación de caja. Intenta nuevamente."
@@ -35,6 +36,7 @@ const errorMessages: Record<CashDataErrorCode, string> = {
 
 export function CashPage() {
   const {
+    canSupervise,
     canUseCash,
     closeOwnCashSession,
     closeStatus,
@@ -140,11 +142,17 @@ export function CashPage() {
         </Button>
       </div>
 
+      <OperationalScopeNotice
+        canSupervise={canSupervise}
+        ownRecordsDescription="La consulta y las operaciones de esta pantalla corresponden únicamente a tu caja de turno."
+        supervisionDescription="Esta pantalla opera tu caja de turno. Las cajas de otros vendedores se gestionan desde Supervisión POS."
+      />
+
       {!canUseCash ? (
         <Alert variant="destructive">
           <LockKeyhole aria-hidden="true" />
-          <AlertTitle>Permiso insuficiente</AlertTitle>
-          <AlertDescription>Tu usuario no tiene permisos para operar caja.</AlertDescription>
+          <AlertTitle>Área no disponible</AlertTitle>
+          <AlertDescription>El rol de tu usuario no incluye la operación de caja.</AlertDescription>
         </Alert>
       ) : null}
 

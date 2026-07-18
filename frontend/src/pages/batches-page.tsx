@@ -143,7 +143,9 @@ export function BatchesPage() {
                       <TableCell className="text-right font-medium">
                         {quantityFormatter.format(item.totalAvailableQuantity)} {item.product.baseUnit.abbreviation}
                       </TableCell>
-                      <TableCell className="text-right">{moneyFormatter.format(item.totalValue)}</TableCell>
+                      <TableCell className="text-right">
+                        {item.totalValue === undefined ? "Restringido" : moneyFormatter.format(item.totalValue)}
+                      </TableCell>
                       <TableCell className="text-right">{item.layerCount}</TableCell>
                     </TableRow>
                   ))}

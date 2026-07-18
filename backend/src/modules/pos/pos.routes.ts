@@ -3,7 +3,7 @@ import { authenticateRequest } from "../../common/middleware/authenticate-reques
 import { requireRole } from "../../common/middleware/require-role.js";
 import { searchPosProducts } from "./pos.controller.js";
 
-const canUsePos = requireRole(["superadmin", "admin", "seller"]);
+const canUsePos = requireRole("pos");
 
 export const posRoutes = Router();
 
