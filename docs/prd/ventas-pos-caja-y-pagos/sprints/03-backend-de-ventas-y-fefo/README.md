@@ -40,4 +40,4 @@ By the end of this sprint:
 
 ## Sprint Rule
 
-Este sprint implementa solamente el backend de venta POS confirmada: contratos de venta/POS, busqueda de productos vendibles, validacion de caja abierta, pago efectivo, descuento FEFO, movimientos de salida, margen, comprobante interno, API, pruebas automatizadas y OpenAPI minima. No implementa anulacion de ventas, carritos pendientes, UI, navegacion, QR, tarjeta, credito, SIAT ni documentacion final de tesis.
+Este sprint implementa solamente el backend de venta POS confirmada: contratos de venta/POS, busqueda de productos vendibles, validacion de caja abierta, pago efectivo, descuento FEFO, movimientos de salida, margen, comprobante interno, API, pruebas automatizadas y OpenAPI minima. No implementa anulacion de ventas, carritos pendientes, UI, navegacion, QR, tarjeta, credito, SIAT ni documentacion final.

@@ -31,7 +31,6 @@ By the end of this sprint:
 4. [04-infra-wire-suppliers-navigation-and-session-reset.md](./04-infra-wire-suppliers-navigation-and-session-reset.md)
 5. [05-infra-clean-up-touched-code-and-references.md](./05-infra-clean-up-touched-code-and-references.md)
 6. [06-infra-run-manual-qa-on-affected-areas.md](./06-infra-run-manual-qa-on-affected-areas.md)
-7. [07-infra-update-thesis-with-sprint-evidence.md](./07-infra-update-thesis-with-sprint-evidence.md)
 
 ## Sprint Rule
 

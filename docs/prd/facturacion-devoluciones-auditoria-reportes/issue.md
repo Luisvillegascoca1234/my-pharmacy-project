@@ -32,7 +32,7 @@ Crear facturas preparadas con correlativo propio, estados `prepared` / `cancelle
 ## Evidencia de Cierre V1
 
 - Sprints 01 a 06 completados: persistencia/contratos, facturacion preparada, devolucion total, auditoria/reportes/CSV, UI de facturas/devoluciones y UI de reportes/exportaciones/auditoria.
-- Sprint 07 completado como cierre documental e infraestructura: documentacion operativa, OpenAPI, tesis, reconciliacion de registros, limpieza y guardrails finales.
+- Sprint 07 completado como cierre documental e infraestructura: documentacion operativa, OpenAPI, reconciliacion de registros, limpieza y guardrails finales.
 - Las capacidades disponibles se consideran parte del cierre administrativo V1 y no deuda futura: preparar/cancelar facturas internas, registrar devoluciones administrativas totales, consultar auditoria, revisar reportes y descargar CSV.
 - Limitaciones V1 consistentes: sin SIAT real, sin QR fiscal, sin devoluciones parciales, sin reapertura de caja cerrada, sin impacto directo sobre cierres historicos, sin BI avanzado y sin CSV por item vendido separado.
 

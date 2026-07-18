@@ -23,7 +23,7 @@ Run technical validation guardrails for the reports, exports and audit UI work. 
 - starting the dev server
 - browser QA, screenshots, Playwright runs or manual exploration
 - broad validation outside the sprint scope
-- updating `epic.md` to `DONE`, because sprint 07 still owns documentation and thesis closure
+- updating `epic.md` to `DONE`, because sprint 07 still owns documentation closure
 
 ## Acceptance Criteria
 

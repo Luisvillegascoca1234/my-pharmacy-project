@@ -38,4 +38,4 @@ By the end of this sprint:
 
 Este sprint convierte facturas preparadas y devoluciones totales en superficies administrativas frontend ejecutables. El corte incluye modulos portables de datos, paginas de facturas y devoluciones, filtros, detalle, modales de motivo, acciones permitidas, navegacion y estados de error esperados.
 
-No implementa reportes, exportaciones, auditoria consultable, documentacion operativa final ni evidencia de tesis. Los modulos bajo `frontend/src/modules` no deben contener JSX, copy visible, rutas, iconos, estilos ni dependencias de UI; las paginas y componentes se encargan de la experiencia visual.
+No implementa reportes, exportaciones, auditoria consultable ni documentacion operativa final. Los modulos bajo `frontend/src/modules` no deben contener JSX, copy visible, rutas, iconos, estilos ni dependencias de UI; las paginas y componentes se encargan de la experiencia visual.

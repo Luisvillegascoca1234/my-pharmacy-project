@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Spec"
+  short_description: "Turn grilling decisions into a tracer-bullet spec"
+policy:
+  allow_implicit_invocation: false

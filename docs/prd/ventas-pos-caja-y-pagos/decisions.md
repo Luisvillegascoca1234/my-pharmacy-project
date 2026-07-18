@@ -112,5 +112,5 @@
 ## Documentacion
 
 - El flujo se documentara como venta operativa interna, no como facturacion fiscal.
-- La tesis debe reflejar caja simple, pago efectivo, FEFO, trazabilidad por lote, margen por costo real y anulacion controlada.
+- La documentacion operativa debe reflejar caja simple, pago efectivo, FEFO, trazabilidad por lote, margen por costo real y anulacion controlada.
 - Nota de cierre: la evidencia posterior al Sprint 08 confirma pendientes POS, anulacion y supervision administrativa como capacidades V1 ejecutables, sin modificar las decisiones aceptadas ni ampliar el alcance fuera de pago efectivo, comprobante interno y control operativo de farmacia.

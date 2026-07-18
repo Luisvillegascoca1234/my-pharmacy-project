@@ -21,7 +21,6 @@ Reconciliar placeholders, titulos, labels de navegacion y referencias visibles q
 ## Out Of Scope
 
 - Documentacion operativa de usuario.
-- Tesis.
 - Reportes, exportaciones y auditoria.
 
 ## Acceptance Criteria

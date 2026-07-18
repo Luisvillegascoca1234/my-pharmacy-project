@@ -22,7 +22,7 @@ Reconciliar la evidencia publicada de contratos y OpenAPI con el comportamiento 
 
 - Crear endpoints nuevos o cambiar contratos.
 - Modificar calculos de reportes, columnas CSV o reglas de auditoria.
-- Documentacion de usuario o tesis, salvo referencias de consistencia necesarias.
+- Documentacion de usuario, salvo referencias de consistencia necesarias.
 - QA manual.
 
 ## Acceptance Criteria

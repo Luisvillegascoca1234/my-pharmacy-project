@@ -29,7 +29,6 @@ By the end of this sprint:
 3. [03-infra-document-suppliers-openapi-and-integration-wiring.md](./03-infra-document-suppliers-openapi-and-integration-wiring.md)
 4. [04-infra-clean-up-touched-code-and-references.md](./04-infra-clean-up-touched-code-and-references.md)
 5. [05-infra-run-manual-qa-on-affected-areas.md](./05-infra-run-manual-qa-on-affected-areas.md)
-6. [06-infra-update-thesis-with-sprint-evidence.md](./06-infra-update-thesis-with-sprint-evidence.md)
 
 ## Sprint Rule
 

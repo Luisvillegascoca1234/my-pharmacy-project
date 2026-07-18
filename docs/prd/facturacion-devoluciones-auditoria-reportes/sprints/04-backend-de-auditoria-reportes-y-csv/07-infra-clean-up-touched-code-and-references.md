@@ -28,11 +28,11 @@ Limpiar codigo muerto, referencias duplicadas, cableado temporal y deriva de nom
 - No queda codigo muerto obvio en los modulos tocados ni en rutas/documentacion asociadas.
 - No quedan handlers, services, repositories o wrappers duplicados sin razon clara.
 - Imports, exports, nombres y referencias mantienen una forma coherente posterior al sprint.
-- La deuda diferida hacia UI, documentacion operativa o tesis queda documentada explicitamente si aparece.
+- La deuda diferida hacia UI o documentacion operativa queda documentada explicitamente si aparece.
 
 ## Completion Notes
 
 - Se retiraron contratos JSON de respuesta CSV que no correspondian a las descargas auditadas `text/csv`.
 - Se conservaron contratos de query y fila CSV para mantener clara la forma de filtros y columnas exportadas.
 - Se eliminaron tipos internos sin uso y se ajusto un helper de filtros para distinguir descarga CSV auditada de consulta visual no auditada.
-- Deuda diferida: UI, documentacion operativa y tesis quedan fuera de este sprint.
+- Deuda diferida: UI y documentacion operativa quedan fuera de este sprint.

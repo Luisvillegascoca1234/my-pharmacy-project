@@ -22,7 +22,7 @@ Limpiar referencias obsoletas, nombres ambiguos y duplicaciones expuestas por la
 - Limpieza amplia fuera del alcance del sprint.
 - Cambios funcionales nuevos.
 - Refactors de servicios, pantallas, navegacion o reportes que pertenecen a sprints posteriores.
-- Documentacion operativa o tesis final.
+- Documentacion operativa final.
 
 ## Acceptance Criteria
 

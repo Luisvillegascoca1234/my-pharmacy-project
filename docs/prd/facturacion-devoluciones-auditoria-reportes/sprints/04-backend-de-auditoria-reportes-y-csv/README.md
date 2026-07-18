@@ -38,4 +38,4 @@ By the end of this sprint:
 
 Este sprint convierte auditoria consultable, reportes operativos iniciales y exportaciones CSV en endpoints backend ejecutables. El corte incluye `audit`, `reports` y `exports`, permisos por rol, filtros paginados, cortes diarios en `America/La_Paz`, calculos con ventas anuladas/devueltas y auditoria de descargas CSV.
 
-No implementa pantallas administrativas, navegacion frontend, documentacion operativa final, evidencia de tesis ni reportes BI avanzados. Las consultas visuales de reportes no deben generar auditoria; solo las descargas CSV deben registrar evento de auditoria.
+No implementa pantallas administrativas, navegacion frontend, documentacion operativa final ni reportes BI avanzados. Las consultas visuales de reportes no deben generar auditoria; solo las descargas CSV deben registrar evento de auditoria.

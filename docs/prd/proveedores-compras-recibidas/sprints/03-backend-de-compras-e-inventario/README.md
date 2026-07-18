@@ -31,7 +31,6 @@ By the end of this sprint:
 5. [05-infra-wire-purchases-openapi-and-backend-integration.md](./05-infra-wire-purchases-openapi-and-backend-integration.md)
 6. [06-infra-clean-up-touched-code-and-references.md](./06-infra-clean-up-touched-code-and-references.md)
 7. [07-infra-run-manual-qa-on-affected-areas.md](./07-infra-run-manual-qa-on-affected-areas.md)
-8. [08-infra-update-thesis-with-sprint-evidence.md](./08-infra-update-thesis-with-sprint-evidence.md)
 
 ## Sprint Rule
 

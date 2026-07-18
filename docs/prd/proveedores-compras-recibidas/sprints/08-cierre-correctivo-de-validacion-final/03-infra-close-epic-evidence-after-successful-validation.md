@@ -16,14 +16,14 @@ Cerrar formalmente el epic de proveedores y compras recibidas solo despues de qu
 - `issue.md` si necesita reflejar el estado final del cierre
 - README del Sprint 08 con resumen de evidencia
 - tickets del Sprint 08 con notas de ejecucion y estado final
-- tesis o documentacion de cierre solo si la evidencia final cambia una afirmacion ya escrita
+- documentacion de cierre solo si la evidencia final cambia una afirmacion ya escrita
 
 ## Out Of Scope
 
 - cerrar el epic sin validacion final exitosa
 - modificar reglas funcionales aprobadas
 - agregar nuevas capacidades fuera del PRD
-- reescribir tesis o documentacion no afectada por el cierre
+- reescribir documentacion no afectada por el cierre
 - afirmar QA exitoso si hubo bloqueo, servidor inaccesible o credenciales insuficientes
 
 ## Acceptance Criteria

@@ -241,4 +241,4 @@ Dependencias:
 - La anulacion se incluye en V1 por necesidad operativa, pero queda limitada a cajas abiertas para no alterar cierres consolidados.
 - El modulo fiscal futuro debe bloquear o restringir anulaciones cuando exista factura asociada.
 - El comprobante interno ayuda a atencion y auditoria, pero debe diferenciarse claramente de una factura.
-- El epic requirio cierre de documentacion y tesis porque introduce el flujo comercial principal de salida de inventario, caja, pagos y margen.
+- El epic requirio cierre de documentacion porque introduce el flujo comercial principal de salida de inventario, caja, pagos y margen.

@@ -123,8 +123,8 @@ Con la limpieza final de referencias del Sprint 09 completada, el epic queda en 
 - La UI debe mantener el flujo rapido de mostrador: buscar, agregar, cobrar.
 - No planificar QA manual salvo solicitud explicita del usuario.
 
-## Documentation and Thesis Impact
+## Documentation Impact
 
-Este epic si requiere un sprint final de documentacion y tesis. La razon es que introduce el flujo comercial principal de salida de inventario: venta POS, caja, pagos, FEFO, anulacion, movimientos, margen y comprobante interno.
+Este epic si requiere un sprint final de documentacion. La razon es que introduce el flujo comercial principal de salida de inventario: venta POS, caja, pagos, FEFO, anulacion, movimientos, margen y comprobante interno.
 
-La evidencia afectara secciones sobre caso de estudio, reglas de negocio de farmacia, control de inventario por lote, metodo FEFO, caja simple, trazabilidad, auditoria operativa y pruebas funcionales. Tambien puede requerir documentacion de uso para vendedor y administrador, especialmente apertura/cierre de caja, cobro efectivo, anulacion y manejo de carritos pendientes.
+La documentacion afectada abarca las reglas de negocio de farmacia, el control de inventario por lote, el metodo FEFO, la caja simple, la trazabilidad, la auditoria operativa y los flujos de uso para vendedor y administrador, especialmente apertura y cierre de caja, cobro efectivo, anulacion y manejo de carritos pendientes.

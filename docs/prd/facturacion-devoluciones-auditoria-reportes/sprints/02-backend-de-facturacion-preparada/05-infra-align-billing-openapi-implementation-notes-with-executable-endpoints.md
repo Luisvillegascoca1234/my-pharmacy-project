@@ -21,7 +21,6 @@ Alinear la documentacion OpenAPI del bloque `billing` con endpoints ejecutables.
 ## Out Of Scope
 
 - Documentacion operativa de usuario.
-- Tesis o evidencia academica.
 - OpenAPI de devoluciones, reportes, CSV y auditoria consultable salvo referencias cruzadas necesarias.
 
 ## Acceptance Criteria

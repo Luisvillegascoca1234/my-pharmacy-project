@@ -22,7 +22,6 @@ Alinear OpenAPI de auditoria, reportes y exportaciones con endpoints ejecutables
 ## Out Of Scope
 
 - Documentacion operativa de usuario.
-- Tesis o evidencia academica.
 - Pantallas administrativas.
 
 ## Acceptance Criteria

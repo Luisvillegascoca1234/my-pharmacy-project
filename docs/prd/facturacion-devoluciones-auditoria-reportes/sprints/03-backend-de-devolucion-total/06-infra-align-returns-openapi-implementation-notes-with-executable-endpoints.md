@@ -21,7 +21,6 @@ Alinear OpenAPI del bloque `returns` con endpoints ejecutables. El sprint 01 dej
 ## Out Of Scope
 
 - Documentacion operativa de usuario.
-- Tesis o evidencia academica.
 - OpenAPI de reportes, CSV y auditoria consultable salvo referencias cruzadas necesarias.
 
 ## Acceptance Criteria

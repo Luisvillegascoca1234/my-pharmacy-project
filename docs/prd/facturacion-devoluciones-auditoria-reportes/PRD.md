@@ -76,8 +76,6 @@ La auditoria es consultable por `superadmin` con paginacion, filtros basicos y m
 54. As a developer, I want contratos compartidos para facturas, devoluciones, reportes, auditoria y exportaciones, so that backend y frontend validen la misma forma de datos.
 55. As a developer, I want operaciones transaccionales para devolucion, so that venta, pago, inventario, movimientos y auditoria cambien juntos.
 56. As a developer, I want pruebas automatizadas de reglas criticas, so that el cierre administrativo no rompa POS, FEFO ni caja.
-57. As a thesis reviewer, I want evidencia funcional del cierre administrativo, so that el caso de estudio cubra el ciclo completo de venta, devolucion, auditoria y reporte.
-
 ## Implementation Decisions
 
 - La implementacion se divide en sub-entregas planificadas por PRD/epic antes de ejecutar sprints: persistencia y contratos, backend de dominio, frontend administrativo, y cierre documental.

@@ -36,4 +36,4 @@ By the end of this sprint:
 
 ## Sprint Rule
 
-Este sprint solo define contratos compartidos, estados operativos, persistencia y guardrails de generacion para caja, ventas, pagos, consumos FEFO y carritos pendientes. No implementa API ejecutable, pantallas POS, cierre real de caja, cobro operativo, anulacion ejecutable, navegacion ni documentacion final de tesis; esos cortes quedan para los siguientes sprints del epic.
+Este sprint solo define contratos compartidos, estados operativos, persistencia y guardrails de generacion para caja, ventas, pagos, consumos FEFO y carritos pendientes. No implementa API ejecutable, pantallas POS, cierre real de caja, cobro operativo, anulacion ejecutable, navegacion ni documentacion final; esos cortes quedan para los siguientes sprints del epic.

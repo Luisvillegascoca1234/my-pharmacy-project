@@ -35,4 +35,4 @@ By the end of this sprint:
 
 ## Sprint Rule
 
-Este sprint implementa solamente la experiencia avanzada de ventas POS: carritos pendientes con expiracion a 3 dias, detalle de venta, anulacion con motivo, supervision por rol, cierre de caja ajena y estados visibles de autorizacion. No implementa reportes analiticos, SIAT, QR, tarjeta, credito, devoluciones posteriores a cierre, reapertura de caja cerrada, reasignacion de pendientes, reserva de stock ni documentacion final de tesis.
+Este sprint implementa solamente la experiencia avanzada de ventas POS: carritos pendientes con expiracion a 3 dias, detalle de venta, anulacion con motivo, supervision por rol, cierre de caja ajena y estados visibles de autorizacion. No implementa reportes analiticos, SIAT, QR, tarjeta, credito, devoluciones posteriores a cierre, reapertura de caja cerrada, reasignacion de pendientes, reserva de stock ni documentacion final.

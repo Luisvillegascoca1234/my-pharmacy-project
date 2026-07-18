@@ -33,7 +33,6 @@ El Sprint 07 dejo la validacion final bloqueada por frontend/backend locales ina
 3. [03-infra-validar-contratos-rutas-y-openapi-de-cierre.md](./03-infra-validar-contratos-rutas-y-openapi-de-cierre.md)
 4. [04-infra-clean-up-touched-code-and-references.md](./04-infra-clean-up-touched-code-and-references.md)
 5. [05-infra-run-manual-qa-on-affected-areas.md](./05-infra-run-manual-qa-on-affected-areas.md)
-6. [06-infra-update-thesis-with-sprint-evidence.md](./06-infra-update-thesis-with-sprint-evidence.md)
 
 ## Sprint Rule
 

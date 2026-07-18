@@ -23,7 +23,7 @@ Documentar la API minima de venta POS y conectar sus rutas al enrutamiento princ
 
 - Documentar anulacion de ventas.
 - Documentar carritos pendientes.
-- Documentacion de usuario final o tesis.
+- Documentacion de usuario final.
 - Verificacion manual de UI o navegador.
 - SIAT, QR, tarjeta o credito.
 

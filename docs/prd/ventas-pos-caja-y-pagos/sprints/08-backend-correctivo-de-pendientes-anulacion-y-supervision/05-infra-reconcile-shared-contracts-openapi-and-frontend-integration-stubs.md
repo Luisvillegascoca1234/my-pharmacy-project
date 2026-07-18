@@ -22,7 +22,7 @@ Reconciliar contratos compartidos, OpenAPI y clientes frontend existentes con la
 
 - Cambios visuales.
 - Nuevas reglas de producto.
-- Documentacion de usuario final o tesis.
+- Documentacion de usuario final.
 - OpenAPI exhaustiva fuera del alcance POS/caja/pagos.
 - SIAT, QR, tarjeta, credito, reportes o descuentos.
 

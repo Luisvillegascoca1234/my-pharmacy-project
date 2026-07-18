@@ -21,7 +21,7 @@ Documentar la API minima de anulaciones y carritos pendientes, y conectar sus ru
 ## Out Of Scope
 
 - Documentacion de UI.
-- Documentacion final de tesis.
+- Documentacion final.
 - QR, tarjeta, credito, SIAT o devoluciones.
 - Verificacion manual de navegador.
 

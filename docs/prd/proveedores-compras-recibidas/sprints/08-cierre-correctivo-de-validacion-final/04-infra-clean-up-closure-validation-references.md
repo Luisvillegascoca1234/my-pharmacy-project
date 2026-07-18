@@ -20,7 +20,7 @@ Limpiar referencias documentales del cierre correctivo para que el estado final 
 ## Out Of Scope
 
 - cambios de codigo funcional
-- reescritura amplia de PRD, tesis o guias no afectadas por este cierre
+- reescritura amplia de PRD o guias no afectadas por este cierre
 - QA adicional
 - nuevas decisiones comerciales
 - limpiar deuda historica de otros PRD

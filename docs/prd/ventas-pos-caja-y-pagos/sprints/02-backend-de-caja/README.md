@@ -34,4 +34,4 @@ By the end of this sprint:
 
 ## Sprint Rule
 
-Este sprint implementa solamente el backend de caja: apertura, caja actual, cierre propio, cierre ajeno, calculos de esperado/diferencia, autorizacion, auditoria, pruebas automatizadas y documentacion OpenAPI minima. No implementa venta POS, pago efectivo, FEFO, anulacion de ventas, carritos pendientes, UI, navegacion ni documentacion final de tesis.
+Este sprint implementa solamente el backend de caja: apertura, caja actual, cierre propio, cierre ajeno, calculos de esperado/diferencia, autorizacion, auditoria, pruebas automatizadas y documentacion OpenAPI minima. No implementa venta POS, pago efectivo, FEFO, anulacion de ventas, carritos pendientes, UI, navegacion ni documentacion final.

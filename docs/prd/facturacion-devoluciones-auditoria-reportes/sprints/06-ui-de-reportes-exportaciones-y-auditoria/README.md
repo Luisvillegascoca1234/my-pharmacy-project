@@ -39,4 +39,4 @@ By the end of this sprint:
 
 Este sprint convierte las superficies de analisis del epic en UI operativa: reportes, exportaciones CSV y auditoria consultable. El trabajo debe consumir los contratos y endpoints ya definidos para ventas diarias, valuacion por lote, proximos vencimientos, CSV de ventas, CSV de movimientos y auditoria paginada.
 
-El sprint no agrega reglas backend nuevas, no cambia facturacion preparada ni devoluciones administrativas ya cerradas, no actualiza documentacion operativa ni tesis, y no planifica QA manual. Los modulos frontend creados bajo `frontend/src/modules` deben seguir siendo portables: sin JSX, copy visible, rutas, iconos, estilos, imports de UI ni dependencias DOM.
+El sprint no agrega reglas backend nuevas, no cambia facturacion preparada ni devoluciones administrativas ya cerradas, no actualiza documentacion operativa y no planifica QA manual. Los modulos frontend creados bajo `frontend/src/modules` deben seguir siendo portables: sin JSX, copy visible, rutas, iconos, estilos, imports de UI ni dependencias DOM.

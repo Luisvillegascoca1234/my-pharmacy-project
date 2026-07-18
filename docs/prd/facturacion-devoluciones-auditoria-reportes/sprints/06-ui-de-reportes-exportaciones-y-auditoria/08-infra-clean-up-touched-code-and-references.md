@@ -21,7 +21,7 @@ Clean up dead code, duplicate wiring, stale references, temporary instrumentatio
 
 - broad cleanup outside the sprint scope
 - new functional changes
-- later-sprint docs, thesis or OpenAPI work
+- later-sprint documentation or OpenAPI work
 
 ## Acceptance Criteria
 

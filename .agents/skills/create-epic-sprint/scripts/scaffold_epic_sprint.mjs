@@ -172,11 +172,6 @@ function isManualQaTitle(title) {
   return lower.includes('manual qa') || lower.includes('run qa') || lower.includes('focused parity qa')
 }
 
-function isThesisUpdateTitle(title) {
-  const lower = title.toLowerCase()
-  return lower.includes('thesis') || lower.includes('tesis')
-}
-
 function buildDependencyMaps(tickets) {
   const dependenciesByTicket = new Map()
   const blockersByTicket = new Map()
@@ -290,45 +285,6 @@ When this QA ticket is the final validation step for the whole PRD epic, update 
 - no new relevant console errors appear during the covered flows
 - blockers such as missing seed data, auth issues, or inaccessible routes are documented with the exact step and URL
 - if this ticket closes the whole epic, \`epic.md\` is updated to \`- Status: DONE\` only after validation succeeds
-`
-  }
-
-  if (isThesisUpdateTitle(ticket.title)) {
-    return `# Ticket ${String(ticket.number).padStart(2, '0')} - ${ticket.title}
-
-- Status: TODO
-${categoryLine}
-${parentPrdLine}
-- Depends on: ${formatDepends(dependencies)}
-- Blocks: ${formatBlocks(blockers)}
-
-## Description
-
-Update the academic thesis documentation with the evidence produced by sprint ${sprintTitle}. The update must be academically rigorous, traceable to implemented work, and limited to high-level implementation detail.
-
-If the thesis document is missing context needed to explain this sprint, reconstruct that context from the PRD, epic, sprint tickets, accepted decisions, and previous related work already completed in the repo before editing. Ask the developer only when the missing information would materially change the academic claim, scope, or interpretation.
-
-## Scope
-
-- thesis sections affected by the sprint outcome
-- high-level implementation summary: architecture decisions, modules touched, data flow, validation strategy, and known limitations
-- academic framing that connects the sprint result to the research or system objectives
-- traceable references to PRD decisions, sprint evidence, and validated behavior
-
-## Out Of Scope
-
-- unsupported academic claims
-- marketing language or informal implementation narration
-- code dumps, exhaustive file-by-file logs, or low-level operational details
-- thesis sections unrelated to the sprint evidence
-
-## Acceptance Criteria
-
-- thesis updates are written in formal academic Spanish unless the existing document requires another language
-- every new claim is supported by sprint evidence, previous implemented work, or an explicit documented decision
-- implementation is described at a high level without copying large code fragments
-- missing thesis context is filled from prior project artifacts when possible
-- unresolved academic assumptions are documented clearly instead of being presented as facts
 `
   }
 

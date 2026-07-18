@@ -24,7 +24,7 @@ Limpiar codigo muerto, referencias obsoletas, duplicacion de wiring, notas de br
 - cambios funcionales nuevos
 - refactors de fases posteriores
 - UI nueva
-- documentacion final de tesis
+- documentacion final
 - SIAT, QR, tarjeta, credito o reportes
 
 ## Acceptance Criteria

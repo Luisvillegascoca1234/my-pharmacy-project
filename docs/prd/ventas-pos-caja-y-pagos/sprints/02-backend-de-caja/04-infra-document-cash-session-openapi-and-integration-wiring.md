@@ -22,7 +22,7 @@ Documentar la API minima de caja y conectar el flujo backend al enrutamiento gen
 ## Out Of Scope
 
 - Documentar ventas, pagos, FEFO, anulacion de venta o pendientes.
-- Crear documentacion de usuario final o tesis.
+- Crear documentacion de usuario final.
 - Cambiar contratos compartidos salvo ajustes menores descubiertos por integracion.
 - QA manual de UI.
 

@@ -39,6 +39,6 @@ By the end of this sprint:
 
 ## Sprint Rule
 
-Este sprint implementa solamente el backend de anulaciones y carritos pendientes: contratos, reglas transaccionales, permisos, API, pruebas automatizadas y OpenAPI minima. No implementa UI, navegacion, reportes, SIAT, QR, tarjeta, credito, reapertura de caja cerrada ni documentacion final de tesis.
+Este sprint implementa solamente el backend de anulaciones y carritos pendientes: contratos, reglas transaccionales, permisos, API, pruebas automatizadas y OpenAPI minima. No implementa UI, navegacion, reportes, SIAT, QR, tarjeta, credito, reapertura de caja cerrada ni documentacion final.
 
 Nota historica posterior al Sprint 09: la ausencia de UI en este sprint no es deuda vigente del epic; el cierre documental considera pendientes, anulacion y supervision como capacidades V1 reconciliadas dentro de los limites aprobados.

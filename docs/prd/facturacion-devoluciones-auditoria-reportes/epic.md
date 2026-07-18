@@ -84,7 +84,7 @@ Un usuario `seller` no puede:
 - Sprint 04 - Backend de auditoria, reportes y CSV: completado. Dejo auditoria consultable, reportes operativos iniciales y exportaciones CSV con separador punto y coma y auditoria de descarga.
 - Sprint 05 - UI de facturas y devoluciones: completado. Dejo superficies administrativas para preparar/cancelar facturas, registrar devoluciones totales y operar errores esperados.
 - Sprint 06 - UI de reportes, exportaciones y auditoria: completado. Dejo superficies de analisis para reportes, descargas CSV y auditoria consultable con permisos por rol.
-- Sprint 07 - Cierre documental e infraestructura: completado. Reconciliacion documental, evidencia academica, OpenAPI, limpieza y guardrails finales cierran el epic.
+- Sprint 07 - Cierre documental e infraestructura: completado. Reconciliacion documental, OpenAPI, limpieza y guardrails finales cierran el epic.
 
 ## Administrative Closure V1 Evidence
 
@@ -92,11 +92,11 @@ El alcance disponible se trata como cierre administrativo V1 entregado: factura 
 
 Las limitaciones V1 permanecen explicitas y no son deuda accidental de cierre: sin SIAT real, sin QR fiscal, sin devoluciones parciales, sin reapertura de caja cerrada, sin modificacion de cierres historicos, sin BI avanzado y sin CSV por item vendido.
 
-El ticket final de guardrails valido documentacion, contratos publicados, tesis y referencias de planificacion; por tanto el epic queda cerrado como `DONE`.
+El ticket final de guardrails valido documentacion, contratos publicados y referencias de planificacion; por tanto el epic queda cerrado como `DONE`.
 
 ## Ticket Category Hints
 
-- `INFRA`: migraciones destructivas permitidas, contratos compartidos, estados nuevos, OpenAPI, documentacion operativa, evidencia de tesis y limpieza de referencias.
+- `INFRA`: migraciones destructivas permitidas, contratos compartidos, estados nuevos, OpenAPI, documentacion operativa y limpieza de referencias.
 - `BACKEND`: facturacion preparada, devolucion total, auditoria consultable, reportes, exportaciones CSV, permisos, transacciones y pruebas de dominio.
 - `UI`: paginas administrativas, navegacion, hooks/facades/stores de datos, filtros, modales de motivo, estados de error y descarga CSV.
 
@@ -137,10 +137,8 @@ El ticket final de guardrails valido documentacion, contratos publicados, tesis 
 - Incluir pruebas automatizadas de backend como parte del trabajo de dominio.
 - No planificar QA manual salvo que el usuario lo pida.
 
-## Documentation and Thesis Impact
+## Documentation Impact
 
-Este epic si requiere sprint final de documentacion y tesis. La razon es que cierra el ciclo administrativo del caso farmaceutico: diferencia entre comprobante interno y factura preparada, devolucion posterior al cierre, trazabilidad por lote, auditoria consultable, ventas netas, valuacion de inventario y exportacion de datos.
+Este epic si requiere un sprint final de documentacion. La razon es que cierra el ciclo administrativo del caso farmaceutico: diferencia entre comprobante interno y factura preparada, devolucion posterior al cierre, trazabilidad por lote, auditoria consultable, ventas netas, valuacion de inventario y exportacion de datos.
 
 La documentacion operativa afectada debe explicar como preparar y cancelar facturas, cuando usar anulacion POS frente a devolucion administrativa, como interpretar ventas devueltas, como leer reportes y como descargar CSV. No debe describir estructura de codigo.
-
-La tesis puede incorporar evidencia sobre control administrativo posterior a venta, trazabilidad farmaceutica por lote, separacion fiscal preparada sin SIAT real, reportes de gestion y auditoria de acciones sensibles.

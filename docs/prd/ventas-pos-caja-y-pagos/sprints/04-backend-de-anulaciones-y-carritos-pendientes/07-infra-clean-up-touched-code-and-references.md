@@ -21,7 +21,7 @@ Limpiar codigo muerto, duplicacion, referencias obsoletas, instrumentacion tempo
 
 - limpieza amplia fuera de anulaciones y pendientes
 - nuevas reglas funcionales
-- refactors destinados a UI, reportes o tesis
+- refactors destinados a UI o reportes
 - cambios en venta confirmada que no sean necesarios para reversa o conversion
 
 ## Acceptance Criteria

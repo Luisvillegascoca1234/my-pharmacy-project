@@ -23,7 +23,7 @@ Limpiar codigo muerto, referencias obsoletas, placeholders desplazados, duplicac
 - limpieza amplia fuera del alcance del sprint
 - cambios funcionales nuevos
 - refactors de fases posteriores
-- documentacion final de tesis
+- documentacion final
 - reportes, SIAT, QR, tarjeta o credito
 
 ## Acceptance Criteria

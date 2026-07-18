@@ -21,7 +21,7 @@ Retirar placeholders y referencias transitorias que mantenian reportes, exportac
 
 - Cambiar la estructura general de navegacion.
 - Reescribir pantallas no tocadas por el sprint.
-- Actualizar documentacion operativa, OpenAPI o tesis.
+- Actualizar documentacion operativa u OpenAPI.
 
 ## Acceptance Criteria
 

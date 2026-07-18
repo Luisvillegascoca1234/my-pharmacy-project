@@ -1,0 +1,5 @@
+interface:
+  display_name: "To Tickets"
+  short_description: "Build a sequential execution chain from a spec"
+policy:
+  allow_implicit_invocation: false

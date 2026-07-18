@@ -26,7 +26,7 @@ Ejecutar validaciones tecnicas para confirmar que la correccion backend resuelve
 - iniciar o detener dev servers
 - cerrar automaticamente el epic como `DONE`
 - pruebas de SIAT, QR, tarjeta, credito, descuentos o reportes
-- documentacion final de tesis
+- documentacion final
 
 ## Acceptance Criteria
 

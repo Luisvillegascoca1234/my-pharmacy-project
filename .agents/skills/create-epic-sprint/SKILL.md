@@ -4,18 +4,18 @@ description: >-
   Create the next sprint and ticket batch for a repo PRD feature under
   `docs/prd/<feature-slug>/sprints`. Use after `$to-prd` has created `epic.md`.
   Enforce the previous sprint `README.md` status gate, group tickets as `UI`,
-  `BACKEND`, or `INFRA`, and infer whether docs or thesis work belongs in this sprint. Load
+  `BACKEND`, or `INFRA`, and infer whether documentation work belongs in this sprint. Load
   project backend or frontend architecture skills when the sprint touches those areas, and
   explore the relevant code before shaping the sprint.
 ---
 
 # Create Epic Sprint
 
-Create the next sprint for a PRD feature folder inside `docs/prd`, following the existing sprint pattern in that feature, grouping tickets by category, and inferring whether this sprint is implementation-only or the final docs/thesis sprint for the epic.
+Create the next sprint for a PRD feature folder inside `docs/prd`, following the existing sprint pattern in that feature, grouping tickets by category, and inferring whether this sprint is implementation-only or the final documentation sprint for the epic.
 
 Use the bundled Node script to scaffold the folder, README, and ticket files. Then refine the generated markdown so it matches the feature's real domain, the current product phase, and the style of the previous sprint.
 
-This skill is intentionally synced with `$to-prd`: PRDs live at `docs/prd/<feature-slug>/PRD.md`, the planning handoff lives at `docs/prd/<feature-slug>/epic.md`, and sprint plans for that PRD live beside them at `docs/prd/<feature-slug>/sprints/<nn>-<slug>`. Every ticket must keep an explicit `Parent PRD` metadata link to that feature's `PRD.md`. The final validation or final docs/thesis sprint for an epic is responsible for updating that `epic.md` status to `DONE` after the planned closing work is complete.
+This skill is intentionally synced with `$to-prd`: PRDs live at `docs/prd/<feature-slug>/PRD.md`, the planning handoff lives at `docs/prd/<feature-slug>/epic.md`, and sprint plans for that PRD live beside them at `docs/prd/<feature-slug>/sprints/<nn>-<slug>`. Every ticket must keep an explicit `Parent PRD` metadata link to that feature's `PRD.md`. The final validation or final documentation sprint for an epic is responsible for updating that `epic.md` status to `DONE` after the planned closing work is complete.
 
 ## Discovery pitfall
 
@@ -46,8 +46,8 @@ The scaffolder treats any main ticket whose title contains `cleanup` or `clean u
 When that happens:
 
 - avoid using `cleanup` or `clean up` in main implementation ticket titles when possible; prefer words like `schema reset`, `schema consolidation`, or `persistence guardrails`
-- if the generated sprint already skipped the dedicated closing cleanup ticket, add it manually before any final validation or docs/thesis ticket that belongs in this sprint
-- renumber or add the closing tickets so the sprint still ends with the intended cleanup and any inferred final validation or docs/thesis work
+- if the generated sprint already skipped the dedicated closing cleanup ticket, add it manually before any final validation or documentation ticket that belongs in this sprint
+- renumber or add the closing tickets so the sprint still ends with the intended cleanup and any inferred final validation or documentation work
 - tell the developer that the scaffolder matched a main implementation ticket as cleanup so future sprint titles can avoid the collision
 
 ## Missing sprints directory pitfall
@@ -119,7 +119,7 @@ Mirror the local pattern for:
 - ticket file naming
 - dependency style
 - category grouping
-- closing tickets such as `cleanup`, `manual QA`, and any final docs/thesis work when the epic actually requires it
+- closing tickets such as `cleanup`, `manual QA`, and any final documentation work when the epic actually requires it
 
 ### 3. Explore the relevant code before deciding the sprint shape
 
@@ -130,7 +130,7 @@ At minimum:
 - inspect the relevant app/package folders implied by the PRD and epic, such as `apps/api`, frontend routes, feature modules, shared packages, contracts, tests, or docs surfaces
 - use `rg` and targeted file reads to find existing domain concepts, routes, handlers, components, stores, contracts, tests, and naming conventions related to the feature
 - compare what the PRD asks for against what the code already does, and reflect any useful findings in the generated sprint tickets
-- infer whether the epic needs a final docs/thesis sprint from the PRD, `epic.md`, current sprint sequence, product impact, and affected documentation surfaces
+- infer whether the epic needs a final documentation sprint from the PRD, `epic.md`, current sprint sequence, product impact, and affected documentation surfaces
 - if the exploration reveals a surprising repo pitfall, tell the developer and add the note to the appropriate repo-specific skill file when it is in scope
 
 ### 4. Enforce the sprint gate
@@ -178,9 +178,9 @@ Rules:
   - `--backend-ticket`
   - `--infra-ticket`
 - do not pass cleanup or QA tickets manually unless you are intentionally overriding the defaults
-- do not rely on the script to invent thesis or docs work
-- when the agent infers that this is the final docs/thesis sprint, pass those docs/thesis tickets as normal `--infra-ticket` entries with concrete titles and refine them after scaffolding
-- for implementation sprints before the final docs/thesis sprint, keep the tickets focused on code and implementation guardrails
+- do not rely on the script to invent documentation work
+- when the agent infers that this is the final documentation sprint, pass those documentation tickets as normal `--infra-ticket` entries with concrete titles and refine them after scaffolding
+- for implementation sprints before the final documentation sprint, keep the tickets focused on code and implementation guardrails
 
 The script also accepts legacy `--epic-dir` as an alias for `--prd-dir`, but new instructions should use `--prd-dir`.
 
@@ -195,7 +195,7 @@ The script will:
 - add a `Parent PRD` metadata link to every generated ticket
 - group execution order by category
 - append `cleanup` and `manual QA` at the end if they are missing
-- preserve agent-provided docs/thesis tickets as normal `INFRA` tickets instead of adding them automatically
+- preserve agent-provided documentation tickets as normal `INFRA` tickets instead of adding them automatically
 
 ### 7. Refine the generated docs
 
@@ -212,7 +212,7 @@ At minimum, refine:
 - dependency graph if the default sequential structure is too naive
 - `cleanup` so it focuses on touched dead code, stale references, temporary instrumentation, and naming drift exposed by the sprint
 - `manual QA` so it names the actual routes, flows, or product surfaces to verify, and so it explicitly says to update `epic.md` to `- Status: DONE` when the QA run closes the entire epic
-- docs/thesis tickets, only when present, so they name the evidence to incorporate, write only academically rigorous material when touching thesis content, document implementation at a high level, and fill missing context by considering the PRD, epic, sprint tickets, and all previous related work already completed in the repo
+- documentation tickets, only when present, so they name the evidence to incorporate, use precise pharmaceutical-domain language, document user-facing behavior, and fill missing context by considering the PRD, epic, sprint tickets, and all previous related work already completed in the repo
 
 ### 8. Keep the category and closing shape explicit
 
@@ -236,36 +236,35 @@ Use the same spirit across PRD feature folders:
 - `manual QA` must explicitly use Playwright MCP when the affected surface is a web UI or browser flow
 - when `manual QA` is the final validation ticket for the whole epic, it must update `docs/prd/<feature-slug>/epic.md` from `- Status: TODO` to `- Status: DONE` after all QA issues are fixed and revalidated
 
-### 9. Infer final docs/thesis work automatically
+### 9. Infer final documentation work automatically
 
-Do not create docs or thesis tickets in every sprint. The agent must infer whether the epic needs a final docs/thesis sprint from `PRD.md`, `epic.md`, the sprint plan, affected product behavior, and the current repo state.
+Do not create documentation tickets in every sprint. The agent must infer whether the epic needs a final documentation sprint from `PRD.md`, `epic.md`, the sprint plan, affected product behavior, and the current repo state.
 
-Create a final docs/thesis sprint only when the epic produces meaningful material for end-user docs, pharmaceutical-domain documentation, or the academic thesis. Good signals include:
+Create a final documentation sprint only when the epic produces meaningful material for end-user docs or pharmaceutical-domain documentation. Good signals include:
 
 - new or changed pharmaceutical workflows, such as inventory, sales, billing, traceability, reporting, validation, or regulated operational behavior
 - user-facing behavior that must be reflected in `apps/docs`
-- architectural, data-flow, validation, or limitation evidence that materially supports the thesis case study
-- PRD or `epic.md` notes that explicitly identify documentation or thesis impact
+- architectural, data-flow, validation, or limitation evidence that materially improves user-facing documentation
+- PRD or `epic.md` notes that explicitly identify documentation impact
 - a completed implementation sequence where the remaining work is synthesizing evidence rather than writing more code
 
-Do not create a docs/thesis sprint when the epic is only:
+Do not create a documentation sprint when the epic is only:
 
-- a functional refactor with no user-facing or academic documentation impact
+- a functional refactor with no user-facing documentation impact
 - internal cleanup, naming consolidation, type tightening, or dead-code removal
-- implementation-only plumbing that does not change the case study, domain behavior, validation strategy, or end-user docs
+- implementation-only plumbing that does not change domain behavior, validation strategy, or end-user docs
 - speculative documentation work unsupported by accepted decisions or implemented evidence
 
-If the evidence is ambiguous, prefer not to create docs/thesis tickets. Record the assumption in the sprint README or `epic.md` notes instead of inventing documentation work.
+If the evidence is ambiguous, prefer not to create documentation tickets. Record the assumption in the sprint README or `epic.md` notes instead of inventing documentation work.
 
-When docs/thesis work is inferred:
+When documentation work is inferred:
 
 - create it as the final sprint for the epic, not as a trailing ticket in every implementation sprint
-- pass docs/thesis tasks to the scaffolder as normal `INFRA` tickets with concrete titles
-- keep that sprint focused on documentation, thesis synthesis, evidence mapping, and final status closure
-- use [$thesis-writing](D:/ProyectoDeGradoUDABOL/.agents/skills/thesis-writing/SKILL.md) before editing thesis content
-- write thesis updates in academically rigorous Spanish and describe implementation only at a high level: architecture decisions, data flow, validation strategy, limitations, and contribution to the research or system objectives
+- pass documentation tasks to the scaffolder as normal `INFRA` tickets with concrete titles
+- keep that sprint focused on user-facing documentation, evidence mapping, and final status closure
+- use precise Spanish and specialized pharmaceutical terminology appropriate for the affected workflow
 - do not include unsupported claims, marketing language, code dumps, operational chatter, low-level implementation logs, or explanations of how the codebase is structured
-- if the thesis document lacks needed context, infer the academic framing from the PRD, epic, sprint docs, accepted decisions, and previous implemented work; ask the developer only when the missing information would materially change the academic claim, scope, or interpretation
+- if the documentation lacks needed context, infer the operational framing from the PRD, epic, sprint docs, accepted decisions, and previous implemented work; ask the developer only when the missing information would materially change the documented behavior, scope, or interpretation
 
 ## Default conventions
 
@@ -284,7 +283,7 @@ Use these defaults unless the PRD feature folder already uses a different explic
 - `manual QA` depends on `cleanup`
 - the generated `manual QA` ticket should mention Playwright MCP explicitly when browser-based verification applies
 - the generated `manual QA` ticket should mention closing `epic.md` with `- Status: DONE` when that QA ticket is the final epic validation step
-- docs/thesis tickets are not generated by default; when inferred, they should be normal `INFRA` tickets in the final docs/thesis sprint and should depend on the relevant completed implementation or validation tickets
+- documentation tickets are not generated by default; when inferred, they should be normal `INFRA` tickets in the final documentation sprint and should depend on the relevant completed implementation or validation tickets
 
 ## When to stop and ask the user
 
