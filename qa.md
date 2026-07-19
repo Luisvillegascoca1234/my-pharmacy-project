@@ -1,351 +1,680 @@
-# Smoke test manual de la app
+# Plan integral de QA de la aplicación farmacéutica
 
-Objetivo: validar rápidamente que los flujos principales abren, cargan datos, guardan registros básicos y mantienen navegación estable desde el navegador.
+## 1. Propósito
 
-## Datos de acceso
+Validar de principio a fin que la aplicación permita operar una jornada farmacéutica V1 con datos íntegros, trazabilidad por lote, dispensación FEFO, control de caja, permisos por rol y evidencia de auditoría; además, contrastar cada comportamiento visible con la aplicación de documentación y su manual de usuario.
 
-- App operativa: `http://localhost:5173`
-- Documentación: `http://localhost:3001`
-- Usuario semilla: `admin@admin.com`
-- Contraseña semilla: `admin`
+Este documento define la ejecución. No registra todavía resultados de pruebas.
 
-> Si tu Vite levantó otro puerto, usa el que aparece en la terminal del dev server.
+## 2. Resultado esperado del ciclo
 
-## Criterio general de aprobación
+Al terminar el ciclo debe ser posible responder con evidencia:
 
-Marca el smoke test como aprobado si:
+- si una farmacia de una sola sucursal puede preparar catálogos, abastecer inventario, vender, cobrar, anular, cerrar caja, gestionar una devolución administrativa y consultar sus resultados;
+- si toda entrada o salida conserva producto, unidad base, lote, cantidad, costo, usuario, fecha, motivo y documento de origen;
+- si cada rol ve y ejecuta únicamente las operaciones autorizadas;
+- si los totales de inventario, caja, reportes y exportaciones coinciden con las operaciones realizadas;
+- si el manual describe fielmente la interfaz, las reglas y las limitaciones vigentes;
+- si las funciones incompletas de facturación están correctamente delimitadas y no se presentan como facturación fiscal real.
 
-- Puedes iniciar sesión y cerrar sesión sin errores.
-- El dashboard indica que el servidor está en línea.
-- Las secciones principales cargan sin pantalla en blanco.
-- Puedes crear al menos un proveedor, una categoría/unidad, un producto y una compra en borrador.
-- Los filtros y búsquedas no rompen las listas.
-- La documentación abre, busca contenido y muestra páginas internas.
+## 3. Alcance
 
-## 1. Acceso y sesión
+### 3.1 Incluido
 
-1. Abre `http://localhost:5173`.
-2. Confirma que si no hay sesión activa te redirige a `/login`.
-3. En la pantalla **Iniciar sesión**, verifica que estén precargados:
-   - Correo electrónico: `admin@admin.com`
-   - Contraseña: `admin`
-4. Presiona **Iniciar sesión**.
-5. Resultado esperado: entras al **Dashboard operativo**.
-6. Abre `/logout` desde la barra de dirección.
-7. Resultado esperado: la sesión se cierra y vuelves al flujo de login.
-8. Inicia sesión nuevamente para continuar el smoke test.
+- Inicio y cierre de sesión.
+- Navegación, rutas directas y conservación de sesión.
+- Dashboard y estados de servicio.
+- Usuarios, roles fijos y facultades.
+- Unidades, categorías, productos y conversiones.
+- Proveedores.
+- Compras en borrador, recepción y anulación cuando corresponda.
+- Inventario por lote, vencimiento, movimientos, ajustes y alertas.
+- Apertura y cierre de caja.
+- Venta POS en efectivo y comprobante interno.
+- Carritos pendientes.
+- Supervisión operativa.
+- Anulación de venta con caja abierta.
+- Factura preparada interna y su cancelación administrativa.
+- Devolución administrativa total posterior al cierre de caja.
+- Reportes, exportaciones CSV y auditoría.
+- Permisos de Superadministrador, Administrador y Vendedor.
+- Validaciones funcionales, consistencia transaccional, accesibilidad básica, adaptación responsive, seguridad operativa, rendimiento percibido y manejo de errores.
+- Navegación, búsqueda y exactitud de la aplicación de documentación.
 
-## 2. Dashboard
+### 3.2 Facturación: alcance parcial aceptado
 
-1. Entra a **Dashboard**.
-2. Verifica que se muestren las tarjetas:
-   - Ventas de hoy
-   - Stock crítico
-   - Compras abiertas
-   - Facturas observadas
-3. En **Preparación del sistema**, confirma que aparezca **Servidor en línea**.
-4. Verifica que se muestren las alertas operativas iniciales.
-5. Resultado esperado: no hay alerta de servidor no disponible ni pantalla de carga permanente.
+La facturación fiscal real está incompleta por decisión de alcance y esto **no bloquea la aprobación de V1**.
 
-## 3. Navegación lateral y módulos iniciales
+Se valida como capacidad V1:
 
-1. Recorre el menú lateral principal.
-2. Abre estas secciones y confirma que cada una carga título, descripción y contenido:
-   - Punto de venta
-   - Caja
-   - Devoluciones y anulaciones
-   - Alertas
-   - Lotes y stock
-   - Movimientos
-   - Ajustes manuales
-   - Facturas SIAT
-   - Configuración SIAT
-   - Reportes
-   - Exportaciones CSV
-   - Auditoría
-   - Roles y permisos
-   - Configuración
-3. Resultado esperado: cada ruta debe renderizar una pantalla informativa, sin errores de navegación.
+- preparación de una factura interna desde una venta elegible;
+- correlativo y datos comerciales mínimos;
+- estados y detalle del documento interno;
+- cancelación administrativa con motivo por Admin o Superadministrador;
+- conservación de evidencia y auditoría;
+- separación visible entre venta, comprobante interno POS y factura preparada interna.
 
-## 4. Unidades y categorías
+Se registra como limitación aceptada, no como defecto:
 
-1. Abre **Unidades y conversiones**.
-2. Verifica que la tabla de unidades semilla cargue registros como `Unidad`, `Caja` o `Blister`.
-3. En **Nueva unidad**, registra:
-   - Nombre: `Smoke unidad`
-   - Abreviatura: `SMK`
-4. Presiona **Guardar unidad**.
-5. Resultado esperado: la unidad aparece en la tabla.
-6. En **Nueva categoría**, registra:
-   - Nombre: `Smoke categoria`
-   - Descripción: `Categoria creada durante smoke test`
-7. Presiona **Guardar categoría**.
-8. Resultado esperado: la categoría aparece en la tabla.
+- ausencia de emisión fiscal real;
+- ausencia de integración con SIAT/SIN;
+- ausencia de CUF, CUFD funcional, QR fiscal y XML tributario;
+- ausencia de envío, validación, rechazo o anulación tributaria real;
+- configuración SIAT informativa o incompleta.
 
-## 5. Proveedores
+Sí constituye defecto:
 
-1. Abre **Proveedores**.
-2. Si no hay registros, confirma que se muestre el estado vacío con opción para crear proveedor.
-3. Presiona **Nuevo proveedor**.
-4. Registra:
-   - Razón social: `Smoke Farma SRL`
-   - NIT: `123456789`
-   - Teléfono: `70000000`
-   - Contacto: `QA Manual`
-   - Dirección: `Av. Smoke Test 123`
-5. Presiona **Guardar**.
-6. Resultado esperado: vuelves a la lista de proveedores y ves `Smoke Farma SRL`.
-7. Usa el buscador con `Smoke`.
-8. Resultado esperado: la lista filtra el proveedor creado.
-9. Cambia el filtro de estado entre **Todos**, **Activo** e **Inactivo**.
-10. Resultado esperado: el filtro responde sin romper la tabla.
-11. Abre **Ver** o **Editar** sobre el proveedor creado.
-12. Cambia el teléfono a `71111111` y guarda.
-13. Resultado esperado: vuelves a la lista y el proveedor sigue visible.
+- llamar “factura fiscal”, “documento validado por SIAT” o equivalente a un documento interno;
+- mostrar CUF, QR o respuesta del SIN ficticios como reales;
+- permitir que un Vendedor cancele una factura preparada;
+- hacer que preparar o cancelar el documento interno cambie inventario, pago o caja sin una regla aprobada;
+- contradecir en la aplicación o el manual los límites anteriores.
 
-## 6. Productos
+### 3.3 Fuera de alcance del ciclo
 
-1. Abre **Productos**.
-2. Confirma que se vean las métricas **Total**, **Activos** y **Con receta**.
-3. En **Nuevo producto**, usa estos datos:
-   - Código de barras: `SMOKE-001`
-   - Nombre comercial: `Paracetamol Smoke 500 mg`
-   - Principio activo: `Paracetamol`
-   - Categoría: `Smoke categoria` o cualquier categoría disponible
-   - Unidad base: `Unidad` o cualquier unidad disponible
-   - Proveedor: `Smoke Farma SRL` o cualquier proveedor disponible
-   - Tipo: `Medicamento`
-   - Precio de venta: `12.50`
-4. Deja activas las opciones inventariables por defecto.
-5. Presiona **Guardar**.
-6. Resultado esperado: el producto aparece en la lista.
-7. Busca `Paracetamol Smoke`.
-8. Resultado esperado: la búsqueda filtra el producto.
-9. Presiona **Editar** en el producto.
-10. Cambia el precio de venta a `13.00` y guarda.
-11. Resultado esperado: el producto queda actualizado en la tabla.
-12. Selecciona nuevamente el producto y revisa **Conversiones**.
-13. Agrega una conversión solo si hay otra unidad disponible, guarda con **Actualizar**.
-14. Resultado esperado: no se muestra error de conversión.
+- Multi-sucursal.
+- Crédito, cuentas por cobrar y pagos mixtos.
+- Pago real con QR, tarjeta o transferencia.
+- Pacientes e historia clínica.
+- Devoluciones parciales.
+- Reapertura de cajas cerradas.
+- Facturación fiscal SIAT real.
+- Pruebas de dispositivos físicos, impresoras fiscales o lectores de código de barras no conectados al entorno.
 
-## 7. Compras
+## 4. Fuentes de verdad y regla de contraste
 
-Antes de esta sección debe existir al menos un proveedor activo y un producto activo asociado a ese proveedor.
+Se usarán en conjunto:
 
-1. Abre **Compras**.
-2. Presiona **Nueva compra**.
-3. En **Encabezado**, selecciona:
-   - Proveedor: `Smoke Farma SRL`
-   - Fecha comercial: la fecha actual
-   - Notas: `Compra creada durante smoke test`
-4. En **Items**, presiona **Agregar item** si no hay fila disponible.
-5. En la primera fila selecciona:
-   - Producto: `Paracetamol Smoke 500 mg`
-   - Unidad: la unidad disponible
-   - Cantidad: `10`
-   - Costo unitario: `8.50`
-   - Lote: `LOT-SMOKE-001`
-   - Vencimiento: una fecha futura, por ejemplo `2027-12-31`
-6. Verifica que el **Total visual** se actualice.
-7. Presiona **Guardar borrador**.
-8. Resultado esperado: quedas en el detalle de la compra y el estado es **Borrador**.
-9. Vuelve a **Compras**.
-10. Busca `Smoke` o filtra por proveedor.
-11. Resultado esperado: la compra aparece en la lista.
-12. Abre la compra con **Ver**.
-13. Presiona **Recibir** o **Recibir compra**.
-14. En el diálogo, agrega la nota `Recepcion smoke test` y confirma.
-15. Resultado esperado: la compra pasa a estado **Recibida** y queda en modo solo lectura.
+1. reglas operativas y farmacéuticas aprobadas;
+2. comportamiento observable de la aplicación;
+3. contratos y respuestas de los servicios;
+4. manual de usuario de la aplicación de documentación.
 
-## 8. Usuarios
+Ante una diferencia se clasificará así:
 
-1. Abre **Usuarios**.
-2. Verifica que carguen las métricas **Total**, **Activos** y **Bloqueados**.
-3. Crea un usuario de prueba:
-   - Nombre completo: `Usuario Smoke`
-   - Correo electrónico: `smoke.user@example.com`
-   - Rol: cualquier rol disponible
-   - Contraseña inicial: `smoke123`
-4. Presiona **Crear usuario**.
-5. Resultado esperado: el usuario aparece en la lista.
-6. Usa el buscador con `smoke.user`.
-7. Resultado esperado: la lista filtra el usuario.
-8. Presiona **Editar**, cambia el nombre a `Usuario Smoke Editado` y guarda.
-9. Presiona **Resetear**, define `smoke456` en ambos campos y guarda.
-10. Cambia el estado con **Bloquear**, **Activar** o **Desactivar**.
-11. Resultado esperado: el badge de estado cambia sin error.
+- **Defecto funcional:** la aplicación incumple una regla aprobada.
+- **Defecto documental:** la aplicación funciona según la regla aprobada, pero el manual dice otra cosa, omite una precondición o usa una denominación incorrecta.
+- **Brecha de alcance:** el manual o la interfaz promete una capacidad todavía no aprobada o implementada.
+- **Limitación aceptada:** comportamiento expresamente excluido, como SIAT real.
+- **Ambigüedad:** no existe una regla suficiente para decidir; debe resolverse antes de aprobar el caso.
 
-## 9. Validaciones rápidas negativas
+La documentación solo se considera aprobada cuando describe comportamiento comprobado. No se corregirá una falla funcional cambiando el manual para ocultarla.
 
-1. En **Proveedores > Nuevo proveedor**, intenta guardar con razón social de un solo carácter.
-2. Resultado esperado: aparece validación y no se guarda.
-3. En **Productos**, intenta guardar un producto sin nombre comercial.
-4. Resultado esperado: el navegador o la interfaz impide guardar.
-5. En **Compras > Nueva compra**, intenta guardar sin proveedor o sin item completo.
-6. Resultado esperado: se muestra una alerta de corrección y no se crea una compra inválida.
-7. En **Usuarios**, intenta crear un usuario con contraseña menor a 6 caracteres.
-8. Resultado esperado: el formulario impide guardar o muestra error.
+## 5. Entorno, accesos y preparación
 
-## 10. Responsive básico
+### 5.1 Entornos
 
-1. En el navegador, cambia a una vista angosta tipo móvil.
-2. Revisa:
-   - Login
-   - Dashboard
-   - Productos
-   - Proveedores
-   - Compras
-3. Resultado esperado: no hay textos montados, controles inaccesibles ni tablas que rompan la navegación general.
+- Aplicación operativa: `http://localhost:5173`.
+- Aplicación de documentación: `http://localhost:3001`.
+- Servicios locales y base de datos del entorno de desarrollo.
 
-## 11. Documentación
+Si un servicio utiliza otro puerto, se registrará el valor real en la evidencia de ejecución.
 
-1. Abre `http://localhost:3001`.
-2. Verifica que cargue la portada de documentación.
-3. Entra a la sección de documentación.
-4. Abre estas páginas:
-   - Primeros pasos
-   - Conceptos
-   - Catálogo farmacéutico
-   - Unidades y conversiones
-   - Proveedores
-   - Compras recibidas
-   - Ventas POS
-   - Inventario por lote
-   - Facturación SIAT
-   - Glosario farmacéutico
-5. Usa la búsqueda con términos:
-   - `lote`
-   - `FEFO`
-   - `SIAT`
-   - `proveedor`
-6. Resultado esperado: la búsqueda devuelve resultados relevantes y las páginas internas renderizan contenido.
+### 5.2 Usuarios semilla
 
-## 12. Flujo normal de trabajo de punta a punta
+| Rol | Usuario | Contraseña |
+| --- | --- | --- |
+| Superadministrador | `admin@admin.com` | `admin` |
+| Administrador | `admin@farmacia.local` | `admin` |
+| Vendedor | `vendedor@farmacia.local` | `admin` |
 
-Este recorrido simula una jornada operativa normal en una farmacia: preparar catálogos, abastecer inventario, vender, controlar caja, revisar alertas y cerrar con reportes.
+Las credenciales son exclusivas del entorno local de prueba.
 
-### 12.1 Preparación administrativa inicial
+### 5.3 Navegadores y tamaños mínimos
 
-1. Inicia sesión como `admin@admin.com`.
-2. Abre **Usuarios** y confirma que exista al menos un usuario activo con rol operativo.
-3. Abre **Unidades y conversiones**.
-4. Confirma que existan unidades farmacéuticas base como `Unidad`, `Caja`, `Blister`, `Frasco` o equivalentes.
-5. Crea las unidades o categorías faltantes para operar medicamentos e insumos.
-6. Resultado esperado: la farmacia queda con catálogos mínimos para registrar productos.
+- Chromium de escritorio: 1440 × 900 y 1280 × 720.
+- Chromium móvil: 390 × 844.
+- Firefox o equivalente como segunda comprobación de escritorio.
 
-### 12.2 Alta de proveedor
+### 5.4 Preparación de datos
 
-1. Abre **Proveedores**.
-2. Registra o valida un proveedor activo con razón social, NIT, contacto, teléfono y dirección.
-3. Busca el proveedor por razón social o NIT.
-4. Abre el detalle del proveedor y confirma que el estado sea **Activo**.
-5. Resultado esperado: el proveedor queda disponible para compras y recepciones.
+Usar el prefijo único `QA-AAAAMMDD-XX` en nombres, códigos, lotes y documentos. Preparar:
 
-### 12.3 Alta de producto farmacéutico
+- una categoría de medicamento;
+- unidades `Tableta`, `Blíster` y `Caja`;
+- conversiones 1 blíster = 10 tabletas y 1 caja = 100 tabletas;
+- un proveedor activo y uno inactivo;
+- un medicamento activo con lote y vencimiento obligatorios;
+- dos lotes vigentes del mismo medicamento, con vencimientos distintos;
+- un lote vencido y uno bloqueado o no apto;
+- stock próximo al mínimo y stock agotado;
+- usuarios activos de los tres roles;
+- fechas y montos que permitan calcular manualmente los resultados.
 
-1. Abre **Productos**.
-2. Registra un producto con nombre comercial, principio activo, categoría, unidad base, proveedor, precio de venta y datos sanitarios disponibles.
-3. Para medicamentos inventariables, deja activo:
-   - Inventariable
-   - Exige lote
-   - Exige vencimiento
-4. Guarda el producto.
-5. Busca el producto por nombre comercial, principio activo o código de barras.
-6. Si corresponde, configura conversiones de presentación, por ejemplo `Caja` hacia `Unidad` o `Blister` hacia `Comprimido`.
-7. Resultado esperado: el producto queda listo para recibir stock por lote y vencimiento.
+Antes del ciclo integral se debe partir de una base conocida. Se guardará una referencia del estado inicial y se evitará reutilizar datos de una ejecución anterior.
 
-### 12.4 Registro de compra y recepción de inventario
+## 6. Criterios de entrada
 
-1. Abre **Compras**.
-2. Crea una **Nueva compra**.
-3. Selecciona proveedor activo y fecha comercial.
-4. Agrega productos asociados al proveedor.
-5. Por cada producto inventariable registra cantidad, costo unitario, lote y fecha de vencimiento.
-6. Guarda la compra como **Borrador**.
-7. Revisa el detalle y confirma que el total visual sea correcto.
-8. Presiona **Recibir compra**.
-9. Agrega una nota de recepción y confirma.
-10. Resultado esperado: la compra pasa a **Recibida** y queda en solo lectura.
+El ciclo comienza cuando:
 
-### 12.5 Control de stock por lote
+- la aplicación operativa y la documentación abren sin error de arranque;
+- la base de datos responde;
+- los tres usuarios semilla pueden autenticarse;
+- se conoce la versión o revisión evaluada;
+- no hay migraciones o datos semilla pendientes;
+- la limitación de facturación fiscal real está aceptada;
+- existe un lugar para registrar defectos y adjuntar evidencias.
 
-1. Abre **Lotes y stock**.
-2. Busca el producto recibido.
-3. Verifica lote, cantidad disponible, vencimiento, costo y estado operativo.
-4. Resultado esperado: el stock recibido debería estar visible por lote para venta FEFO.
-5. Estado actual: esta pantalla todavía es informativa; si no muestra lotes reales, registrar pendiente en `TODO.md`.
+## 7. Evidencia y registro
 
-### 12.6 Venta normal en POS
+Cada caso debe guardar:
 
-1. Abre **Punto de venta**.
-2. Busca el producto por nombre, código interno o código de barras.
-3. Agrega el producto al carrito.
-4. Confirma que el sistema seleccione lote disponible con criterio FEFO.
-5. Ajusta cantidad.
-6. Confirma precio, subtotal, total y forma de pago.
-7. Finaliza la venta.
-8. Resultado esperado: la venta queda registrada, el stock del lote disminuye y se genera comprobante o factura según corresponda.
-9. Estado actual: esta pantalla todavía es informativa; registrar pendiente en `TODO.md`.
+- identificador del caso;
+- fecha, versión y navegador;
+- rol utilizado;
+- precondiciones y datos exactos;
+- pasos ejecutados;
+- resultado esperado y obtenido;
+- captura de pantalla para estados visuales;
+- respuesta relevante del servicio cuando exista error o inconsistencia;
+- identificadores de venta, compra, lote, caja, devolución o documento generado;
+- enlace a la página del manual contrastada;
+- estado: `APROBADO`, `FALLIDO`, `BLOQUEADO`, `NO APLICA` o `LIMITACIÓN ACEPTADA`.
 
-### 12.7 Caja y pagos
+No incluir contraseñas, tokens ni datos sensibles en capturas o reportes.
 
-1. Abre **Caja**.
-2. Inicia apertura de caja con monto inicial.
-3. Revisa ingresos por ventas, pagos y diferencias.
-4. Realiza cierre de caja.
-5. Resultado esperado: caja cerrada con total esperado, total contado, diferencia y responsable.
-6. Estado actual: esta pantalla todavía es informativa; registrar pendiente en `TODO.md`.
+## 8. Severidad y prioridad
 
-### 12.8 Facturación SIAT
+| Severidad | Criterio | Ejemplos |
+| --- | --- | --- |
+| S1 Bloqueante | Impide operar o compromete dinero, stock, trazabilidad o acceso. | Venta duplicada, stock negativo, acceso Vendedor a administración, cierre corrupto. |
+| S2 Alta | Regla principal incorrecta sin alternativa segura. | FEFO incorrecto, anulación sin reversa completa, reporte neto inconsistente. |
+| S3 Media | Función secundaria incorrecta o documentación materialmente inexacta. | Filtro erróneo, manual omite precondición, mensaje confuso que permite recuperarse. |
+| S4 Baja | Presentación o mejora sin impacto operativo relevante. | Alineación, texto menor, inconsistencia cosmética. |
 
-1. Abre **Configuración SIAT**.
-2. Verifica datos de punto de venta, actividad económica, CUIS, CUFD y parámetros de contingencia.
-3. Abre **Facturas SIAT**.
-4. Revisa estado de emisión, validación, observaciones, anulaciones y contingencias.
-5. Resultado esperado: las ventas facturables deben reflejar estado fiscal y respuesta del SIN.
-6. Estado actual: estas pantallas todavía son informativas; registrar pendiente en `TODO.md`.
+Toda brecha que presente un documento interno como fiscal se clasifica al menos S2.
 
-### 12.9 Devoluciones, anulaciones y ajustes
+## 9. Orden de ejecución
 
-1. Abre **Devoluciones y anulaciones**.
-2. Busca una venta o documento fiscal.
-3. Intenta registrar devolución o anulación con motivo obligatorio.
-4. Abre **Ajustes manuales**.
-5. Registra ajuste justificado sobre inventario si aplica.
-6. Resultado esperado: cada operación conserva trazabilidad, motivo, usuario y efecto en stock/caja/facturación.
-7. Estado actual: estas pantallas todavía son informativas; registrar pendiente en `TODO.md`.
+### Fase 0 — Línea base técnica
 
-### 12.10 Alertas, movimientos y auditoría
+1. Registrar versión, fecha, puertos y estado de servicios.
+2. Ejecutar las verificaciones automatizadas existentes de tipos, compilación y pruebas.
+3. Confirmar que no existan errores inesperados de consola, red o arranque.
+4. Registrar fallas de línea base antes de iniciar datos transaccionales.
 
-1. Abre **Alertas** y revisa vencimientos, stock bajo, caja abierta y observaciones SIAT.
-2. Abre **Movimientos** y revisa entradas, salidas, ajustes, devoluciones y mermas.
-3. Abre **Auditoría** y busca acciones sensibles por usuario, fecha y módulo.
-4. Resultado esperado: debe existir trazabilidad operativa para control farmacéutico y administrativo.
-5. Estado actual: estas pantallas todavía son informativas; registrar pendiente en `TODO.md`.
+Comandos previstos:
 
-### 12.11 Reportes y cierre del día
+```powershell
+pnpm typecheck
+pnpm build
+pnpm --filter @pharmacy-pos/backend test
+pnpm --filter @pharmacy-pos/frontend test
+```
 
-1. Abre **Reportes**.
-2. Revisa ventas del día, margen, rotación, vencimientos, compras y caja.
-3. Abre **Exportaciones CSV**.
-4. Genera exportaciones operativas con fechas ISO e IDs estables.
-5. Resultado esperado: se puede cerrar la jornada con reportes y datos exportables.
-6. Estado actual: estas pantallas todavía son informativas; registrar pendiente en `TODO.md`.
+Resultado de salida: línea base estable o lista explícita de bloqueos conocidos.
 
-## 13. Cierre del smoke test
+### Fase 1 — Smoke de acceso y navegación
 
-1. Vuelve a la app operativa.
-2. Cierra sesión con `/logout`.
-3. Resultado esperado: no puedes volver al dashboard sin autenticarte.
-4. Registra el resultado final:
-   - Aprobado
-   - Aprobado con observaciones
-   - Bloqueado
+1. Abrir la aplicación sin sesión y confirmar redirección a inicio de sesión.
+2. Probar credenciales válidas e inválidas.
+3. Confirmar mensajes comprensibles, sin revelar si una cuenta existe.
+4. Recargar una ruta interna y comprobar que la sesión y la ruta se restauran.
+5. Cerrar sesión y confirmar que volver atrás no reabre contenido protegido.
+6. Recorrer todas las opciones visibles por rol.
+7. Abrir rutas no autorizadas directamente y confirmar denegación sin fuga de datos.
+8. Abrir una ruta inexistente y confirmar redirección estable.
 
-## Observaciones encontradas
+Resultado de salida: autenticación y navegación utilizables para continuar.
 
-Usa esta sección durante la ejecución manual:
+### Fase 2 — Matriz de roles y facultades
 
-| Fecha | Pantalla | Paso | Resultado esperado | Resultado obtenido | Severidad |
-| --- | --- | --- | --- | --- | --- |
-|  |  |  |  |  |  |
+Ejecutar la matriz con navegación visible, ruta directa y operación real:
+
+| Área | Superadministrador | Administrador | Vendedor |
+| --- | --- | --- | --- |
+| POS, pendientes, caja y ventas propias | Permitido | Permitido | Permitido |
+| Supervisión de otros usuarios | Permitido | Permitido | Denegado |
+| Gestión de productos, unidades y categorías | Permitido | Permitido | Solo consulta permitida |
+| Movimientos con costo y ajustes | Permitido | Permitido | Denegado |
+| Proveedores y compras | Permitido | Permitido | Denegado |
+| Facturas preparadas y devoluciones | Permitido | Permitido | Denegado |
+| Reportes y CSV | Permitido | Permitido | Denegado |
+| Usuarios, auditoría y configuración global/SIAT | Permitido | Denegado | Denegado |
+| Roles y facultades | Consulta del catálogo fijo | Sin acceso | Sin acceso |
+
+Además:
+
+- comprobar que un Vendedor solo consulte su caja, ventas y pendientes;
+- comprobar que el servidor también rechace la operación prohibida aunque se intente sin usar la interfaz;
+- comprobar que cambiar, bloquear o desactivar un usuario tenga efecto en una nueva autenticación;
+- verificar que los roles institucionales no se creen, editen ni eliminen desde la interfaz.
+
+### Fase 3 — Catálogos farmacéuticos
+
+#### Unidades y categorías
+
+- crear, listar y buscar unidades y categorías;
+- rechazar nombres o abreviaturas inválidas y duplicadas;
+- validar conversiones positivas y coherentes;
+- comprobar que la unidad base siempre esté disponible;
+- confirmar que cambiar una conversión no altere el histórico de compras recibidas o ventas.
+
+#### Productos
+
+- crear medicamento con nombre comercial, principio activo, categoría, proveedor, unidad base, precio y requisitos sanitarios;
+- buscar por nombre, código y código de barras;
+- editar precio y datos permitidos;
+- activar e inactivar;
+- impedir duplicados y valores monetarios o cantidades inválidas;
+- exigir lote y vencimiento para productos inventariables;
+- confirmar que el Vendedor no modifique costos ni datos administrativos;
+- comprobar que un producto inactivo no pueda incorporarse a operaciones nuevas, sin perder su historial.
+
+Resultado de salida: catálogos válidos para abastecimiento.
+
+### Fase 4 — Proveedores y compras
+
+#### Proveedores
+
+- crear, consultar, editar, buscar, paginar y filtrar por estado;
+- validar razón social, NIT, teléfono y duplicados según reglas vigentes;
+- inactivar sin borrar historial;
+- impedir usar un proveedor inactivo en una compra nueva.
+
+#### Compra en borrador
+
+- crear una compra con varios productos y presentaciones;
+- comprobar conversión a unidad base y total monetario;
+- guardar, recargar, editar y volver a guardar;
+- verificar aviso de cambios pendientes;
+- confirmar que el borrador no cree stock ni movimientos;
+- probar campos incompletos, cantidades cero/negativas, lote vacío y vencimiento inválido.
+
+#### Recepción y anulación
+
+- recibir una compra válida una sola vez;
+- confirmar modo de solo lectura después de recibir;
+- confirmar creación de lotes y movimientos de entrada;
+- comprobar costo por lote y cantidades normalizadas;
+- impedir doble recepción;
+- probar anulación permitida y confirmar conservación histórica;
+- verificar que cualquier reversa sea atómica: o se completan todos los cambios o no se modifica nada.
+
+Resultado de salida: inventario abastecido con trazabilidad de origen.
+
+### Fase 5 — Inventario, kardex, ajustes y alertas
+
+#### Lotes y stock
+
+- localizar los lotes recibidos por producto, código y número de lote;
+- validar cantidad disponible, vencimiento, costo, valor y estado;
+- confirmar diferenciación entre vigente, próximo a vencer, vencido, agotado y bloqueado;
+- comprobar que el total por producto sea igual a la suma de lotes aptos.
+
+#### Movimientos y kardex
+
+- comprobar una entrada por cada capa recibida;
+- filtrar por producto, lote, tipo y fecha;
+- validar signo, cantidad base, costo, usuario, fecha, motivo y documento de origen;
+- reconciliar saldo inicial + entradas − salidas = saldo final.
+
+#### Ajustes manuales
+
+- ejecutar ajuste positivo y negativo con motivo válido;
+- impedir ajuste sin motivo, sin lote o con saldo final inválido;
+- impedir acceso del Vendedor;
+- confirmar movimiento y auditoría;
+- comprobar que no se alteren otros lotes.
+
+#### Alertas
+
+- provocar stock bajo, agotado, vencimiento próximo y lote vencido;
+- comprobar prioridad, producto, lote, vencimiento y cantidad;
+- confirmar que la alerta desaparezca o cambie al corregir la condición;
+- no exigir alertas fiscales SIAT reales en V1.
+
+Resultado de salida: stock explicable y alertas coherentes.
+
+### Fase 6 — Caja, POS, pendientes y FEFO
+
+#### Caja
+
+- abrir caja con monto inicial válido;
+- impedir una segunda caja abierta para el mismo responsable;
+- impedir venta sin caja abierta;
+- validar montos cero, negativos y formatos decimales;
+- confirmar que Admin y Superadministrador puedan supervisar y cerrar caja ajena según regla;
+- confirmar que una caja cerrada no se reabra.
+
+#### Carrito POS
+
+- buscar por nombre, código interno y código de barras;
+- agregar, quitar y cambiar cantidades;
+- impedir producto inactivo, lote vencido, bloqueado o sin stock vendible;
+- confirmar que el precio vigente se revalide al cobrar;
+- comprobar subtotales, total, monto recibido y cambio;
+- impedir cobro insuficiente o cantidades superiores al stock apto.
+
+#### FEFO
+
+- vender una cantidad cubierta por el lote con vencimiento más cercano;
+- vender una cantidad que requiera más de un lote;
+- confirmar que no se use el lote vencido o bloqueado;
+- comprobar el descuento exacto por capa y su costo real;
+- repetir con una presentación comercial y validar conversión a unidad base.
+
+#### Pendientes POS
+
+- guardar y retomar un carrito propio;
+- comprobar que no reserve stock ni congele precio;
+- cambiar stock o precio desde otro flujo y confirmar revalidación al cobrar;
+- impedir que un Vendedor vea o modifique pendientes ajenos;
+- permitir supervisión administrativa;
+- descartar un pendiente sin generar venta, pago, movimiento ni cambio de stock;
+- validar expiración a tres días cuando el mecanismo sea ejecutable en el entorno.
+
+#### Confirmación de venta
+
+- cobrar únicamente en efectivo;
+- confirmar venta, pago, comprobante interno y caja asociada;
+- comprobar que no se duplique al hacer doble clic, recargar o repetir una solicitud;
+- validar actualización de stock, movimientos, total esperado de caja y auditoría;
+- confirmar que el comprobante diga claramente que no es factura fiscal.
+
+Resultado de salida: una venta trazable y monetariamente consistente.
+
+### Fase 7 — Anulación operativa con caja abierta
+
+1. Seleccionar una venta propia del día con caja abierta.
+2. Intentar anular sin motivo y confirmar rechazo.
+3. Anular con motivo válido.
+4. Confirmar que la venta se conserve como anulada.
+5. Confirmar reversa del pago.
+6. Confirmar reposición a los mismos lotes consumidos, no a lotes alternativos.
+7. Confirmar movimientos compensatorios y auditoría.
+8. Confirmar reducción del total esperado de caja.
+9. Repetir las restricciones con venta ajena y cada rol.
+10. Cerrar la caja e intentar anular; debe rechazarse y orientar a devolución administrativa.
+
+Resultado de salida: reversa completa, atómica y auditable.
+
+### Fase 8 — Cierre de caja
+
+1. Registrar una combinación conocida de ventas vigentes y anuladas.
+2. Calcular manualmente el efectivo esperado neto.
+3. Cerrar con monto contado igual y validar diferencia cero.
+4. En otra caja, cerrar con sobrante o faltante y validar signo y monto.
+5. Confirmar responsable, usuario que cierra, fecha y estado.
+6. Verificar que el cierre no cambie al ejecutar devoluciones administrativas posteriores.
+7. Confirmar que no se admitan nuevas ventas en la caja cerrada.
+
+Resultado de salida: arqueo reproducible e histórico inmutable.
+
+### Fase 9 — Cierre administrativo
+
+#### Factura preparada interna
+
+- listar ventas elegibles;
+- preparar documento con datos mínimos válidos;
+- impedir duplicar el documento para la misma venta cuando la regla lo prohíba;
+- consultar detalle, correlativo, estado, cliente, productos, vendedor, caja y total;
+- cancelar con motivo como Admin y Superadministrador;
+- impedir cancelación como Vendedor;
+- confirmar que preparación y cancelación no alteren stock, pago ni cierre de caja;
+- revisar que toda la interfaz mantenga la advertencia de ausencia de emisión SIAT real.
+
+#### Devolución administrativa total
+
+- seleccionar una venta confirmada cuya caja esté cerrada;
+- validar elegibilidad y bloqueos;
+- impedir devolución parcial;
+- exigir motivo;
+- registrar devolución total y estado de reembolso;
+- reponer exactamente los lotes originales;
+- generar movimientos compensatorios y auditoría;
+- conservar inmutable el cierre histórico;
+- reflejar el efecto en resultados netos posteriores;
+- impedir duplicar la devolución;
+- validar interacción con una factura preparada existente según la regla visible.
+
+Resultado de salida: cierre administrativo consistente sin simular procesos fiscales.
+
+### Fase 10 — Reportes, CSV y auditoría
+
+#### Reportes
+
+Reconciliar con los identificadores creados durante el ciclo:
+
+- ventas brutas;
+- anulaciones;
+- devoluciones;
+- ventas netas;
+- inventario disponible valorizado por costo de lote;
+- productos próximos a vencer;
+- diferencias de caja.
+
+Validar filtros, intervalos inclusivos, zona horaria, estados vacíos, paginación y permisos.
+
+#### Exportaciones CSV
+
+- exportar ventas y movimientos con y sin filtros;
+- comprobar nombre, tipo de archivo y descarga;
+- validar encabezados, fechas ISO, codificación UTF-8 y caracteres españoles;
+- confirmar IDs estables y valores numéricos sin texto mezclado;
+- reconciliar cantidad de filas y totales con la pantalla y los datos del ciclo;
+- comprobar auditoría de la descarga;
+- confirmar que un Vendedor no pueda exportar.
+
+#### Auditoría
+
+- buscar por usuario, acción, entidad y fecha;
+- confirmar creación, edición y cambios de estado sensibles;
+- confirmar compra recibida, ajustes, venta, anulación, devolución, factura preparada/cancelada y descarga CSV;
+- validar datos anteriores/nuevos y metadatos sin exponer secretos;
+- confirmar acceso exclusivo de Superadministrador;
+- comprobar que los registros no se puedan editar ni borrar desde la aplicación.
+
+Resultado de salida: cifras reconciliadas y trazabilidad administrativa completa.
+
+### Fase 11 — Contraste sistemático con el manual de usuario
+
+La contrastación se realiza en paralelo visual: aplicación operativa a un lado y aplicación de documentación al otro.
+
+Para cada página del manual:
+
+1. abrir la ruta o módulo descrito;
+2. usar el rol indicado o inferido por el texto;
+3. preparar las precondiciones descritas;
+4. ejecutar literalmente los pasos del manual;
+5. comparar nombres de menú, títulos, botones, campos, filtros, estados y mensajes;
+6. comparar resultado funcional y efectos en inventario, caja y auditoría;
+7. confirmar que las restricciones y errores recuperables estén explicados;
+8. revisar enlaces internos, navegación siguiente/anterior y búsqueda;
+9. registrar una fila en la matriz de trazabilidad documental;
+10. clasificar cualquier diferencia como defecto funcional, documental, brecha, limitación aceptada o ambigüedad.
+
+#### Matriz mínima aplicación ↔ manual
+
+| Área de la aplicación | Páginas mínimas del manual |
+| --- | --- |
+| Acceso, navegación y dashboard | Primeros pasos; Guía de navegación general; Consejos operativos |
+| Roles, usuarios y facultades | Roles y facultades; Guía de usuarios; Guía de módulos administrativos |
+| Unidades, categorías y conversiones | Unidades y conversiones; Guía de unidades y categorías |
+| Productos | Catálogo farmacéutico; Guía de productos |
+| Proveedores | Proveedores; Guía de proveedores |
+| Compras | Compras recibidas; Guía de compras recibidas |
+| Lotes y stock | Inventario por lote; Guía de lotes y stock |
+| Movimientos y ajustes | Movimientos y kardex; Guía de movimientos y kardex; Guía de ajustes manuales |
+| Alertas | Alertas operativas; Guía de alertas operativas |
+| POS y pendientes | Ventas POS; Caja y pagos; Reglas transversales |
+| Anulaciones y devoluciones | Devoluciones y anulaciones; Reglas transversales |
+| Factura preparada | Facturación preparada; Glosario farmacéutico |
+| Reportes, CSV y auditoría | Reportes y exportaciones; Guía de módulos administrativos |
+
+#### Verificaciones propias de la aplicación de documentación
+
+- portada, índice y menú lateral completos;
+- todas las páginas abren sin error;
+- enlaces internos y anclas válidos;
+- búsqueda de `lote`, `FEFO`, `caja`, `anulación`, `devolución`, `comprobante interno` y `SIAT`;
+- resultados relevantes y sin páginas huérfanas;
+- lectura correcta en escritorio y móvil;
+- ausencia de texto cortado, tablas inaccesibles o bloques superpuestos;
+- terminología farmacéutica consistente;
+- ausencia de afirmaciones de SIAT real disponible;
+- distinción consistente entre comprobante interno POS, factura preparada interna y factura fiscal real;
+- ausencia de instrucciones que requieran una función no visible o no autorizada para el rol.
+
+Formato de trazabilidad:
+
+| ID | Página del manual | Paso/afirmación | Rol | Evidencia en app | Resultado | Clasificación | Defecto |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| DOC-001 |  |  |  |  |  |  |  |
+
+Resultado de salida: cobertura documental del 100 % de las páginas operativas y cero contradicciones materiales abiertas.
+
+### Fase 12 — Pruebas transversales
+
+#### Validación y errores
+
+- campos requeridos, mínimos, máximos, caracteres especiales y espacios;
+- cantidades y dinero con cero, negativos, demasiados decimales y valores extremos;
+- fechas pasadas, actuales, futuras y límites de vencimiento;
+- duplicados y operaciones repetidas;
+- errores 400, 401, 403, 404, 409, 422 y 500 con mensajes recuperables;
+- pérdida temporal del servicio durante lectura y durante una mutación;
+- reintento sin duplicar venta, pago, recepción, ajuste, devolución o factura preparada.
+
+#### Integridad y concurrencia
+
+- dos usuarios intentando vender el último stock;
+- dos intentos de recibir la misma compra;
+- dos intentos de cerrar o anular la misma caja/venta;
+- cambio de precio o stock mientras existe un pendiente;
+- confirmación de atomicidad ante una falla intermedia;
+- prohibición de stock negativo;
+- consistencia entre pantalla, movimientos, reportes y CSV.
+
+#### Seguridad operativa
+
+- control de acceso en menú, ruta y servicio;
+- sesión inválida o expirada;
+- ausencia de token y datos sensibles en mensajes o documentación;
+- entradas con contenido HTML o scripts tratadas como texto;
+- identificadores ajenos manipulados sin acceso indebido;
+- descargas restringidas por rol.
+
+#### Accesibilidad y usabilidad
+
+- recorrido completo con teclado;
+- foco visible y orden lógico;
+- etiquetas y mensajes asociados a campos;
+- botones con nombre accesible;
+- diálogos con foco contenido y retorno correcto;
+- contraste y significado no dependiente solo del color;
+- zoom al 200 % sin pérdida de operación crítica;
+- mensajes en español claro con terminología farmacéutica correcta.
+
+#### Responsive y compatibilidad
+
+- login, navegación, tablas, formularios, POS, caja y documentación en tamaños definidos;
+- menús y diálogos utilizables en móvil;
+- tablas con desplazamiento controlado;
+- ausencia de controles fuera de pantalla;
+- segunda comprobación en Firefox o equivalente.
+
+#### Rendimiento percibido
+
+- carga inicial sin espera indefinida;
+- indicadores visibles durante operaciones;
+- búsquedas y filtros con respuesta fluida;
+- listas grandes paginadas o manejables;
+- una acción no debe parecer disponible mientras continúa guardándose;
+- no se fijará un umbral numérico definitivo sin un entorno de rendimiento controlado; las demoras repetibles se registrarán con tiempo medido.
+
+### Fase 13 — Regresión y cierre
+
+1. Corregir defectos S1 y S2.
+2. Reejecutar el caso fallido y su recorrido completo relacionado.
+3. Ejecutar smoke de autenticación, compra, inventario, caja, venta, anulación/devolución y reportes.
+4. Repetir la contrastación de las páginas del manual afectadas.
+5. Ejecutar nuevamente las verificaciones automatizadas.
+6. Reconciliar datos finales.
+7. Emitir informe de cierre con aprobados, fallidos, limitaciones aceptadas y riesgos residuales.
+
+## 10. Recorrido maestro de principio a fin
+
+Este recorrido es obligatorio y no reemplaza los casos negativos:
+
+1. Superadministrador inicia sesión y valida roles fijos.
+2. Superadministrador crea o habilita un Administrador y un Vendedor.
+3. Administrador crea unidades, categoría, proveedor y medicamento.
+4. Administrador configura conversiones de Caja y Blíster hacia Tableta.
+5. Administrador crea una compra con dos lotes de vencimientos distintos.
+6. Administrador guarda el borrador y confirma que no exista stock nuevo.
+7. Administrador recibe la compra y comprueba lotes, entradas y alertas.
+8. Vendedor abre caja con un monto inicial conocido.
+9. Vendedor crea un pendiente y comprueba que no reserve stock.
+10. Administrador cambia el precio o afecta el stock apto; el Vendedor retoma y observa la revalidación.
+11. Vendedor cobra una venta que consuma más de un lote mediante FEFO.
+12. Se valida comprobante interno, pago, cambio, stock, movimientos y caja.
+13. Vendedor anula la venta con motivo mientras la caja está abierta.
+14. Se valida reversa al mismo lote, pago reversado, caja neta y auditoría.
+15. Vendedor registra una segunda venta válida y cierra caja.
+16. Se intenta anular después del cierre y se confirma el bloqueo.
+17. Administrador registra devolución administrativa total de la segunda venta.
+18. Se confirma reposición a lotes originales sin modificar el cierre histórico.
+19. Administrador prepara una factura interna de una venta elegible y confirma que no es fiscal.
+20. Administrador cancela el documento interno con motivo y sin impacto en stock/caja.
+21. Superadministrador revisa auditoría.
+22. Administrador reconcilia reportes y exportaciones CSV.
+23. Cada paso se reproduce desde el manual y se registra en la matriz documental.
+
+## 11. Criterios de salida
+
+La versión puede aprobarse cuando:
+
+- el recorrido maestro está aprobado;
+- no quedan defectos S1 ni S2 abiertos;
+- los S3 abiertos tienen riesgo, responsable y decisión explícita;
+- las verificaciones automatizadas previstas terminan correctamente o sus excepciones están aceptadas;
+- la matriz de permisos pasa en interfaz y servicio;
+- no hay stock negativo ni diferencias inexplicables de caja;
+- compra, venta, anulación y devolución conservan trazabilidad por lote;
+- reportes y CSV se reconcilian con las operaciones del ciclo;
+- todas las páginas operativas del manual fueron contrastadas;
+- no quedan contradicciones materiales entre manual y aplicación;
+- las limitaciones de facturación están visibles y no se confunden con SIAT real;
+- el informe final contiene evidencias y riesgos residuales.
+
+Clasificación final:
+
+- **APROBADO:** cumple todos los criterios de salida.
+- **APROBADO CON OBSERVACIONES:** solo quedan S3/S4 o limitaciones aceptadas sin riesgo crítico.
+- **NO APROBADO:** existe S1/S2, falla el recorrido maestro o no se puede demostrar integridad de stock/caja.
+- **BLOQUEADO:** el entorno o los datos impiden obtener evidencia suficiente.
+
+## 12. Entregables del ciclo
+
+- matriz de casos y resultados;
+- matriz de permisos por rol;
+- matriz aplicación ↔ manual;
+- evidencias visuales y datos de reconciliación;
+- archivos CSV verificados;
+- registro de defectos con severidad;
+- lista separada de limitaciones aceptadas de facturación;
+- informe final de QA con recomendación de liberación.
+
+## 13. Plantilla de informe final
+
+| Campo | Resultado |
+| --- | --- |
+| Versión evaluada |  |
+| Fecha y entorno |  |
+| Casos ejecutados / aprobados / fallidos / bloqueados |  |
+| Recorrido maestro |  |
+| S1 / S2 / S3 / S4 abiertos |  |
+| Cobertura de páginas del manual |  |
+| Reconciliación de inventario |  |
+| Reconciliación de caja |  |
+| Reconciliación de reportes y CSV |  |
+| Limitaciones aceptadas de facturación | Sin SIAT real, CUF, QR fiscal ni anulación tributaria |
+| Riesgos residuales |  |
+| Recomendación | APROBADO / APROBADO CON OBSERVACIONES / NO APROBADO / BLOQUEADO |
+
+## 14. Plantilla de defectos
+
+| ID | Severidad | Módulo | Rol | Precondición | Pasos | Esperado | Obtenido | Evidencia | Manual relacionado | Estado |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| QA-001 |  |  |  |  |  |  |  |  |  |  |

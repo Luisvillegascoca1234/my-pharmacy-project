@@ -29,6 +29,10 @@ Una venta, una compra, una factura o una devolución representan documentos o ev
 
 Las anulaciones, devoluciones y ajustes manuales requieren motivo. En una farmacia, estas acciones pueden afectar inventario sanitario, caja, reportes y documentos fiscales. El motivo permite distinguir una corrección operativa de una irregularidad o de una pérdida legítima.
 
+## Reintentos sin duplicación
+
+Una interrupción de red no debe convertir un reintento en una segunda operación. Al repetir la confirmación del mismo cobro, el sistema conserva una sola venta, un solo pago, una sola salida FEFO y un único efecto sobre el efectivo esperado de caja. Las recepciones, devoluciones y facturas preparadas también bloquean repeticiones incompatibles con su estado y trazabilidad.
+
 ## Resultado esperado
 
 El sistema debe preservar coherencia entre las áreas de la farmacia. Si se consulta una compra, un lote, una venta, un reporte o una auditoria, la información debe contar la misma historia desde perspectivas distintas.

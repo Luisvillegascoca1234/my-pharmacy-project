@@ -8,7 +8,7 @@ export const posFacade = {
     return posApi.searchProducts(buildPosProductSearchQuery(query), signal);
   },
 
-  confirmCashSale(items: PosCartItem[], receivedAmount: number): Promise<Sale> {
-    return posApi.createCashSale(buildCreateSalePayload(items, receivedAmount));
+  confirmCashSale(items: PosCartItem[], receivedAmount: number, idempotencyKey: string): Promise<Sale> {
+    return posApi.createCashSale(buildCreateSalePayload(items, receivedAmount), idempotencyKey);
   }
 };

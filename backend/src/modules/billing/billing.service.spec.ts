@@ -603,6 +603,7 @@ function makeSale(overrides: Partial<BillingSaleWithRelations> = {}): BillingSal
 
   return {
     id: saleId,
+    idempotencyKey: null,
     correlativeNumber: 1,
     correlativeCode: "V-000001",
     sellerUserId: "seller-1",

@@ -7,6 +7,7 @@ import {
   SalesListResponseSchema,
   SalesQuerySchema
 } from "@pharmacy-pos/shared";
+import { HttpError } from "../../common/http/http-error.js";
 import { SalesService } from "./sales.service.js";
 
 const salesService = new SalesService();
@@ -25,12 +26,29 @@ export async function listSales(request: Request, response: Response, next: Next
 export async function createSale(request: Request, response: Response, next: NextFunction) {
   try {
     const input = CreateSaleSchema.parse(request.body);
-    const sale = await salesService.createSale(input, getAuditContext(request));
+    const sale = await salesService.createSale(input, {
+      ...getAuditContext(request),
+      idempotencyKey: getRequiredIdempotencyKey(request)
+    });
 
     response.status(201).json(SaleSchema.parse(sale));
   } catch (error) {
     next(error);
   }
+}
+
+function getRequiredIdempotencyKey(request: Request) {
+  const idempotencyKey = request.get("Idempotency-Key")?.trim();
+
+  if (!idempotencyKey || !/^[A-Za-z0-9][A-Za-z0-9:_-]{7,127}$/.test(idempotencyKey)) {
+    throw new HttpError(
+      400,
+      "A valid Idempotency-Key header is required to confirm a sale.",
+      "SALE_IDEMPOTENCY_KEY_REQUIRED"
+    );
+  }
+
+  return idempotencyKey;
 }
 
 export async function getSale(request: Request, response: Response, next: NextFunction) {

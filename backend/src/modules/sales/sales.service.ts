@@ -75,6 +75,11 @@ export type SalesRepositoryPort = {
   createCashPayment(data: CreateCashPaymentData, client?: SalesTransactionClient): Promise<unknown>;
   incrementCashSessionExpectedAmount(id: string, amount: Prisma.Decimal, client?: SalesTransactionClient): Promise<unknown>;
   getSaleById(id: string, client?: SalesTransactionClient): Promise<SaleWithRelations | null>;
+  getSaleByIdempotencyKey(
+    sellerUserId: string,
+    idempotencyKey: string,
+    client?: SalesTransactionClient
+  ): Promise<SaleWithRelations | null>;
   markSaleCancelled(
     id: string,
     input: {
@@ -183,7 +188,22 @@ export class SalesService {
   }
 
   async createSale(input: CreateSale, context: AuditContext): Promise<Sale> {
-    return this.salesRepository.runInTransaction((tx) => this.createSaleInTransaction(input, context, tx));
+    try {
+      return await this.salesRepository.runInTransaction((tx) => this.createSaleInTransaction(input, context, tx));
+    } catch (error) {
+      if (context.actorUserId && context.idempotencyKey && isUniqueConstraintError(error)) {
+        const existingSale = await this.salesRepository.getSaleByIdempotencyKey(
+          context.actorUserId,
+          context.idempotencyKey
+        );
+
+        if (existingSale) {
+          return toSale(existingSale);
+        }
+      }
+
+      throw error;
+    }
   }
 
   async cancelSale(id: string, input: CancelSale, context: SaleAccessContext): Promise<CancelableSale> {
@@ -282,6 +302,14 @@ export class SalesService {
 
   async createSaleInTransaction(input: CreateSale, context: AuditContext, tx: SalesTransactionClient): Promise<Sale> {
     const actorUserId = this.getAuthenticatedUserId(context);
+    const existingSale = context.idempotencyKey
+      ? await this.salesRepository.getSaleByIdempotencyKey(actorUserId, context.idempotencyKey, tx)
+      : null;
+
+    if (existingSale) {
+      return toSale(existingSale);
+    }
+
     const normalizedItems = normalizeSaleItems(input.items);
     const receivedAmount = toMoney(input.payment.receivedAmount, "SALE_PAYMENT_RECEIVED_AMOUNT_INVALID");
 
@@ -312,6 +340,7 @@ export class SalesService {
         confirmedAt,
         correlativeCode: buildSaleCorrelativeCode(correlativeNumber),
         correlativeNumber,
+        idempotencyKey: context.idempotencyKey,
         sellerUserId: actorUserId,
         totalAmount,
         totalCost: ZERO_DECIMAL,
@@ -611,6 +640,10 @@ export class SalesService {
       });
     }
   }
+}
+
+function isUniqueConstraintError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
 function normalizeSaleItems(items: CreateSale["items"]) {

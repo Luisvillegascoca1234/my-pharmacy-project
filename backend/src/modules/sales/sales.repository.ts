@@ -195,6 +195,7 @@ export class SalesRepository {
   ): Promise<SaleWithRelations> {
     return client.sale.create({
       data: {
+        idempotencyKey: input.idempotencyKey,
         correlativeNumber: input.correlativeNumber,
         correlativeCode: input.correlativeCode,
         sellerUserId: input.sellerUserId,
@@ -281,6 +282,22 @@ export class SalesRepository {
   getSaleById(id: string, client: Client = prisma): Promise<SaleWithRelations | null> {
     return client.sale.findUnique({
       where: { id },
+      include: saleInclude
+    });
+  }
+
+  getSaleByIdempotencyKey(
+    sellerUserId: string,
+    idempotencyKey: string,
+    client: Client = prisma
+  ): Promise<SaleWithRelations | null> {
+    return client.sale.findUnique({
+      where: {
+        sellerUserId_idempotencyKey: {
+          sellerUserId,
+          idempotencyKey
+        }
+      },
       include: saleInclude
     });
   }

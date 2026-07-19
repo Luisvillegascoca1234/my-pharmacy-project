@@ -11,8 +11,12 @@ export const posApi = {
     return response.data;
   },
 
-  async createCashSale(input: CreateSale): Promise<Sale> {
-    const response = await axiosApi.post<Sale>("/sales", input);
+  async createCashSale(input: CreateSale, idempotencyKey: string): Promise<Sale> {
+    const response = await axiosApi.post<Sale>("/sales", input, {
+      headers: {
+        "Idempotency-Key": idempotencyKey
+      }
+    });
 
     return response.data;
   }

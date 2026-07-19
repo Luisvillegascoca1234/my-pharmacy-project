@@ -194,6 +194,32 @@ describe("SalesService payment and FEFO rules", () => {
     ]);
   });
 
+  it("returns the original sale when the same idempotency key is retried", async () => {
+    const salesRepository = makeRepositoryWithOpenSessionAndProduct({
+      salePrice: 10,
+      batches: [makeBatch({ id: "batch-1", availableQuantity: 5, baseUnitCost: 3.5 })]
+    });
+    const service = new SalesService(salesRepository);
+    const retryContext: AuditContext = {
+      ...auditContext,
+      idempotencyKey: "pos-retry-0001"
+    };
+    const input = {
+      items: [{ productId: "product-1", quantity: 2 }],
+      payment: { method: "cash" as const, receivedAmount: 25 }
+    };
+
+    const firstSale = await service.createSale(input, retryContext);
+    const retriedSale = await service.createSale(input, retryContext);
+
+    expect(retriedSale.id).toBe(firstSale.id);
+    expect(retriedSale.correlativeCode).toBe(firstSale.correlativeCode);
+    expect(salesRepository.sales).toHaveLength(1);
+    expect(salesRepository.payments).toHaveLength(1);
+    expect(salesRepository.inventoryMovements).toHaveLength(1);
+    expect(salesRepository.batches[0].availableQuantity).toEqual(decimal(3));
+  });
+
   it("splits a sale across several FEFO batches and uses each consumed layer cost", async () => {
     const salesRepository = makeRepositoryWithOpenSessionAndProduct({
       salePrice: 5,
@@ -868,12 +894,21 @@ class FakeSalesRepository implements SalesRepositoryPort {
     return correlativeNumber;
   }
 
+  async getSaleByIdempotencyKey(sellerUserId: string, idempotencyKey: string) {
+    return (
+      [...this.saleRecords.values()].find(
+        (sale) => sale.sellerUserId === sellerUserId && sale.idempotencyKey === idempotencyKey
+      ) ?? null
+    );
+  }
+
   async createConfirmedSale(input: CreateConfirmedSaleData, items: CreateConfirmedSaleItemData[]) {
     const sellerUser = requireRecord(this.userRecords, input.sellerUserId, "user");
     const cashSession = requireRecord(this.cashSessionRecords, input.cashSessionId, "cash session");
     const saleId = `sale-${this.saleRecords.size + 1}`;
     const sale: SaleWithRelations = {
       id: saleId,
+      idempotencyKey: input.idempotencyKey ?? null,
       correlativeNumber: input.correlativeNumber,
       correlativeCode: input.correlativeCode,
       sellerUserId: input.sellerUserId,
@@ -1271,6 +1306,7 @@ function makeSale(overrides: Partial<SaleWithRelations> = {}): SaleWithRelations
   const saleId = overrides.id ?? "sale-1";
   const sale: SaleWithRelations = {
     id: saleId,
+    idempotencyKey: null,
     correlativeNumber: 1,
     correlativeCode: "V-000001",
     sellerUserId,

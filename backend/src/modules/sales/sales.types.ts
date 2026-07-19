@@ -16,6 +16,7 @@ export type SalesTransactionClient = Prisma.TransactionClient;
 
 export type AuditContext = {
   actorUserId?: string;
+  idempotencyKey?: string;
   ipAddress?: string;
   userAgent?: string;
 };
@@ -58,6 +59,7 @@ export type CreateConfirmedSaleItemData = {
 };
 
 export type CreateConfirmedSaleData = {
+  idempotencyKey?: string;
   correlativeNumber: number;
   correlativeCode: string;
   sellerUserId: string;

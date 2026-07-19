@@ -5,6 +5,7 @@ import { posFacade } from "../facades/posFacade";
 import { calculatePosCartTotals, createPosCartItem, updatePosCartItemQuantity } from "../utils/posCart";
 import { createPosDataError } from "../utils/posErrors";
 import { normalizeNonNegativeMoney, normalizePositiveInteger } from "../utils/posMoney";
+import { createPosIdempotencyKey } from "../utils/posIdempotency";
 import type { PosDataError } from "../types/posTypes";
 import type { PosActions } from "./PosActions";
 import { buildPosSearchQuery, initialPosPagination, initialPosState, type PosState } from "./PosState";
@@ -81,6 +82,7 @@ export const usePosStore = create<PosStore>()(
             confirmedSale: null,
             error: quantityState.error,
             receipt: null,
+            saleAttemptKey: null,
             saleStatus: "idle"
           },
           false,
@@ -93,6 +95,7 @@ export const usePosStore = create<PosStore>()(
           {
             ...rebuildCartState([]),
             error: null,
+            saleAttemptKey: null,
             saleStatus: "idle"
           },
           false,
@@ -103,6 +106,7 @@ export const usePosStore = create<PosStore>()(
       async confirmCashSale(receivedAmount) {
         const state = get();
         const paymentReceivedAmount = normalizeNonNegativeMoney(receivedAmount);
+        const idempotencyKey = state.saleAttemptKey ?? createPosIdempotencyKey();
 
         if (state.cartItems.length === 0) {
           set({ error: createLocalError("cart-empty"), saleStatus: "error" }, false, "confirmCashSale:cartEmpty");
@@ -125,6 +129,7 @@ export const usePosStore = create<PosStore>()(
         set(
           {
             error: null,
+            saleAttemptKey: idempotencyKey,
             saleStatus: "loading"
           },
           false,
@@ -132,7 +137,7 @@ export const usePosStore = create<PosStore>()(
         );
 
         try {
-          const sale = await posFacade.confirmCashSale(state.cartItems, paymentReceivedAmount);
+          const sale = await posFacade.confirmCashSale(state.cartItems, paymentReceivedAmount, idempotencyKey);
 
           set(
             {
@@ -140,6 +145,7 @@ export const usePosStore = create<PosStore>()(
               confirmedSale: sale,
               error: null,
               receipt: sale.receipt,
+              saleAttemptKey: null,
               saleStatus: "success"
             },
             false,
@@ -162,6 +168,7 @@ export const usePosStore = create<PosStore>()(
           {
             ...rebuildCartState(nextItems),
             error: null,
+            saleAttemptKey: null,
             saleStatus: "idle"
           },
           false,
@@ -176,6 +183,7 @@ export const usePosStore = create<PosStore>()(
             confirmedSale: null,
             error: null,
             receipt: null,
+            saleAttemptKey: null,
             saleStatus: "idle"
           },
           false,
@@ -193,6 +201,7 @@ export const usePosStore = create<PosStore>()(
             confirmedSale: null,
             error: null,
             receipt: null,
+            saleAttemptKey: null,
             saleStatus: "idle"
           },
           false,
@@ -207,6 +216,7 @@ export const usePosStore = create<PosStore>()(
             confirmedSale: sale,
             error: null,
             receipt: sale.receipt,
+            saleAttemptKey: null,
             saleStatus: "success"
           },
           false,
@@ -319,6 +329,7 @@ export const usePosStore = create<PosStore>()(
           {
             ...rebuildCartState(nextItems),
             error: quantityState.error,
+            saleAttemptKey: null,
             saleStatus: "idle"
           },
           false,

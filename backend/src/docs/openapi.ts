@@ -1493,8 +1493,22 @@ export const openApiDocument = {
       post: {
         tags: ["Sales"],
         summary: "Create a confirmed cash sale",
-        description: "Requires authentication. Available to seller, admin, and superadmin users. The sale uses the authenticated user's open cash session, registers a cash payment, and discounts inventory by FEFO.",
+        description: "Requires authentication and an Idempotency-Key header. Available to seller, admin, and superadmin users. Reusing the same key for the same seller returns the original sale without duplicating payment, inventory movements, FEFO consumption, or cash totals.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "Idempotency-Key",
+            in: "header",
+            required: true,
+            description: "Stable key for one POS confirmation attempt. Reuse it only when retrying that attempt.",
+            schema: {
+              type: "string",
+              minLength: 8,
+              maxLength: 128,
+              pattern: "^[A-Za-z0-9][A-Za-z0-9:_-]{7,127}$"
+            }
+          }
+        ],
         requestBody: {
           required: true,
           content: {

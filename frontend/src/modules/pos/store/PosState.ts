@@ -23,6 +23,7 @@ export type PosState = {
   searchResults: PosProduct[];
   searchStatus: PosRequestStatus;
   saleStatus: PosRequestStatus;
+  saleAttemptKey: string | null;
 };
 
 export const initialPosState: PosState = {
@@ -36,6 +37,7 @@ export const initialPosState: PosState = {
   search: "",
   searchResults: [],
   searchStatus: "idle",
+  saleAttemptKey: null,
   saleStatus: "idle"
 };
 

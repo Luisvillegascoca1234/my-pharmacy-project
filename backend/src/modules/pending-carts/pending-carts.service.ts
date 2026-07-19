@@ -191,7 +191,10 @@ export class PendingCartsService {
           })),
           payment: input.payment
         },
-        context,
+        {
+          ...context,
+          idempotencyKey: `pending-cart:${cart.id}`
+        },
         tx
       );
       const convertedCart = await this.pendingCartsRepository.convertCart(cart.id, sale.id, now, tx);

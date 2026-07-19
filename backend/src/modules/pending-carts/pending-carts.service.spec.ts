@@ -390,7 +390,10 @@ describe("PendingCartsService lifecycle and revalidation rules", () => {
           items: [{ productId: "product-1", quantity: 1 }],
           payment: { method: "cash", receivedAmount: 10 }
         },
-        context: auditContext,
+        context: {
+          ...auditContext,
+          idempotencyKey: "pending-cart:pending-cart-1"
+        },
         tx: testTransactionClient
       }
     ]);

@@ -409,6 +409,7 @@ model CashSession {
 
 model Sale {
   id                   String            @id @default(cuid())
+  idempotencyKey       String?           @db.VarChar(128)
   correlativeNumber    Int               @unique
   correlativeCode      String            @unique
   sellerUserId         String
@@ -433,6 +434,7 @@ model Sale {
   updatedAt            DateTime          @updatedAt
 
   @@index([sellerUserId])
+  @@unique([sellerUserId, idempotencyKey])
   @@index([cancelledByUserId])
   @@index([cashSessionId])
   @@index([status])
