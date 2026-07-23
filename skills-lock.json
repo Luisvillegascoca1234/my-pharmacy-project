@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "batch-grill-me": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/in-progress/batch-grill-me/SKILL.md",
+      "computedHash": "574a9c661c3ba9682f33aa924c0638a9553c5b110e45f73d4c55efab0ecbe2fe"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
