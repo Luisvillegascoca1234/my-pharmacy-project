@@ -5,12 +5,22 @@ import {
   AUDIT_PATH,
   EXPORTS_PATH,
   REPORTS_PATH,
+  STOCK_PLANNING_PATH,
   getVisibleNavigationItems,
   isRouteAllowedForRole,
   navigationItems
 } from "./navigation";
 
 const analysisRoutes = [
+  {
+    label: "Planificación de stock",
+    path: STOCK_PLANNING_PATH,
+    roles: {
+      admin: true,
+      seller: false,
+      superadmin: true
+    }
+  },
   {
     label: "Reportes operativos",
     path: REPORTS_PATH,
@@ -74,6 +84,7 @@ const expectedNavigationByRole = {
     "purchases",
     "invoices",
     "returns",
+    "stockPlanning",
     "reports",
     "exports"
   ],

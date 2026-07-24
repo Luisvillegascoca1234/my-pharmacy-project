@@ -21,6 +21,7 @@ import { ReportsPage } from "@/pages/reports-page";
 import { RolesPage } from "@/pages/roles-page";
 import { ReturnsPage } from "@/pages/returns-page";
 import { SalesCancellationPage } from "@/pages/sales-cancellation-page";
+import { StockPlanningPage } from "@/pages/stock-planning-page";
 import { SupplierFormPage } from "@/pages/supplier-form-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
 import { UnitsPage } from "@/pages/units-page";
@@ -59,6 +60,7 @@ const routePages: Partial<Record<AppRouteKey, ComponentType>> = {
   roles: RolesPage,
   returns: ReturnsPage,
   sales: SalesCancellationPage,
+  stockPlanning: StockPlanningPage,
   supervision: AdministrativeSupervisionPage,
   suppliers: SuppliersPage,
   units: UnitsPage,

@@ -9,8 +9,13 @@ import { exportsFacade } from "./facades/exportsFacade";
 import { useExports } from "./hooks/use-exports";
 import { selectExportsActions, selectExportsState } from "./store/ExportsSelectors";
 import { resetExportsStore, useExportsStore } from "./store/ExportsStore";
-import type { CsvExportFile } from "./types/exportsTypes";
-import { createCsvExportDataError, getCsvExportStatusFromError } from "./utils/exportsErrors";
+import type { CsvExportFile, StockPlanningParquetFile } from "./types/exportsTypes";
+import {
+  createCsvExportDataError,
+  createStockPlanningParquetExportError,
+  getCsvExportStatusFromError,
+  getStockPlanningParquetStatusFromError
+} from "./utils/exportsErrors";
 
 vi.mock("@/api", async () => {
   const actual = await vi.importActual<typeof import("@/api")>("@/api");
@@ -40,6 +45,19 @@ const movementsFile: CsvExportFile = {
   contentType: "text/csv; charset=utf-8",
   fileName: "inventory-movements.csv",
   kind: "inventory-movements"
+};
+const parquetContent = new Uint8Array([80, 65, 82, 49]).buffer;
+const observationsFile: StockPlanningParquetFile = {
+  content: parquetContent,
+  contentType: "application/vnd.apache.parquet",
+  fileName: "stock-planning-time-series_2026-01-01_2026-03-31.parquet",
+  kind: "observations"
+};
+const resultsFile: StockPlanningParquetFile = {
+  content: parquetContent,
+  contentType: "application/vnd.apache.parquet",
+  fileName: "stock-planning-predictions_execution-1_2026-01-01_2026-03-31.parquet",
+  kind: "prediction-results"
 };
 
 function setAuthRole(roleName: "admin" | "seller" | "superadmin") {
@@ -250,6 +268,134 @@ describe("exports expected errors and role access", () => {
     expect(useExportsStore.getState().salesExportStatus).toBe("idle");
     expect(salesSpy).not.toHaveBeenCalled();
 
+    await probe.unmount();
+  });
+});
+
+describe("stock planning Parquet exports", () => {
+  beforeEach(() => {
+    resetExportsStore();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    resetExportsStore();
+  });
+
+  it("uses binary transport and passes the applicable filters to both endpoints", async () => {
+    mockedAxiosApi.get.mockResolvedValueOnce({ data: parquetContent }).mockResolvedValueOnce({ data: parquetContent });
+    const baseQuery = {
+      categoryId: "category-1",
+      fromDate: "2026-01-01",
+      productId: "product-1",
+      supplierId: "supplier-1",
+      toDate: "2026-03-31"
+    };
+
+    await exportsApi.downloadStockPlanningObservationsParquet(baseQuery);
+    await exportsApi.downloadStockPlanningResultsParquet({ ...baseQuery, executionId: "execution-1" });
+
+    expect(mockedAxiosApi.get).toHaveBeenNthCalledWith(1, "/exports/stock-planning/time-series.parquet", {
+      params: baseQuery,
+      responseType: "arraybuffer",
+      signal: undefined
+    });
+    expect(mockedAxiosApi.get).toHaveBeenNthCalledWith(2, "/exports/stock-planning/predictions.parquet", {
+      params: { ...baseQuery, executionId: "execution-1" },
+      responseType: "arraybuffer",
+      signal: undefined
+    });
+  });
+
+  it("normalizes filters in the facade and creates descriptive file names", async () => {
+    const observationsSpy = vi.spyOn(exportsApi, "downloadStockPlanningObservationsParquet").mockResolvedValue(parquetContent);
+    const resultsSpy = vi.spyOn(exportsApi, "downloadStockPlanningResultsParquet").mockResolvedValue(parquetContent);
+    const filters = {
+      categoryId: " category-1 ",
+      executionId: " execution-1 ",
+      fromDate: " 2026-01-01 ",
+      productId: "",
+      supplierId: " supplier-1 ",
+      toDate: " 2026-03-31 "
+    };
+
+    const observations = await exportsFacade.downloadStockPlanningObservationsParquet(filters);
+    const results = await exportsFacade.downloadStockPlanningResultsParquet(filters);
+
+    expect(observationsSpy).toHaveBeenCalledWith({
+      categoryId: "category-1",
+      fromDate: "2026-01-01",
+      productId: undefined,
+      supplierId: "supplier-1",
+      toDate: "2026-03-31"
+    }, undefined);
+    expect(resultsSpy).toHaveBeenCalledWith({
+      categoryId: "category-1",
+      executionId: "execution-1",
+      fromDate: "2026-01-01",
+      productId: undefined,
+      supplierId: "supplier-1",
+      toDate: "2026-03-31"
+    }, undefined);
+    expect(observations).toEqual(observationsFile);
+    expect(results).toEqual(resultsFile);
+  });
+
+  it("keeps observation and result states independent when one download exceeds the row limit", async () => {
+    vi.spyOn(exportsFacade, "downloadStockPlanningObservationsParquet").mockRejectedValue(
+      new ApiError({
+        code: "STOCK_PLANNING_EXPORT_ROW_LIMIT_EXCEEDED",
+        message: "Too many rows.",
+        statusCode: 413
+      })
+    );
+    vi.spyOn(exportsFacade, "downloadStockPlanningResultsParquet").mockResolvedValue(resultsFile);
+    useExportsStore.getState().setStockPlanningFilters({
+      executionId: "execution-1",
+      fromDate: "2026-01-01",
+      productId: "product-1",
+      toDate: "2026-03-31"
+    });
+
+    await useExportsStore.getState().downloadStockPlanningObservationsParquet();
+    await useExportsStore.getState().downloadStockPlanningResultsParquet();
+
+    const state = selectExportsState(useExportsStore.getState());
+    expect(state.stockPlanningFilters).toMatchObject({
+      executionId: "execution-1",
+      fromDate: "2026-01-01",
+      productId: "product-1",
+      toDate: "2026-03-31"
+    });
+    expect(state.stockPlanningObservationsStatus).toBe("error");
+    expect(state.stockPlanningObservationsError).toMatchObject({ code: "row-limit", statusCode: 413 });
+    expect(state.stockPlanningResultsStatus).toBe("success");
+    expect(state.stockPlanningResultsFile).toEqual(resultsFile);
+  });
+
+  it.each([
+    ["range-too-large", "STOCK_PLANNING_EXPORT_RANGE_TOO_LARGE", 400, "error"],
+    ["execution-not-found", "STOCK_PLANNING_EXPORT_EXECUTION_NOT_FOUND", 404, "error"],
+    ["forbidden", "FORBIDDEN", 403, "forbidden"]
+  ] as const)("maps Parquet error %s to its recoverable state", (expectedCode, apiCode, statusCode, expectedStatus) => {
+    const error = createStockPlanningParquetExportError(
+      new ApiError({ code: apiCode, message: "Expected Parquet error.", statusCode })
+    );
+    expect(error.code).toBe(expectedCode);
+    expect(getStockPlanningParquetStatusFromError(error)).toBe(expectedStatus);
+  });
+
+  it("blocks Parquet transport for seller users", async () => {
+    const observationsSpy = vi.spyOn(exportsFacade, "downloadStockPlanningObservationsParquet").mockResolvedValue(observationsFile);
+    const probe = await renderExportsHook("seller");
+
+    await act(async () => {
+      expect(await probe.value.downloadStockPlanningObservationsParquet()).toBeNull();
+    });
+
+    expect(probe.value.canDownloadExports).toBe(false);
+    expect(observationsSpy).not.toHaveBeenCalled();
+    expect(useExportsStore.getState().stockPlanningObservationsStatus).toBe("idle");
     await probe.unmount();
   });
 });

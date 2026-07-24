@@ -457,6 +457,9 @@ export function makeProductWithPurchaseRelations(
     requiresBatch: true,
     requiresExpiration: true,
     minimumStock: decimal(0),
+    stockCriticality: "normal",
+    stockCoverageDays: null,
+    preferredRestockUnitId: null,
     salePrice: decimal(10),
     status: "active",
     units: [

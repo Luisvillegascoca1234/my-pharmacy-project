@@ -15,6 +15,8 @@ import {
   SALES_CSV_FILE_NAME,
   useExports
 } from "@/modules/exports";
+import { useStockPlanning } from "@/modules/stock-planning";
+import { StockPlanningParquetExports } from "@/pages/stock-planning/stock-planning-parquet-exports";
 
 const errorMessages: Record<CsvExportDataErrorCode, string> = {
   forbidden: "Tu usuario no tiene permiso para descargar extracciones CSV auditadas.",
@@ -25,6 +27,7 @@ const errorMessages: Record<CsvExportDataErrorCode, string> = {
 
 export function ExportsPage() {
   const exportsState = useExports();
+  const stockPlanning = useStockPlanning();
   const canOperate = exportsState.canDownloadExports;
   const visibleError = exportsState.error ? errorMessages[exportsState.error.code] : null;
 
@@ -58,7 +61,7 @@ export function ExportsPage() {
             Extracciones auditadas
           </Badge>
           <div className="max-w-3xl space-y-2">
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Exportaciones CSV</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Exportaciones de datos</h1>
             <p className="text-sm leading-6 text-muted-foreground">
               Descarga operativa de ventas y movimientos de inventario para analisis externo. Cada descarga genera registro de
               auditoria; las consultas visuales de reportes no se auditan como extraccion.
@@ -125,6 +128,12 @@ export function ExportsPage() {
           onToDateChange={exportsState.setInventoryMovementsToDate}
         />
       </div>
+
+      <StockPlanningParquetExports
+        executions={stockPlanning.executions}
+        products={stockPlanning.products}
+        surface="exports"
+      />
     </section>
   );
 }

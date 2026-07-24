@@ -30,6 +30,18 @@ function isApiErrorResponse(data: unknown): data is ApiErrorResponse {
   return typeof data === "object" && data !== null && "message" in data;
 }
 
+function decodeBinaryApiError(data: unknown): unknown {
+  if (!(data instanceof ArrayBuffer)) {
+    return data;
+  }
+
+  try {
+    return JSON.parse(new TextDecoder().decode(data)) as unknown;
+  } catch {
+    return data;
+  }
+}
+
 function transformError(error: AxiosError): ApiError | AxiosError {
   if (!error.response) {
     return new ApiError({
@@ -39,7 +51,7 @@ function transformError(error: AxiosError): ApiError | AxiosError {
     });
   }
 
-  const data = error.response.data;
+  const data = decodeBinaryApiError(error.response.data);
 
   if (isApiErrorResponse(data)) {
     return new ApiError({

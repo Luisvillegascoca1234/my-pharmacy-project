@@ -1,4 +1,9 @@
-import type { InventoryMovementsCsvExportQuery, SalesCsvExportQuery } from "@pharmacy-pos/shared";
+import type {
+  InventoryMovementsCsvExportQuery,
+  SalesCsvExportQuery,
+  StockPlanningParquetExportQuery,
+  StockPlanningPredictionParquetExportQuery
+} from "@pharmacy-pos/shared";
 
 export type CsvExportKind = "sales" | "inventory-movements";
 
@@ -18,4 +23,41 @@ export type CsvExportFile = {
   kind: CsvExportKind;
 };
 
-export type { InventoryMovementsCsvExportQuery, SalesCsvExportQuery };
+export type StockPlanningParquetExportKind = "observations" | "prediction-results";
+export type StockPlanningParquetExportStatus = "error" | "forbidden" | "idle" | "loading" | "success";
+export type StockPlanningParquetExportErrorCode =
+  | "execution-not-found"
+  | "forbidden"
+  | "range-too-large"
+  | "row-limit"
+  | "session-invalid"
+  | "unknown"
+  | "validation";
+
+export type StockPlanningParquetExportError = {
+  code: StockPlanningParquetExportErrorCode;
+  statusCode: number | null;
+};
+
+export type StockPlanningParquetFile = {
+  content: ArrayBuffer;
+  contentType: "application/vnd.apache.parquet";
+  fileName: string;
+  kind: StockPlanningParquetExportKind;
+};
+
+export type StockPlanningParquetFilters = {
+  categoryId: string;
+  executionId: string;
+  fromDate: string;
+  productId: string;
+  supplierId: string;
+  toDate: string;
+};
+
+export type {
+  InventoryMovementsCsvExportQuery,
+  SalesCsvExportQuery,
+  StockPlanningParquetExportQuery,
+  StockPlanningPredictionParquetExportQuery
+};

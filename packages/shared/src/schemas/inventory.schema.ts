@@ -6,7 +6,7 @@ const pureDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const decimal4 = z.coerce.number().finite().min(0);
 const signedDecimal4 = z.coerce.number().finite();
 
-export const InventoryBatchStatusSchema = z.enum(["active", "depleted", "cancelled"]);
+export const InventoryBatchStatusSchema = z.enum(["active", "depleted", "blocked", "cancelled"]);
 export type InventoryBatchStatus = z.infer<typeof InventoryBatchStatusSchema>;
 
 export const InventoryMovementTypeSchema = z.enum([

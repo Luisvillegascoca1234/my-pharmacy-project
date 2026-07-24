@@ -27,6 +27,8 @@ const expectedPolicy = {
   returns: administrativeRoles,
   siatSettings: superadminOnly,
   reports: administrativeRoles,
+  stockPlanning: administrativeRoles,
+  stockPlanningGovernance: superadminOnly,
   exports: administrativeRoles,
   audit: superadminOnly,
   users: superadminOnly,

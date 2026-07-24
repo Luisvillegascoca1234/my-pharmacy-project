@@ -26,6 +26,8 @@ export const FEATURE_ACCESS_POLICY = {
   returns: ADMINISTRATIVE_ROLES,
   siatSettings: SUPERADMIN_ONLY,
   reports: ADMINISTRATIVE_ROLES,
+  stockPlanning: ADMINISTRATIVE_ROLES,
+  stockPlanningGovernance: SUPERADMIN_ONLY,
   exports: ADMINISTRATIVE_ROLES,
   audit: SUPERADMIN_ONLY,
   users: SUPERADMIN_ONLY,

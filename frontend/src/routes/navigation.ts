@@ -10,6 +10,7 @@ import {
   History,
   Home,
   Package,
+  PackageCheck,
   PackageSearch,
   ReceiptText,
   RefreshCcw,
@@ -46,6 +47,7 @@ export const PREPARED_INTERNAL_DOCUMENTS_PATH = "/invoices";
 export const ADMINISTRATIVE_RETURNS_PATH = "/returns";
 export const SIAT_SETTINGS_PATH = "/siat-settings";
 export const REPORTS_PATH = "/reports";
+export const STOCK_PLANNING_PATH = "/stock-planning";
 export const EXPORTS_PATH = "/exports";
 export const AUDIT_PATH = "/audit";
 
@@ -197,6 +199,13 @@ export const navigationGroups: AppNavigationGroup[] = [
   {
     label: "Análisis",
     items: [
+      {
+        key: "stockPlanning",
+        label: "Planificación de stock",
+        path: STOCK_PLANNING_PATH,
+        icon: PackageCheck,
+        description: "Referencias de reposición, cobertura y criticidad para el inventario farmacéutico."
+      },
       {
         key: "reports",
         label: "Reportes operativos",

@@ -1,0 +1,241 @@
+---
+title: Planificación de stock
+description: Guía administrativa para interpretar pronósticos, recomendaciones, lotes, alertas y exportaciones analíticas.
+---
+
+# Guía administrativa
+
+## Propósito y alcance
+
+Planificación de stock ayuda a decidir cuánto conviene reabastecer por producto a partir de la demanda observada, la incertidumbre del pronóstico, la criticidad, el stock mínimo y la condición de los lotes.
+
+La recomendación es exclusivamente consultiva:
+
+- no crea compras ni cambia el estado de una compra;
+- no reserva stock;
+- no recibe mercadería;
+- no genera movimientos de inventario;
+- no modifica cantidades, lotes ni vencimientos.
+
+`Admin` y `Superadmin` pueden consultar la planificación y descargar información analítica. Ambos pueden definir criticidad, cobertura específica y presentación preferida por producto. Solo `Superadmin` puede cambiar la configuración general, activar o desactivar el motor y solicitar un recálculo. `Vendedor` no tiene acceso a esta superficie.
+
+## Tres cifras que no deben confundirse
+
+### Referencia configurada
+
+Es la orientación disponible durante el arranque sin historia suficiente. Se calcula como la diferencia no negativa entre el stock mínimo y el stock utilizable:
+
+`máximo entre 0 y stock mínimo menos stock utilizable`
+
+Si existe una presentación preferida, la cantidad se redondea hacia arriba hasta completar esa presentación. La referencia se identifica como tal y nunca se presenta como pronóstico estadístico.
+
+### Pronóstico de demanda
+
+Es una estimación de la demanda futura obtenida de la historia comercial válida. Incluye una trayectoria diaria central y una banda central del 80 % para expresar incertidumbre. El pronóstico estima demanda; por sí solo no indica cuánto comprar.
+
+### Recomendación de reabastecimiento
+
+Es la sugerencia resultante de combinar el pronóstico o, durante el arranque, la referencia configurada, con:
+
+- criticidad y nivel de protección;
+- cobertura;
+- stock mínimo;
+- stock de seguridad;
+- stock utilizable proyectado por FEFO;
+- presentación preferida.
+
+La sugerencia nunca es negativa y no constituye una orden de compra.
+
+## Madurez, confianza y calidad del pronóstico
+
+### Madurez
+
+La madurez describe cuánta evidencia comercial útil existe:
+
+- **Sin historial:** todavía no hay al menos 12 semanas de historia o existen menos de 4 días con demanda.
+- **Baja confianza:** existen al menos 12 semanas, pero solo entre 4 y 11 días con demanda.
+- **Predicción operativa:** existen al menos 12 semanas y 12 días con demanda, siempre que la calidad de la evidencia no obligue a degradar el resultado.
+- **Sin demanda observada:** después de 12 semanas no se registraron ventas; la recomendación es cero, salvo las advertencias operativas que correspondan.
+
+La transición entre estados ocurre a medida que se acumula historia. Una referencia de arranque no se convierte retroactivamente en predicción.
+
+### Confianza
+
+La confianza puede ser baja, media o alta. Resume la extensión y densidad de la historia, el desempeño en backtesting, los días censurados y la amplitud de la banda predictiva. No es una probabilidad de acierto ni una garantía de disponibilidad.
+
+Cuando ningún modelo mejora la referencia estadística de comparación, se conserva esa referencia con confianza reducida. Un fallo aislado en un producto no oculta los resultados válidos de los demás.
+
+### Error y sesgo
+
+- **Error:** expresa la magnitud de la diferencia histórica entre demanda observada y estimada. Un error menor indica mejor ajuste relativo.
+- **Sesgo:** muestra la dirección persistente del desvío. Un sesgo positivo o negativo ayuda a detectar si el cálculo tiende a sobreestimar o subestimar.
+
+Ambas métricas se interpretan junto con la madurez, la censura y la banda del 80 %. No deben usarse de forma aislada para aprobar un abastecimiento.
+
+## Cobertura, criticidad y protección
+
+La cobertura es el horizonte, expresado en días, que se desea proteger. Cada producto puede:
+
+- heredar la cobertura general;
+- usar una cobertura específica cuando su rotación o importancia requiera otro horizonte.
+
+La cobertura general inicial es de 30 días.
+
+La criticidad define el nivel de protección frente a faltantes:
+
+- **Normal:** cuantil acumulado del 90 %.
+- **Alta:** cuantil acumulado del 95 %.
+- **Crítica:** cuantil acumulado del 99 %.
+
+Una protección mayor contempla más incertidumbre y puede elevar la meta de inventario. No representa una promesa de servicio, un tiempo de entrega del proveedor ni una probabilidad clínica.
+
+## Cómo se obtiene la cantidad sugerida
+
+### Demanda y stock de seguridad
+
+La demanda prevista central representa el consumo esperado para la cobertura. El stock de seguridad es la diferencia no negativa entre el cuantil protegido y la estimación central.
+
+La meta de inventario toma el mayor valor entre:
+
+- el stock mínimo configurado;
+- el cuantil acumulado correspondiente a cobertura y criticidad.
+
+El stock mínimo continúa actuando como piso operativo incluso cuando la demanda prevista sea menor.
+
+### FEFO, lotes y vencimientos
+
+FEFO significa que se proyecta primero el consumo del lote vigente con vencimiento más cercano. Esta lectura permite distinguir:
+
+- **stock utilizable:** cantidad que puede consumirse dentro del horizonte;
+- **riesgo de vencimiento:** cantidad que podría vencer antes de ser consumida;
+- **stock no utilizable:** lotes vencidos o bloqueados.
+
+Los lotes vencidos, bloqueados o con excedente que no alcanzaría a consumirse antes del vencimiento no inflan la disponibilidad proyectada. El detalle conserva el orden de vencimiento para facilitar la revisión sanitaria.
+
+### Compras en borrador
+
+Una compra en borrador se muestra como contexto de abastecimiento, pero no reduce la recomendación. Mientras no sea recibida, no constituye stock disponible ni una entrada confirmada.
+
+### Presentaciones y costo estimado
+
+La sugerencia base es:
+
+`máximo entre 0 y meta de inventario menos stock utilizable`
+
+Si se configuró una presentación preferida —por ejemplo, una caja de 10 unidades base—, la sugerencia se redondea hacia arriba a un múltiplo completo. Sin presentación preferida, se informa en unidad base y se muestra la advertencia correspondiente.
+
+El costo estimado es una referencia secundaria calculada con el último costo de compra confiable. No sustituye una cotización del proveedor.
+
+## Programación, recálculo y vigencia
+
+El cálculo programado usa la zona horaria `America/La_Paz`. La configuración inicial es diaria a las 02:00 y puede cambiarse a frecuencia diaria o semanal.
+
+La superficie administrativa muestra:
+
+- último cálculo;
+- próxima ejecución;
+- estado y vigencia;
+- historial versionado;
+- configuración general utilizada.
+
+Solo `Superadmin` puede modificar la programación o seleccionar **Recalcular ahora**. Si ya existe un cálculo equivalente en curso, el segundo intento se rechaza para evitar resultados simultáneos.
+
+Una modificación relevante de configuración deja el resultado vigente como pendiente de actualización. También se considera desactualizado cuando transcurren más de seis horas desde la siguiente ejecución esperada.
+
+Cada ejecución conserva la configuración con la que comenzó y puede finalizar como:
+
+- en curso;
+- exitosa;
+- exitosa con advertencias;
+- fallida.
+
+Las ejecuciones históricas no se reescriben. Una corrección de datos o parámetros afecta únicamente cálculos futuros. Si una ejecución posterior falla, el último resultado exitoso permanece disponible con su advertencia de vigencia.
+
+## Snapshots diarios
+
+Un snapshot es la fotografía diaria del inventario por producto y lote. Su captura continúa aunque el motor predictivo esté desactivado, por lo que pausar el pronóstico no elimina la historia ni interrumpe la trazabilidad diaria.
+
+Cuando falta una fotografía y puede reconstruirse a partir de la evidencia disponible, se identifica como **reconstruida**. Así se distingue de una captura realizada normalmente.
+
+Desactivar el motor no elimina resultados, ejecuciones ni snapshots anteriores.
+
+## Alertas y priorización
+
+Las alertas se derivan del último resultado disponible y se presentan para orientar la revisión administrativa:
+
+- agotamiento de un producto crítico o fallo general;
+- reabastecimiento urgente;
+- cálculo desactualizado;
+- riesgo de vencimiento;
+- baja confianza;
+- historia insuficiente.
+
+El dashboard resume cantidades de productos evaluados, productos con reposición sugerida, riesgos críticos y riesgos de vencimiento. No suma unidades incompatibles entre productos.
+
+Las alertas no tienen reconocimiento manual y no ejecutan acciones sobre compras o inventario.
+
+## Detalle, gráficas y comparación
+
+El detalle por producto ofrece tres lecturas complementarias:
+
+1. **Demanda frente a pronóstico:** compara demanda observada con trayectoria estimada y banda central del 80 %.
+2. **Stock frente a meta:** muestra la evolución del inventario respecto de la meta recomendada.
+3. **Error y sesgo:** permite revisar la evolución del desempeño y la dirección de los desvíos.
+
+La comparación contrasta una ejecución con la inmediatamente anterior. Sirve para reconocer cambios en demanda, meta, sugerencia, madurez, confianza o métricas, pero no compara más de dos ejecuciones a la vez.
+
+Los productos inactivos conservan su historial para auditoría, aunque dejan de recibir nuevas recomendaciones vigentes.
+
+## Filtros y exportaciones Parquet
+
+La planificación puede filtrarse por producto, categoría, proveedor, criticidad, madurez, confianza y riesgo. La agrupación por proveedor facilita revisar el abastecimiento, pero el proveedor no se utiliza como variable del pronóstico.
+
+Existen dos descargas Parquet:
+
+- **Serie temporal analítica:** una fila por producto y fecha con demanda, operaciones, censura, stock, criticidad y cobertura.
+- **Resultados predictivos:** una fila por producto, ejecución y fecha con estimación, límites, meta, sugerencia, modelo, madurez, confianza y métricas.
+
+Ambas descargas:
+
+- requieren un rango de fechas;
+- admiten filtros por producto, categoría y proveedor;
+- conservan tipos analíticos para fechas, marcas de tiempo, decimales, booleanos y valores nulos;
+- declaran versión de esquema y compresión Zstandard;
+- no pueden superar cinco años ni 1.000.000 de filas;
+- se generan bajo demanda y no quedan almacenadas;
+- registran en auditoría la generación, no la finalización de la descarga en el dispositivo.
+
+Las exportaciones CSV existentes continúan disponibles y no son reemplazadas por Parquet. `Admin` y `Superadmin` pueden exportar; `Vendedor` recibe acceso denegado.
+
+## Arranque sin datos y demanda censurada
+
+En una farmacia que inicia sin historia, los productos activos aparecen como **Sin historial** y muestran una referencia configurada. La ausencia de datos no se disfraza como predicción.
+
+Para construir demanda diaria:
+
+- se consideran ventas confirmadas;
+- se excluyen anulaciones;
+- se restan devoluciones que reingresaron al inventario;
+- un día sin ventas y con disponibilidad se considera demanda cero;
+- un día completo sin disponibilidad se marca como censurado.
+
+La demanda censurada evita interpretar un quiebre de stock como falta de interés del mercado. Una censura elevada reduce la confianza. La demanda y los límites visibles nunca son negativos.
+
+## Límites de interpretación
+
+La planificación utiliza como máximo los 24 meses más recientes de historia y no incorpora:
+
+- promociones;
+- precios históricos como variables predictivas;
+- clima;
+- mercado;
+- fuentes epidemiológicas;
+- tiempos de entrega o fechas prometidas;
+- calendarios de proveedor;
+- pedidos mínimos contractuales;
+- órdenes en tránsito;
+- demanda no satisfecha declarada en mostrador.
+
+No ofrece selección manual del modelo, edición de parámetros estadísticos, garantías de precisión comercial, clínica o epidemiológica, automatización de compras ni modificación automática del inventario.
+
+La recomendación debe revisarse junto con la realidad farmacéutica del producto: criticidad terapéutica, disponibilidad del proveedor, condiciones de almacenamiento, lote, vencimiento, presupuesto y política de abastecimiento.
