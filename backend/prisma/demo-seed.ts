@@ -5,6 +5,9 @@ import { prisma } from "../src/infrastructure/prisma/prisma.client.js";
 
 const PRODUCT_COUNT = 250;
 const HISTORY_DAYS = 730;
+const USER_COUNT = 50;
+const INACTIVE_USER_COUNT = 5;
+const BLOCKED_USER_COUNT = 3;
 const DEMO_PASSWORD = "admin";
 
 const categories = [
@@ -716,6 +719,7 @@ async function main() {
 
   const pendingCartRows: Prisma.PendingCartCreateManyInput[] = [];
   const pendingCartItemRows: Prisma.PendingCartItemCreateManyInput[] = [];
+  const recentConfirmedSales = [...salePlans].reverse().filter((sale) => sale.status === "confirmed");
   for (let index = 0; index < 24; index += 1) {
     const status = index < 8 ? "active" : index < 14 ? "expired" : index < 20 ? "discarded" : "converted";
     const createdAt = addDays(asOf, status === "active" ? -1 : -(4 + index));
@@ -723,7 +727,7 @@ async function main() {
     const quantity = 1 + (index % 3);
     const cartId = `demo-cart-${String(index + 1).padStart(3, "0")}`;
     const convertedSale = status === "converted"
-      ? [...salePlans].reverse().find((sale, position) => sale.status === "confirmed" && position >= index - 20)
+      ? recentConfirmedSales[index - 20]
       : undefined;
     pendingCartRows.push({
       id: cartId,
@@ -884,7 +888,7 @@ async function main() {
   console.log("Realistic pharmacy demo seed completed:");
   console.log(`- Reference date: ${options.asOf}`);
   console.log(`- Deterministic seed: ${options.seed}`);
-  console.log(`- Users: ${staff.length} (20 active, 27 inactive, 3 blocked)`);
+  console.log(`- Users: ${staff.length} (${staff.filter((user) => user.status === "active").length} active, ${staff.filter((user) => user.status === "inactive").length} inactive, ${staff.filter((user) => user.status === "blocked").length} blocked)`);
   console.log(`- Products: ${products.length}`);
   console.log(`- Suppliers: ${supplierRows.length}`);
   console.log(`- Received purchases: ${purchaseRows.filter((purchase) => purchase.status === "received").length}`);
@@ -954,11 +958,13 @@ async function buildStaff(passwordHash: string, roleByName: Map<string, string>,
     lastLoginAt: addDays(asOf, -index),
     createdAt: addDays(asOf, -800)
   }));
-  for (let index = 3; index < 50; index += 1) {
+  for (let index = 3; index < USER_COUNT; index += 1) {
     const isAdmin = index < 7;
-    const sellerOrdinal = index - 7;
-    const isActiveSeller = isAdmin || sellerOrdinal < 13;
-    const status = isActiveSeller ? "active" as const : sellerOrdinal >= 40 ? "blocked" as const : "inactive" as const;
+    const status = index >= USER_COUNT - BLOCKED_USER_COUNT
+      ? "blocked" as const
+      : index >= USER_COUNT - BLOCKED_USER_COUNT - INACTIVE_USER_COUNT
+        ? "inactive" as const
+        : "active" as const;
     const roleName = isAdmin ? "admin" as const : "seller" as const;
     const fullName = staffName(index);
     staff.push({

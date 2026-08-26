@@ -112,7 +112,7 @@ pnpm --filter @pharmacy-pos/backend seed:demo -- --as-of=2026-08-19 --seed=20260
 
 La carga es determinista y crea un escenario proporcional de una farmacia de una sola sucursal:
 
-- 50 usuarios: 20 activos, 27 inactivos y 3 bloqueados;
+- 50 usuarios: 42 activos, 5 inactivos y 3 bloqueados; los activos participan en ventas, caja, compras y recepciones según su rol;
 - 15 categorías, 14 proveedores y 250 productos farmacéuticos;
 - dos años de turnos de caja y actividad comercial;
 - compras recibidas, en borrador y canceladas;
