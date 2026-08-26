@@ -25,7 +25,7 @@ export const FIXED_ROLE_CATALOG = [
       faculty("inventory_traceability", "Inventario y trazabilidad", "full_access", "Consulta y gestiona lotes, movimientos, costos, ajustes y alertas."),
       faculty("supply", "Abastecimiento", "full_access", "Administra proveedores, compras y recepción de mercadería."),
       faculty("administrative_closure_analysis", "Cierre administrativo y análisis", "full_access", "Supervisa cierres, comprobantes internos, devoluciones, reportes y exportaciones."),
-      faculty("system_governance", "Gobierno del sistema", "full_access", "Administra usuarios, roles asignados, configuración global, SIAT y auditoría completa.")
+      faculty("system_governance", "Gobierno del sistema", "full_access", "Administra usuarios, roles asignados y la auditoría completa de operaciones sensibles.")
     ]
   },
   {
@@ -38,7 +38,7 @@ export const FIXED_ROLE_CATALOG = [
       faculty("inventory_traceability", "Inventario y trazabilidad", "full_access", "Gestiona lotes, movimientos, costos, ajustes y alertas operativas."),
       faculty("supply", "Abastecimiento", "full_access", "Gestiona proveedores, compras y recepción de mercadería."),
       faculty("administrative_closure_analysis", "Cierre administrativo y análisis", "full_access", "Ejecuta cierres, comprobantes internos, devoluciones, reportes y exportaciones."),
-      faculty("system_governance", "Gobierno del sistema", "no_access", "No administra usuarios, roles, configuración global, SIAT ni auditoría completa.")
+      faculty("system_governance", "Gobierno del sistema", "no_access", "No administra usuarios, roles asignados ni la auditoría completa.")
     ]
   },
   {
@@ -51,7 +51,7 @@ export const FIXED_ROLE_CATALOG = [
       faculty("inventory_traceability", "Inventario y trazabilidad", "operational_access", "Consulta stock, lotes y alertas básicas sin gestionar movimientos ni costos."),
       faculty("supply", "Abastecimiento", "no_access", "No gestiona proveedores, compras ni recepciones."),
       faculty("administrative_closure_analysis", "Cierre administrativo y análisis", "no_access", "No accede a comprobantes internos administrativos, devoluciones, reportes ni exportaciones."),
-      faculty("system_governance", "Gobierno del sistema", "no_access", "No administra usuarios, roles, configuración global, SIAT ni auditoría completa.")
+      faculty("system_governance", "Gobierno del sistema", "no_access", "No administra usuarios, roles asignados ni la auditoría completa.")
     ]
   }
 ] as const satisfies readonly FixedRole[];

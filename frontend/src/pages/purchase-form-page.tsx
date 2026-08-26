@@ -1,5 +1,5 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Product, PurchaseStatus, Supplier } from "@pharmacy-pos/shared";
 import { AlertCircle, ArrowLeft, Ban, CalendarClock, PackageCheck, PackagePlus, Plus, Save, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,8 +15,9 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { OPERATIONAL_TIME_ZONE } from "@/lib/operational-date";
 import { resetProductsCatalogStore, useProductsCatalog } from "@/modules/products";
-import { resetPurchasesStore, usePurchases, type PurchaseDraftItemForm } from "@/modules/purchases";
+import { resetPurchasesStore, usePurchases, type PurchaseDraftItemForm, type PurchaseRequestStatus } from "@/modules/purchases";
 import { resetSuppliersStore, useSuppliers } from "@/modules/suppliers";
 
 type PurchaseFormPageProps = {
@@ -135,7 +136,7 @@ function validateDraft(items: PurchaseDraftItemForm[], products: Product[], supp
     }
 
     if (product.isInventoryTracked && (!item.batchNumber.trim() || !item.expirationDate.trim())) {
-      itemErrors[index] = "Los items inventariables requieren lote y vencimiento.";
+      itemErrors[index] = "Los productos con control de stock requieren lote y vencimiento.";
       return;
     }
 
@@ -143,7 +144,7 @@ function validateDraft(items: PurchaseDraftItemForm[], products: Product[], supp
     const duplicateIndex = seenKeys.get(key);
 
     if (duplicateIndex !== undefined) {
-      itemErrors[index] = `Item duplicado con la fila ${duplicateIndex + 1}.`;
+      itemErrors[index] = `Producto duplicado en la fila ${duplicateIndex + 1}.`;
       return;
     }
 
@@ -152,7 +153,7 @@ function validateDraft(items: PurchaseDraftItemForm[], products: Product[], supp
 
   return {
     itemErrors,
-    message: Object.keys(itemErrors).length > 0 ? "Corrige los items antes de guardar el borrador." : null
+    message: Object.keys(itemErrors).length > 0 ? "Corrige los productos antes de guardar el borrador." : null
   };
 }
 
@@ -183,7 +184,8 @@ function formatDateTime(value?: string) {
 
   return new Intl.DateTimeFormat("es-BO", {
     dateStyle: "short",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: OPERATIONAL_TIME_ZONE
   }).format(parsedDate);
 }
 
@@ -191,8 +193,61 @@ function formatOptionalText(value?: string) {
   return value?.trim() ? value.trim() : "Sin registrar";
 }
 
+type DraftSyncContext = {
+  isCreateMode: boolean;
+  isDirty: boolean;
+  isDraft: boolean;
+  saveStatus: PurchaseRequestStatus;
+};
+
+function getDraftSyncTitle({ isCreateMode, isDirty, isDraft, saveStatus }: DraftSyncContext) {
+  if (!isDraft) {
+    return "Historial de compra";
+  }
+
+  if (saveStatus === "loading") {
+    return "Guardando borrador";
+  }
+
+  if (saveStatus === "error") {
+    return "No se pudo guardar";
+  }
+
+  if (isCreateMode) {
+    return isDirty ? "Cambios sin guardar" : "Borrador sin guardar";
+  }
+
+  return isDirty ? "Hay cambios pendientes" : "Borrador guardado";
+}
+
+function getDraftSyncDescription({ isCreateMode, isDirty, isDraft, saveStatus }: DraftSyncContext) {
+  if (!isDraft) {
+    return "La compra se muestra en modo de solo lectura.";
+  }
+
+  if (saveStatus === "loading") {
+    return "Espera mientras se confirma el guardado.";
+  }
+
+  if (saveStatus === "error") {
+    return "Los cambios siguen en pantalla. Revisa el mensaje de error e intenta nuevamente.";
+  }
+
+  if (isCreateMode) {
+    return isDirty
+      ? "Completa los datos requeridos y guarda para crear el borrador."
+      : "Esta compra todavía no existe en el sistema. Completa los datos para guardarla.";
+  }
+
+  return isDirty
+    ? "Guarda el borrador antes de recibir la compra."
+    : "Todos los cambios están guardados.";
+}
+
 export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const prefillApplied = useRef(false);
   const params = useParams();
   const purchaseId = params.id;
   const isCreateMode = mode === "create";
@@ -200,6 +255,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
   const suppliers = useSuppliers();
   const productsCatalog = useProductsCatalog();
   const [localError, setLocalError] = useState<string | null>(null);
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
   const [receiveDialogOpen, setReceiveDialogOpen] = useState(false);
   const [receiveNotes, setReceiveNotes] = useState("");
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -284,6 +340,28 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
     return () => controller.abort();
   }, [isCreateMode, purchaseId]);
 
+  useEffect(() => {
+    if (!isCreateMode || prefillApplied.current) {
+      return;
+    }
+
+    const productId = searchParams.get("productId")?.trim();
+    const supplierId = searchParams.get("supplierId")?.trim();
+    const quantity = Number(searchParams.get("quantity"));
+    const product = activeProducts.find((item) => item.id === productId);
+    const supplier = activeSuppliers.find((item) => item.id === supplierId);
+
+    if (!productId || !supplierId || !product || !supplier) {
+      return;
+    }
+
+    purchases.setDraftField("supplierId", supplierId);
+    purchases.setDraftItemField(0, "productId", productId);
+    purchases.setDraftItemField(0, "unitId", getConfiguredUnits(product)[0]?.unitId ?? "");
+    purchases.setDraftItemField(0, "quantity", Number.isFinite(quantity) && quantity > 0 ? quantity : 1);
+    prefillApplied.current = true;
+  }, [activeProducts, activeSuppliers, isCreateMode, searchParams]);
+
   if (!isCreateMode && !purchaseId) {
     return <Navigate replace to="/purchases" />;
   }
@@ -303,7 +381,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
               <AlertCircle aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>Permiso insuficiente</EmptyTitle>
-            <EmptyDescription>Tu rol actual no permite gestionar borradores de compra.</EmptyDescription>
+            <EmptyDescription>No tienes permiso para registrar compras.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       </section>
@@ -311,6 +389,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
   }
 
   async function saveForm() {
+    setHasAttemptedSave(true);
     setLocalError(null);
 
     if (validation.message) {
@@ -323,6 +402,8 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
     if (!purchase) {
       return;
     }
+
+    setHasAttemptedSave(false);
 
     if (isCreateMode) {
       navigate(`/purchases/${purchase.id}`, { replace: true });
@@ -363,14 +444,25 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
 
   const title = isCreateMode ? "Nueva compra" : "Detalle de compra";
   const status = selectedPurchase?.status ?? "draft";
+  const pageDescription = isCreateMode || status === "draft"
+    ? "Selecciona proveedor y productos, guarda el borrador y luego confirma la recepción para ingresar el stock."
+    : status === "received"
+      ? "Compra recibida y reflejada en inventario. La información se conserva en modo de consulta."
+      : "Compra anulada. Puedes consultar sus datos, pero ya no modificarlos.";
   const displayTotal = selectedPurchase && !purchases.isDirty ? selectedPurchase.totalAmount : subtotal;
   const errorTitle = purchases.receiveStatus === "error" ? "No se pudo recibir" : purchases.cancelStatus === "error" ? "No se pudo anular" : "No se pudo guardar";
-  const syncAlertTitle = isDraft ? (purchases.isDirty ? "Hay cambios pendientes" : "Borrador sincronizado") : "Historial de compra";
-  const syncAlertDescription = isDraft
-    ? purchases.isDirty
-      ? "Guarda el borrador antes de continuar con recepción o revisión operativa."
-      : "La información visible coincide con el último guardado exitoso."
-    : "La compra se muestra en modo de solo lectura.";
+  const syncAlertTitle = getDraftSyncTitle({
+    isCreateMode,
+    isDirty: purchases.isDirty,
+    isDraft,
+    saveStatus: purchases.saveStatus
+  });
+  const syncAlertDescription = getDraftSyncDescription({
+    isCreateMode,
+    isDirty: purchases.isDirty,
+    isDraft,
+    saveStatus: purchases.saveStatus
+  });
 
   function openReceiveDialog() {
     setLocalError(null);
@@ -446,35 +538,11 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">{title}</h1>
             <Badge variant={getPurchaseStatusVariant(status)}>{purchaseStatusLabels[status]}</Badge>
-            {purchases.isDirty ? <Badge variant="secondary">Cambios pendientes</Badge> : null}
+            {!isCreateMode && purchases.isDirty ? <Badge variant="secondary">Cambios pendientes</Badge> : null}
           </div>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            Prepara proveedor, fecha comercial e items del borrador antes de recibir inventario.
+            {pageDescription}
           </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          {isDraft ? (
-            <Button disabled={!canSubmit || Boolean(validation.message)} type="button" onClick={saveForm}>
-              {isSaving ? <Spinner /> : <Save aria-hidden="true" />}
-              Guardar borrador
-            </Button>
-          ) : null}
-          {canOperateDraft ? (
-            <>
-              <Button disabled={!canReceive} type="button" variant="outline" onClick={openReceiveDialog}>
-                {isReceiving ? <Spinner /> : <PackageCheck aria-hidden="true" />}
-                Recibir
-              </Button>
-            </>
-          ) : null}
-          {canShowCancel ? (
-            <>
-              <Button disabled={!canCancel} type="button" variant="destructive" onClick={openCancelDialog}>
-                {isCancelling ? <Spinner /> : <Ban aria-hidden="true" />}
-                Anular
-              </Button>
-            </>
-          ) : null}
         </div>
       </div>
 
@@ -490,7 +558,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
               <PackagePlus aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>Compra no encontrada</EmptyTitle>
-            <EmptyDescription>La compra solicitada no existe o ya no está disponible para tu sesión.</EmptyDescription>
+            <EmptyDescription>La compra solicitada no existe o ya no está disponible.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : isDetailError ? (
@@ -522,7 +590,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
             <Alert>
               <CalendarClock aria-hidden="true" />
               <AlertTitle>Compra solo lectura</AlertTitle>
-              <AlertDescription>Las compras recibidas o anuladas no permiten editar encabezado ni items.</AlertDescription>
+              <AlertDescription>Las compras recibidas o anuladas ya no pueden modificarse.</AlertDescription>
             </Alert>
           ) : null}
 
@@ -546,7 +614,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
             <div className="grid gap-5">
               <Card>
                 <CardHeader>
-                  <CardTitle>Encabezado</CardTitle>
+                  <CardTitle>Datos de la compra</CardTitle>
                   <CardDescription>El proveedor debe estar activo para nuevas compras.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
@@ -563,13 +631,13 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                       {supplierOptions.map((supplier) => (
                         <NativeSelectOption key={supplier.id} value={supplier.id}>
                           {supplier.businessName}
-                          {supplier.status === "inactive" ? " (histórico)" : ""}
+                          {supplier.status === "inactive" ? " (inactivo)" : ""}
                         </NativeSelectOption>
                       ))}
                     </NativeSelect>
                   </Field>
                   <Field>
-                    <FieldLabel>Fecha comercial</FieldLabel>
+                    <FieldLabel>Fecha de compra</FieldLabel>
                     <Input
                       disabled={!canEdit}
                       type="date"
@@ -599,12 +667,12 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                 <CardHeader className="gap-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <CardTitle>Items</CardTitle>
-                      <CardDescription>Selecciona productos activos asociados al proveedor del encabezado.</CardDescription>
+                      <CardTitle>Productos</CardTitle>
+                      <CardDescription>Selecciona los productos comprados a este proveedor.</CardDescription>
                     </div>
                     <Button disabled={!canEdit} type="button" variant="outline" onClick={() => purchases.addDraftItem()}>
                       <Plus aria-hidden="true" />
-                      Agregar item
+                      Agregar producto
                     </Button>
                   </div>
                 </CardHeader>
@@ -649,7 +717,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                                   {!canEdit && selectedPurchase?.items[index]?.productName ? (
                                     <FieldDescription>{selectedPurchase.items[index].productName}</FieldDescription>
                                   ) : null}
-                                  <FieldError>{validation.itemErrors[index]}</FieldError>
+                                  {hasAttemptedSave ? <FieldError>{validation.itemErrors[index]}</FieldError> : null}
                                 </Field>
                               </TableCell>
                               <TableCell className="align-top">
@@ -704,7 +772,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                               <TableCell className="whitespace-nowrap text-right align-top font-medium">{formatMoney(getLineTotal(item))}</TableCell>
                               <TableCell className="text-right align-top">
                                 <Button
-                                  aria-label="Quitar item"
+                                    aria-label="Quitar producto"
                                   disabled={!canEdit || purchases.draftForm.items.length <= 1}
                                   size="icon"
                                   type="button"
@@ -733,7 +801,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle>Resumen</CardTitle>
-                <CardDescription>El total final se recalcula y confirma en backend al guardar.</CardDescription>
+                <CardDescription>Comprueba las cantidades y el total antes de guardar.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="grid gap-2 text-sm">
@@ -742,11 +810,11 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                     <span className="font-medium">{formatDate(purchases.draftForm.purchaseDate)}</span>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Items</span>
+                    <span className="text-muted-foreground">Productos</span>
                     <span className="font-medium">{purchases.draftForm.items.length}</span>
                   </div>
                   <div className="flex justify-between gap-4 border-t pt-3 text-base">
-                    <span className="font-medium">Total visual</span>
+                    <span className="font-medium">Total estimado</span>
                     <span className="font-semibold">{formatMoney(displayTotal)}</span>
                   </div>
                 </div>
@@ -755,7 +823,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                   <AlertDescription>{syncAlertDescription}</AlertDescription>
                 </Alert>
                 {isDraft ? (
-                  <Button disabled={!canSubmit || Boolean(validation.message)} type="button" onClick={saveForm}>
+                  <Button disabled={!canSubmit} type="button" onClick={saveForm}>
                     {isSaving ? <Spinner /> : <Save aria-hidden="true" />}
                     Guardar borrador
                   </Button>
@@ -831,7 +899,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
           <form className="grid gap-4" onSubmit={receivePurchase}>
             <DialogHeader>
               <DialogTitle>Recibir compra</DialogTitle>
-              <DialogDescription>Confirma que los items del borrador ingresarán al inventario con los datos guardados.</DialogDescription>
+              <DialogDescription>Los productos de esta compra ingresarán al inventario con los lotes y vencimientos indicados.</DialogDescription>
             </DialogHeader>
             <Field>
               <FieldLabel>Notas de recepción</FieldLabel>
@@ -842,7 +910,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                 value={receiveNotes}
                 onChange={(event) => setReceiveNotes(event.target.value)}
               />
-              <FieldDescription>Opcional, máximo 240 caracteres.</FieldDescription>
+              <FieldDescription>Opcional.</FieldDescription>
             </Field>
             <DialogFooter>
               <Button disabled={isReceiving} type="button" variant="outline" onClick={() => setReceiveDialogOpen(false)}>
@@ -880,7 +948,7 @@ export function PurchaseFormPage({ mode }: PurchaseFormPageProps) {
                   setCancelReasonError(null);
                 }}
               />
-              <FieldDescription>Entre 3 y 240 caracteres.</FieldDescription>
+              <FieldDescription>Obligatorio. Explica brevemente el motivo.</FieldDescription>
               <FieldError>{cancelReasonError}</FieldError>
             </Field>
             <DialogFooter>

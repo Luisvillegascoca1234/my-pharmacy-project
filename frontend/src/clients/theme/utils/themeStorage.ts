@@ -4,7 +4,7 @@ import type { ThemeMode, ThemePreferences } from "../types";
 export const THEME_STORAGE_KEY = "pharmacy-pos.theme-preferences";
 
 const DEFAULT_THEME_PREFERENCES: ThemePreferences = {
-  themeName: null,
+  themeName: "clinical-enterprise",
   mode: "system"
 };
 

@@ -2,7 +2,7 @@ import { ApiError } from "@/api";
 
 const userManagementErrorMessages: Record<string, string> = {
   LAST_ACTIVE_SUPERADMIN: "Debe permanecer al menos una cuenta Superadministrador activa.",
-  ROLE_NOT_FOUND: "El rol institucional seleccionado ya no está disponible.",
+  ROLE_NOT_FOUND: "El rol seleccionado ya no está disponible.",
   USER_EMAIL_IN_USE: "El correo electrónico ya está asignado a otro usuario.",
   USER_NOT_FOUND: "La cuenta de usuario ya no está disponible. Actualiza la lista e inténtalo nuevamente.",
   VALIDATION_ERROR: "Revisa los datos ingresados antes de continuar."
@@ -15,7 +15,7 @@ export function getUserManagementErrorMessage(error: unknown, fallback: string):
     }
 
     if (error.code === "NETWORK_ERROR") {
-      return "No se pudo conectar con el servidor. Verifica la conexión e inténtalo nuevamente.";
+      return "No hay conexión. Verifica tu red e inténtalo nuevamente.";
     }
   }
 
@@ -23,5 +23,5 @@ export function getUserManagementErrorMessage(error: unknown, fallback: string):
 }
 
 export function getUsersLoadErrorMessage(errorCode: "load_failed" | null): string | null {
-  return errorCode === "load_failed" ? "No se pudieron cargar los usuarios y roles institucionales." : null;
+  return errorCode === "load_failed" ? "No se pudieron cargar los usuarios y roles." : null;
 }

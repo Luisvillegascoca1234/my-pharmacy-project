@@ -1,7 +1,7 @@
 import { type FormEvent, useMemo, useState } from "react";
+import { ContextNavigation, inventoryNavigation } from "@/components/context-navigation";
 import { AlertCircle, ClipboardList, PackageSearch, Save } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -47,7 +47,7 @@ export function AdjustmentsPage() {
     setLocalError(null);
 
     if (!batchId) {
-      setLocalError("Selecciona una capa de inventario.");
+      setLocalError("Selecciona el lote que deseas corregir.");
       return;
     }
 
@@ -78,14 +78,12 @@ export function AdjustmentsPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Opciones de inventario" items={inventoryNavigation} />
       <div className="space-y-2">
-        <Badge className="w-fit" variant="secondary">
-          Corrección controlada
-        </Badge>
         <div>
-          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Ajustes manuales</h1>
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Corregir stock</h1>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            Ajusta una capa existente escribiendo el stock final contado. El sistema calcula la diferencia y registra auditoría.
+            Escribe la cantidad que contaste físicamente para corregir un lote.
           </p>
         </div>
       </div>
@@ -119,8 +117,8 @@ export function AdjustmentsPage() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card>
           <CardHeader>
-            <CardTitle>Registro de conteo</CardTitle>
-            <CardDescription>El ajuste no crea stock nuevo; solo corrige lotes existentes.</CardDescription>
+            <CardTitle>Conteo físico</CardTitle>
+            <CardDescription>Selecciona un lote e ingresa la cantidad disponible.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={saveAdjustment}>
@@ -145,7 +143,7 @@ export function AdjustmentsPage() {
               </Field>
 
               <Field>
-                <FieldLabel>Capa/lote</FieldLabel>
+                <FieldLabel>Lote a corregir</FieldLabel>
                 <NativeSelect
                   disabled={!adjustment.canAdjust || !selectedProductId || batches.status === "loading"}
                   value={batchId}
@@ -154,7 +152,7 @@ export function AdjustmentsPage() {
                     setCountedQuantity("");
                   }}
                 >
-                  <NativeSelectOption value="">Seleccionar capa</NativeSelectOption>
+                  <NativeSelectOption value="">Seleccionar lote</NativeSelectOption>
                   {batches.items
                     .filter((batch) => batch.status !== "cancelled")
                     .map((batch) => (
@@ -164,7 +162,7 @@ export function AdjustmentsPage() {
                       </NativeSelectOption>
                     ))}
                 </NativeSelect>
-                <FieldDescription>La capa mantiene costo, compra y trazabilidad separados.</FieldDescription>
+                <FieldDescription>Selecciona exactamente el lote que contaste.</FieldDescription>
               </Field>
 
               <Field>
@@ -194,7 +192,7 @@ export function AdjustmentsPage() {
                   value={reason}
                   onChange={(event) => setReason(event.target.value)}
                 />
-                <FieldDescription>Obligatorio, queda registrado en movimiento y auditoría.</FieldDescription>
+                <FieldDescription>Obligatorio. Explica por qué necesitas corregir el stock.</FieldDescription>
                 <FieldError>{localError}</FieldError>
               </Field>
 
@@ -208,8 +206,8 @@ export function AdjustmentsPage() {
 
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle>Vista previa</CardTitle>
-            <CardDescription>Diferencia que se convertirá en movimiento de inventario.</CardDescription>
+            <CardTitle>Cambio que se aplicará</CardTitle>
+            <CardDescription>Compara el stock actual con la cantidad contada.</CardDescription>
           </CardHeader>
           <CardContent>
             {!selectedBatch ? (
@@ -218,8 +216,8 @@ export function AdjustmentsPage() {
                   <EmptyMedia variant="icon">
                     <PackageSearch aria-hidden="true" />
                   </EmptyMedia>
-                  <EmptyTitle>Selecciona una capa</EmptyTitle>
-                  <EmptyDescription>El ajuste se calcula contra el saldo disponible actual.</EmptyDescription>
+                  <EmptyTitle>Selecciona un lote</EmptyTitle>
+                <EmptyDescription>Selecciona un lote para comparar las cantidades.</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : (
@@ -229,10 +227,14 @@ export function AdjustmentsPage() {
                   <p className="font-medium">{selectedBatch.product.commercialName}</p>
                   <p className="text-xs text-muted-foreground">{selectedBatch.product.internalCode}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-md border p-3">
                     <p className="text-muted-foreground">Actual</p>
                     <p className="text-lg font-semibold">{quantityFormatter.format(selectedBatch.availableQuantity)}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="text-muted-foreground">Contado</p>
+                    <p className="text-lg font-semibold">{countedQuantity === "" ? "—" : quantityFormatter.format(countedValue)}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-muted-foreground">Diferencia</p>

@@ -97,7 +97,7 @@ La migración es hacia adelante y se ejecuta sin respaldo por decisión explíci
 SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -f deploy/compose.yml --profile init run --rm migrate
 ```
 
-No ejecutar `seed-operational` ni `seed-prediction` durante una actualización ordinaria.
+No ejecutar `seed-operational` ni `seed-realistic` durante una actualización ordinaria.
 
 Recrear los servicios de aplicación con el nuevo tag sin tocar PostgreSQL ni el volumen:
 

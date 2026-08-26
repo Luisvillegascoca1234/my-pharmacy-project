@@ -115,9 +115,9 @@ describe("stock planning forecast communication", () => {
     const container = await render(<ForecastConfidenceGuide />);
 
     expect(container.textContent).toContain("no representa una probabilidad de acierto");
-    expect(container.textContent).toContain("Evidencia");
+    expect(container.textContent).toContain("Datos disponibles");
     expect(container.textContent).toContain("Desempeño");
-    expect(container.textContent).toContain("Censura");
+    expect(container.textContent).toContain("Días sin stock");
     expect(container.textContent).toContain("Amplitud");
   });
 
@@ -148,14 +148,14 @@ describe("stock planning forecast communication", () => {
     expect(container.textContent).toContain("Error absoluto: 1,5 tab/día");
     expect(container.textContent).toContain("Sesgo: -0,25 tab/día");
     expect(container.textContent).toContain("34 días completos sin stock");
-    expect(container.textContent).toContain("Se retuvo el baseline");
-    expect(container.textContent).toContain("madurez se redujo por calidad de evidencia");
+    expect(container.textContent).toContain("Se conservó el método anterior");
+    expect(container.textContent).toContain("Hay pocos datos confiables");
   });
 
   it.each([
     ["no_history", "none", "Sin historial"],
     ["low_confidence", "low", "Baja confianza"],
-    ["operational", "high", "Predicción operativa"],
+    ["operational", "high", "Datos suficientes"],
     ["no_observed_demand", "none", "Sin demanda observada"]
   ] as const)("renders maturity %s as %s", async (maturity, confidence, expectedLabel) => {
     const product: StockPlanningProduct = {

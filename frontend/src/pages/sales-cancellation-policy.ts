@@ -1,11 +1,11 @@
 import type { CancelableSale, SaleCancellationBlockReason } from "@/modules/sales";
 
 const cancellationBlockMessages: Record<SaleCancellationBlockReason, string> = {
-  "already-cancelled": "La venta ya fue anulada y se conserva como historial operativo.",
-  "cash-session-closed": "La caja asociada está cerrada; la venta ya no admite anulación operativa.",
-  forbidden: "La venta pertenece a otro usuario y no está habilitada para tu alcance propio.",
-  "not-current-day": "La venta no corresponde al día operativo actual y ya no admite anulación por el vendedor.",
-  unknown: "El estado actual de la venta no admite anulación operativa."
+  "already-cancelled": "La venta ya fue anulada y se conserva en el historial.",
+  "cash-session-closed": "La caja asociada está cerrada; registra una devolución si corresponde.",
+  forbidden: "La venta pertenece a otra persona y no puedes anularla.",
+  "not-current-day": "La venta no corresponde a hoy y ya no puede anularla el vendedor.",
+  unknown: "El estado actual de la venta no permite anularla."
 };
 
 export function isSaleCancellationAllowed(sale: CancelableSale | null) {
@@ -14,7 +14,7 @@ export function isSaleCancellationAllowed(sale: CancelableSale | null) {
 
 export function getSaleCancellationBlockMessage(sale: CancelableSale | null) {
   if (!sale) {
-    return "Selecciona una venta para consultar la evaluación de anulación.";
+    return "Selecciona una venta para comprobar si se puede anular.";
   }
 
   return cancellationBlockMessages[sale.cancellationBlockedReason ?? "unknown"];

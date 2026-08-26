@@ -5,7 +5,10 @@ import { prisma } from "../src/infrastructure/prisma/prisma.client.js";
 
 const PRODUCT_COUNT = 250;
 const HISTORY_DAYS = 730;
-const DEMO_PASSWORD = "admin";
+const USER_COUNT = 50;
+const INACTIVE_USER_COUNT = 5;
+const BLOCKED_USER_COUNT = 3;
+const SEED_PASSWORD = "admin";
 
 const categories = [
   "Analgésicos y antipiréticos",
@@ -40,6 +43,17 @@ const suppliers = [
   ["Laboratorios y Droguería Nacional", "3345678912", "La Paz"],
   ["Suministros Hospitalarios Bolivia", "4456789123", "Oruro"],
   ["Distribuciones Médicas Potosí", "5567891234", "Potosí"]
+] as const;
+
+const invoiceCustomers = [
+  ["María Fernanda López Quispe", "4827312"],
+  ["Consultorio Médico Los Pinos S.R.L.", "1029456781"],
+  ["Centro Integral Vida Plena S.R.L.", "2038567492"],
+  ["José Antonio Vargas Mamani", "6172845"],
+  ["Servicios de Salud Kantuta S.R.L.", "3049675813"],
+  ["Carla Andrea Rojas Fernández", "7351926"],
+  ["Clínica Familiar San Gabriel S.R.L.", "4059786124"],
+  ["Comercial Médica Altiplano S.R.L.", "5061897235"]
 ] as const;
 
 type ProductFamily = {
@@ -141,7 +155,7 @@ async function main() {
   const random = createRandom(options.seed);
   const asOf = dateOnly(options.asOf);
   const historyStart = addDays(asOf, -(HISTORY_DAYS - 1));
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+  const passwordHash = await bcrypt.hash(SEED_PASSWORD, 12);
 
   const [roles, units, baseCategory, baseSupplier] = await Promise.all([
     prisma.role.findMany(),
@@ -165,14 +179,14 @@ async function main() {
   const allSellerIds = [...historicalSellerIds, ...activeSellerIds];
 
   const categoryRows: Prisma.ProductCategoryCreateManyInput[] = categories.map((name, index) => ({
-    id: index === 0 ? baseCategory.id : `demo-category-${String(index + 1).padStart(2, "0")}`,
+    id: index === 0 ? baseCategory.id : `category-${String(index + 1).padStart(2, "0")}`,
     name,
     description: categoryDescription(name),
     status: "active",
     createdAt: addDays(historyStart, -120)
   }));
   const supplierRows: Prisma.SupplierCreateManyInput[] = suppliers.map(([businessName, nit, city], index) => ({
-    id: index === 0 ? baseSupplier.id : `demo-supplier-${String(index + 1).padStart(2, "0")}`,
+    id: index === 0 ? baseSupplier.id : `supplier-${String(index + 1).padStart(2, "0")}`,
     businessName,
     nit,
     phone: `7${String(1000000 + index * 7319).slice(0, 7)}`,
@@ -258,7 +272,7 @@ async function main() {
       const closedAt = isCurrentOpenSession ? null : atHour(day, shift === 0 ? 14 : 21, randomInt(random, 0, 35));
       const currentSessionIndex = sessionIndex;
       sessionPlans.push({
-        id: `demo-cash-${String(currentSessionIndex).padStart(5, "0")}`,
+        id: `cash-session-${String(currentSessionIndex).padStart(5, "0")}`,
         index: currentSessionIndex,
         sellerId,
         openedAt,
@@ -314,7 +328,7 @@ async function main() {
 
   for (let waveIndex = 0; waveIndex < waveStarts.length; waveIndex += 1) {
     for (let supplierIndex = 0; supplierIndex < suppliers.length; supplierIndex += 1) {
-      const id = `demo-purchase-${waveIndex + 1}-${String(supplierIndex + 1).padStart(2, "0")}`;
+      const id = `purchase-${waveIndex + 1}-${String(supplierIndex + 1).padStart(2, "0")}`;
       purchaseRows.push({
         id,
         supplierId: supplierRows[supplierIndex]!.id!,
@@ -333,9 +347,9 @@ async function main() {
 
   for (const product of products) {
     for (let waveIndex = 0; waveIndex < waveStarts.length; waveIndex += 1) {
-      const purchaseId = `demo-purchase-${waveIndex + 1}-${String(product.supplierIndex + 1).padStart(2, "0")}`;
-      const purchaseItemId = `demo-purchase-item-${String(product.index + 1).padStart(4, "0")}-${waveIndex + 1}`;
-      const batchId = `demo-batch-${String(product.index + 1).padStart(4, "0")}-${waveIndex + 1}`;
+      const purchaseId = `purchase-${waveIndex + 1}-${String(product.supplierIndex + 1).padStart(2, "0")}`;
+      const purchaseItemId = `purchase-item-${String(product.index + 1).padStart(4, "0")}-${waveIndex + 1}`;
+      const batchId = `inventory-batch-${String(product.index + 1).padStart(4, "0")}-${waveIndex + 1}`;
       const isLastWave = waveIndex === waveStarts.length - 1;
       const targetStock = isLastWave
         ? product.index < 5 ? 0 : product.index < 17 ? Math.max(1, Math.floor(product.minimumStock * 0.45)) : product.minimumStock + randomInt(random, 12, 65)
@@ -380,7 +394,7 @@ async function main() {
       };
       mutableBatches.push(batch);
       inventoryMovementRows.push({
-        id: `demo-movement-receipt-${batchId}`,
+        id: `inventory-movement-receipt-${batchId}`,
         batchId,
         productId: product.id,
         type: "purchase_received",
@@ -412,7 +426,7 @@ async function main() {
   let preparedInvoiceNumber = 0;
 
   for (const sale of salePlans) {
-    const saleId = `demo-sale-${String(sale.index).padStart(7, "0")}`;
+    const saleId = `sale-${String(sale.index).padStart(7, "0")}`;
     const session = sessionPlans[sale.sessionIndex - 1]!;
     let totalAmount = 0;
     let totalCost = 0;
@@ -440,8 +454,8 @@ async function main() {
         batch.availableQuantity -= quantity;
         remaining -= quantity;
         itemCost += quantity * batch.baseUnitCost;
-        const movementId = `demo-movement-sale-${sale.index}-${lineIndex + 1}-${batch.id}`;
-        const consumptionId = `demo-consumption-${sale.index}-${lineIndex + 1}-${batch.id}`;
+        const movementId = `inventory-movement-sale-${sale.index}-${lineIndex + 1}-${batch.id}`;
+        const consumptionId = `batch-consumption-${sale.index}-${lineIndex + 1}-${batch.id}`;
         inventoryMovementRows.push({
           id: movementId,
           batchId: batch.id,
@@ -499,7 +513,7 @@ async function main() {
     const receivedAmount = nextCashAmount(totalAmount);
     saleRows.push({
       id: saleId,
-      idempotencyKey: `demo-${options.seed}-${sale.index}`,
+      idempotencyKey: `seed-${options.seed}-${sale.index}`,
       correlativeNumber: sale.index,
       correlativeCode: `VTA-${String(sale.index).padStart(7, "0")}`,
       sellerUserId: sale.sellerId,
@@ -515,7 +529,7 @@ async function main() {
       createdAt: sale.confirmedAt
     });
     paymentRows.push({
-      id: `demo-payment-${sale.index}`,
+      id: `payment-${sale.index}`,
       saleId,
       cashSessionId: session.id,
       method: "cash",
@@ -534,12 +548,12 @@ async function main() {
     if (sale.status === "cancelled" || sale.status === "returned") {
       const reversalType = sale.status === "cancelled" ? "sale_cancelled" : "sale_returned";
       const reversalDate = addMinutes(sale.confirmedAt, sale.status === "cancelled" ? 8 : 180);
-      const returnId = `demo-return-${sale.index}`;
+      const returnId = `sale-return-${sale.index}`;
       if (sale.status === "returned") {
         returnRows.push({
           id: returnId,
           saleId,
-          paymentId: `demo-payment-${sale.index}`,
+          paymentId: `payment-${sale.index}`,
           actorUserId: adminIds[sale.index % adminIds.length]!,
           reason: "Devolución total autorizada por presentación incorrecta del producto.",
           refundAmount: totalAmount,
@@ -549,7 +563,7 @@ async function main() {
       }
       for (const [allocationIndex, allocation] of allocationsForReturn.entries()) {
         allocation.batch.availableQuantity += allocation.quantity;
-        const reversalMovementId = `demo-movement-${reversalType}-${sale.index}-${allocationIndex + 1}`;
+        const reversalMovementId = `inventory-movement-${reversalType}-${sale.index}-${allocationIndex + 1}`;
         inventoryMovementRows.push({
           id: reversalMovementId,
           batchId: allocation.batch.id,
@@ -587,8 +601,11 @@ async function main() {
 
     if (sale.status === "confirmed" && sale.index % 11 === 0) {
       preparedInvoiceNumber += 1;
-      const invoiceId = `demo-invoice-${preparedInvoiceNumber}`;
+      const invoiceId = `prepared-invoice-${preparedInvoiceNumber}`;
       const cancelled = preparedInvoiceNumber % 19 === 0;
+      const invoiceCustomer = preparedInvoiceNumber % 4 === 0
+        ? invoiceCustomers[Math.floor(preparedInvoiceNumber / 4) % invoiceCustomers.length]!
+        : null;
       preparedInvoiceRows.push({
         id: invoiceId,
         correlativeNumber: preparedInvoiceNumber,
@@ -601,8 +618,8 @@ async function main() {
         cashSessionCode: `CAJ-${String(session.index).padStart(6, "0")}`,
         sellerName: staff.find((user) => user.id === sale.sellerId)!.fullName,
         sellerEmail: staff.find((user) => user.id === sale.sellerId)!.email,
-        customerNit: preparedInvoiceNumber % 4 === 0 ? String(4600000 + preparedInvoiceNumber * 37) : "0",
-        customerBusinessName: preparedInvoiceNumber % 4 === 0 ? `Cliente demostración ${preparedInvoiceNumber}` : "Consumidor final",
+        customerNit: invoiceCustomer?.[1] ?? "0",
+        customerBusinessName: invoiceCustomer?.[0] ?? "Consumidor final",
         fiscalNotes: "Factura preparada interna. No constituye emisión fiscal SIAT.",
         totalAmount,
         preparedAt: addMinutes(sale.confirmedAt, 5),
@@ -647,7 +664,7 @@ async function main() {
       const previousQuantity = batch.availableQuantity;
       batch.availableQuantity -= adjustmentQuantity;
       excessQuantity -= adjustmentQuantity;
-      const adjustmentId = `demo-adjustment-${String(product.index + 1).padStart(3, "0")}-${batchIndex + 1}`;
+      const adjustmentId = `inventory-adjustment-${String(product.index + 1).padStart(3, "0")}-${batchIndex + 1}`;
       inventoryAdjustmentRows.push({
         id: adjustmentId,
         batchId: batch.id,
@@ -660,7 +677,7 @@ async function main() {
         createdAt: atHour(asOf, 6, 45)
       });
       inventoryMovementRows.push({
-        id: `demo-movement-${adjustmentId}`,
+        id: `inventory-movement-${adjustmentId}`,
         batchId: batch.id,
         productId: product.id,
         type: "inventory_adjustment",
@@ -716,29 +733,29 @@ async function main() {
 
   const pendingCartRows: Prisma.PendingCartCreateManyInput[] = [];
   const pendingCartItemRows: Prisma.PendingCartItemCreateManyInput[] = [];
-  const convertedSaleCandidates = salePlans.filter((sale) => sale.status === "confirmed").slice(-4).reverse();
+  const recentConfirmedSales = [...salePlans].reverse().filter((sale) => sale.status === "confirmed");
   for (let index = 0; index < 24; index += 1) {
     const status = index < 8 ? "active" : index < 14 ? "expired" : index < 20 ? "discarded" : "converted";
     const createdAt = addDays(asOf, status === "active" ? -1 : -(4 + index));
     const product = products[(index * 17 + 3) % products.length]!;
     const quantity = 1 + (index % 3);
-    const cartId = `demo-cart-${String(index + 1).padStart(3, "0")}`;
+    const cartId = `pending-cart-${String(index + 1).padStart(3, "0")}`;
     const convertedSale = status === "converted"
-      ? convertedSaleCandidates[index - 20]
+      ? recentConfirmedSales[index - 20]
       : undefined;
     pendingCartRows.push({
       id: cartId,
       ownerUserId: activeSellerIds[index % activeSellerIds.length]!,
       status,
       name: ["Cotización de tratamiento", "Pedido para recoger", "Consulta de disponibilidad"][index % 3],
-      note: "Carrito de demostración con referencia de precio no reservada.",
+      note: "Cotización pendiente; el precio y el stock se validarán nuevamente al momento del cobro.",
       referenceTotalAmount: money(product.salePrice * quantity),
       expiresAt: addDays(createdAt, 3),
       expiredAt: status === "expired" ? addDays(createdAt, 3) : null,
       discardedAt: status === "discarded" ? addDays(createdAt, 1) : null,
       discardReason: status === "discarded" ? "El cliente decidió no completar la compra." : null,
       convertedAt: status === "converted" && convertedSale ? convertedSale.confirmedAt : null,
-      convertedSaleId: status === "converted" && convertedSale ? `demo-sale-${String(convertedSale.index).padStart(7, "0")}` : null,
+      convertedSaleId: status === "converted" && convertedSale ? `sale-${String(convertedSale.index).padStart(7, "0")}` : null,
       createdAt
     });
     const baseUnit = requireUnit(unitByAbbreviation, product.family.baseUnit);
@@ -764,7 +781,7 @@ async function main() {
     const status = index < 7 ? "draft" : "cancelled";
     const purchaseDate = addDays(asOf, -(index * 9 + 2));
     purchaseRows.push({
-      id: `demo-purchase-exception-${index + 1}`,
+      id: `purchase-pending-${index + 1}`,
       supplierId: supplierRows[index % supplierRows.length]!.id!,
       purchaseDate,
       status,
@@ -778,25 +795,25 @@ async function main() {
   }
 
   auditRows.push(...staff.map((user, index) => ({
-    id: `demo-audit-user-${index + 1}`,
-    action: "USER_SEEDED_FOR_DEMO",
+    id: `audit-user-created-${index + 1}`,
+    action: "USER_CREATED",
     actorUserId: staff[0]!.id,
     entityType: "User",
     entityId: user.id,
-    metadata: { source: "realistic_demo_seed", status: user.status, role: user.roleName },
+    metadata: { origin: "user_administration", status: user.status, role: user.roleName },
     ipAddress: "127.0.0.1",
-    userAgent: "Codex realistic demo seed",
+    userAgent: "Farmacia POS / Administración de usuarios",
     createdAt: addDays(historyStart, -100 + index)
   })));
   for (let index = 0; index < salePlans.length; index += 97) {
     const sale = salePlans[index]!;
     auditRows.push({
-      id: `demo-audit-sale-${sale.index}`,
+      id: `audit-sale-${sale.index}`,
       action: sale.status === "cancelled" ? "SALE_CANCELLED" : sale.status === "returned" ? "SALE_RETURNED" : "SALE_CONFIRMED",
       actorUserId: sale.sellerId,
       entityType: "Sale",
-      entityId: `demo-sale-${String(sale.index).padStart(7, "0")}`,
-      metadata: { source: "realistic_demo_seed", status: sale.status },
+      entityId: `sale-${String(sale.index).padStart(7, "0")}`,
+      metadata: { origin: "point_of_sale", status: sale.status },
       ipAddress: "192.168.10.25",
       userAgent: "Farmacia POS",
       createdAt: sale.confirmedAt
@@ -804,8 +821,8 @@ async function main() {
   }
 
   await prisma.$transaction(async (tx) => {
-    const existing = await tx.product.count({ where: { internalCode: { startsWith: "DEMO-" } } });
-    if (existing > 0) throw new Error("Realistic demo data already exists. Run seed:demo to rebuild the database from scratch.");
+    const existing = await tx.product.count({ where: { internalCode: { startsWith: "PRD-" } } });
+    if (existing > 0) throw new Error("Operational seed data already exists. Run seed:realistic to rebuild the database from scratch.");
 
     for (const user of staff.slice(3)) {
       await tx.user.create({
@@ -882,17 +899,17 @@ async function main() {
     await createInChunks(auditRows, (data) => tx.auditLog.createMany({ data }));
   }, { maxWait: 20_000, timeout: 180_000 });
 
-  console.log("Realistic pharmacy demo seed completed:");
+  console.log("Realistic pharmacy seed completed:");
   console.log(`- Reference date: ${options.asOf}`);
   console.log(`- Deterministic seed: ${options.seed}`);
-  console.log(`- Users: ${staff.length} (20 active, 27 inactive, 3 blocked)`);
+  console.log(`- Users: ${staff.length} (${staff.filter((user) => user.status === "active").length} active, ${staff.filter((user) => user.status === "inactive").length} inactive, ${staff.filter((user) => user.status === "blocked").length} blocked)`);
   console.log(`- Products: ${products.length}`);
   console.log(`- Suppliers: ${supplierRows.length}`);
   console.log(`- Received purchases: ${purchaseRows.filter((purchase) => purchase.status === "received").length}`);
   console.log(`- Cash sessions: ${cashRows.length}`);
   console.log(`- Sales: ${saleRows.length}`);
   console.log(`- Prepared internal invoices: ${preparedInvoiceRows.length}`);
-  console.log("- Demo credentials keep the password: admin");
+  console.log("- Development credentials keep the password: admin");
 }
 
 function family(
@@ -921,11 +938,11 @@ function buildProduct(index: number, random: () => number) {
   const salePrice = roundToHalf(baseUnitCost * (1 + marginRate));
   return {
     index,
-    id: `demo-product-${String(index + 1).padStart(4, "0")}`,
-    internalCode: `DEMO-${String(index + 1).padStart(4, "0")}`,
-    barcode: `777${String(1000000000 + index).padStart(10, "0")}`,
+    id: `product-${String(index + 1).padStart(4, "0")}`,
+    internalCode: `PRD-${String(index + 1).padStart(4, "0")}`,
+    barcode: buildEan13(index),
     commercialName: `${family.genericName} ${strength} ${presentation}`,
-    description: `${presentation} de ${family.genericName} ${strength}. Producto ficticio para demostración farmacéutica.`,
+    description: `${presentation} de ${family.genericName} ${strength}. Registro con control de lote, vencimiento y dispensación.`,
     family,
     laboratory,
     supplierIndex: index % suppliers.length,
@@ -955,15 +972,17 @@ async function buildStaff(passwordHash: string, roleByName: Map<string, string>,
     lastLoginAt: addDays(asOf, -index),
     createdAt: addDays(asOf, -800)
   }));
-  for (let index = 3; index < 50; index += 1) {
+  for (let index = 3; index < USER_COUNT; index += 1) {
     const isAdmin = index < 7;
-    const sellerOrdinal = index - 7;
-    const isActiveSeller = isAdmin || sellerOrdinal < 13;
-    const status = isActiveSeller ? "active" as const : sellerOrdinal >= 40 ? "blocked" as const : "inactive" as const;
+    const status = index >= USER_COUNT - BLOCKED_USER_COUNT
+      ? "blocked" as const
+      : index >= USER_COUNT - BLOCKED_USER_COUNT - INACTIVE_USER_COUNT
+        ? "inactive" as const
+        : "active" as const;
     const roleName = isAdmin ? "admin" as const : "seller" as const;
     const fullName = staffName(index);
     staff.push({
-      id: `demo-user-${String(index + 1).padStart(3, "0")}`,
+      id: `user-${String(index + 1).padStart(3, "0")}`,
       email: `${slug(fullName)}.${String(index + 1).padStart(2, "0")}@farmacia.local`,
       fullName,
       roleName,
@@ -1029,6 +1048,15 @@ function createRandom(seed: number) {
 
 function randomInt(random: () => number, minimum: number, maximum: number) {
   return Math.floor(random() * (maximum - minimum + 1)) + minimum;
+}
+
+function buildEan13(index: number) {
+  const body = `777${String(100000000 + index).padStart(9, "0")}`;
+  const weightedSum = [...body].reduce((sum, digit, position) => {
+    return sum + Number(digit) * (position % 2 === 0 ? 1 : 3);
+  }, 0);
+  const checkDigit = (10 - (weightedSum % 10)) % 10;
+  return `${body}${checkDigit}`;
 }
 
 function dateOnly(value: string | Date) {

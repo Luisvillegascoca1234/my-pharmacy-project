@@ -126,12 +126,12 @@ describe("stock planning temporal detail", () => {
     });
     cleanup = async () => act(async () => root.unmount());
 
-    expect(document.body.textContent).toContain("Demanda real frente a pronóstico");
-    expect(document.body.textContent).toContain("Stock frente a meta");
-    expect(document.body.textContent).toContain("Error y sesgo históricos");
+    expect(document.body.textContent).toContain("Ventas reales y demanda prevista");
+    expect(document.body.textContent).toContain("Inventario y cantidad recomendada");
+    expect(document.body.textContent).toContain("Precisión de cálculos anteriores");
     expect(document.body.querySelectorAll("[data-chart]")).toHaveLength(3);
-    expect(document.body.textContent).toContain("Se conserva la última ejecución exitosa");
-    expect(document.body.textContent).toContain("Historia conservada sin recomendación vigente");
+    expect(document.body.textContent).toContain("No se pudo completar un cálculo reciente");
+    expect(document.body.textContent).toContain("Medicamento inactivo");
     expect(document.body.textContent).toContain("LT-001");
     expect(document.body.textContent).toContain("10 → 12 tab");
     expect(document.body.textContent).toContain("Promedio móvil → Tendencia de Holt");
@@ -173,9 +173,9 @@ describe("stock planning temporal detail", () => {
     });
     cleanup = async () => act(async () => root.unmount());
 
-    expect(document.body.textContent).toContain("No hay observaciones ni trayectoria");
-    expect(document.body.textContent).toContain("No hay snapshots de inventario");
+    expect(document.body.textContent).toContain("No hay datos de demanda");
+    expect(document.body.textContent).toContain("No hay registros de inventario");
     expect(document.body.textContent).toContain("No hay métricas históricas comparables");
-    expect(document.body.textContent).toContain("no utilizó parámetros de modelo");
+    expect(document.body.textContent).toContain("no utilizó parámetros adicionales");
   });
 });

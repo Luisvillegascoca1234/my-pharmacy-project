@@ -14,7 +14,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "pnpm run build:shared && tsx prisma/seed.ts",
-    "seed:demo": "pnpm run prisma:seed && tsx prisma/demo-seed.ts",
+    "seed:realistic": "pnpm run prisma:seed && tsx prisma/realistic-seed.ts",
     "synthetic:stock-planning": "pnpm run build:shared && tsx src/scripts/generate-stock-planning-scenarios.ts",
     "seed:stock-planning-prediction": "pnpm run build:shared && tsx src/scripts/seed-stock-planning-prediction.ts",
     "db:reset:prediction": "pnpm run build:shared && tsx src/scripts/reset-prediction-database.ts"

@@ -8,7 +8,7 @@ export const stockPlanningMaturityLabels: Record<StockPlanningMaturity, string> 
   low_confidence: "Baja confianza",
   no_history: "Sin historial",
   no_observed_demand: "Sin demanda observada",
-  operational: "Predicción operativa"
+  operational: "Datos suficientes"
 };
 
 export const stockPlanningConfidenceLabels: Record<StockPlanningConfidence, string> = {

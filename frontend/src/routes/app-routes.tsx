@@ -32,7 +32,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ADMINISTRATIVE_RETURNS_PATH,
   PREPARED_INTERNAL_DOCUMENTS_PATH,
-  SIAT_SETTINGS_PATH,
   isRouteAllowedForRole,
   navigationItems,
   type AppNavigationItem,
@@ -137,7 +136,7 @@ export function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
       <Alert variant="destructive">
         <ShieldAlert aria-hidden="true" />
         <AlertTitle>Acceso no autorizado</AlertTitle>
-        <AlertDescription>Tu rol actual no permite abrir esta ruta operativa.</AlertDescription>
+        <AlertDescription>No tienes permiso para entrar a esta pantalla.</AlertDescription>
       </Alert>
 
       <Card>
@@ -147,7 +146,7 @@ export function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
         <CardContent className="grid gap-4">
           <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
           <Button className="w-fit" type="button" variant="outline" onClick={() => navigate("/dashboard", { replace: true })}>
-            Ir al dashboard
+            Ir al inicio
           </Button>
         </CardContent>
       </Card>
@@ -161,11 +160,7 @@ export function getRouteTitle(pathname: string) {
   }
 
   if (pathname === ADMINISTRATIVE_RETURNS_PATH) {
-    return "Devoluciones administrativas";
-  }
-
-  if (pathname === SIAT_SETTINGS_PATH) {
-    return "Configuración SIAT";
+    return "Devoluciones";
   }
 
   if (pathname === "/suppliers/new") {
@@ -184,5 +179,5 @@ export function getRouteTitle(pathname: string) {
     return "Detalle de compra";
   }
 
-  return navigationItems.find((item) => item.path === pathname)?.label ?? "Dashboard";
+  return navigationItems.find((item) => item.path === pathname)?.label ?? "Inicio";
 }

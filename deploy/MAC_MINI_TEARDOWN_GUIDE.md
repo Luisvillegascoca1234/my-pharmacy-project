@@ -40,7 +40,7 @@ Primero detener los servicios y después retirar únicamente los contenedores de
 
 ```bash
 docker compose --env-file deploy/.env -f deploy/compose.yml stop cloudflared frontend docs backend postgres
-docker compose --env-file deploy/.env -f deploy/compose.yml rm -f cloudflared frontend docs backend postgres migrate seed-operational seed-demo seed-prediction
+docker compose --env-file deploy/.env -f deploy/compose.yml rm -f cloudflared frontend docs backend postgres migrate seed-operational seed-realistic
 ```
 
 El volumen `pharmacy-showcase-postgres-data` no se elimina. La red puede permanecer hasta un despliegue posterior.
@@ -61,7 +61,7 @@ Confirmar que todos los recursos pertenecen exclusivamente a este showcase. Lueg
 
 ```bash
 docker compose --env-file deploy/.env -f deploy/compose.yml stop cloudflared frontend docs backend postgres
-docker compose --env-file deploy/.env -f deploy/compose.yml rm -f cloudflared frontend docs backend postgres migrate seed-operational seed-demo seed-prediction
+docker compose --env-file deploy/.env -f deploy/compose.yml rm -f cloudflared frontend docs backend postgres migrate seed-operational seed-realistic
 ```
 
 La siguiente operación es irreversible y elimina únicamente el volumen exacto del showcase:
