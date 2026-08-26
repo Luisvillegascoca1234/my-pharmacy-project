@@ -61,6 +61,22 @@ services:
     networks:
       - showcase
 
+  seed-demo:
+    image: pharmacy-showcase-backend:${SHOWCASE_IMAGE_TAG:-showcase}
+    profiles: [init]
+    restart: "no"
+    environment: *backend-environment
+    command:
+      - node
+      - /app/backend/dist/prisma/demo-seed.js
+      - --as-of=2026-08-26
+      - --seed=20260826
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - showcase
+
   seed-prediction:
     image: pharmacy-showcase-backend:${SHOWCASE_IMAGE_TAG:-showcase}
     profiles: [init]

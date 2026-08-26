@@ -21,7 +21,7 @@ El túnel remoto debe dirigir ambos hostnames a `http://caddy:80`.
 
 El Compose asume estos archivos y comportamientos:
 
-- `deploy/Dockerfile.backend`: produce una imagen ARM64 con `/app/backend` como directorio de trabajo, Prisma, el workspace y los artefactos JavaScript compilados del backend. Debe incluir `/app/backend/dist/prisma/seed.js` y `/app/backend/dist/src/scripts/seed-stock-planning-prediction.js`; su comando predeterminado inicia el backend en el puerto `4000` sin descargar herramientas al arrancar.
+- `deploy/Dockerfile.backend`: produce una imagen ARM64 con `/app/backend` como directorio de trabajo, Prisma, el workspace y los artefactos JavaScript compilados del backend. Debe incluir `/app/backend/dist/prisma/seed.js`, `/app/backend/dist/prisma/demo-seed.js` y `/app/backend/dist/src/scripts/seed-stock-planning-prediction.js`; su comando predeterminado inicia el backend en el puerto `4000` sin descargar herramientas al arrancar.
 - `deploy/Dockerfile.frontend`: compila `VITE_API_URL=/api` y sirve el frontend con Caddy en el puerto `80`. Su Caddyfile enruta `/api/*` a `backend:4000`, sirve el frontend para `farmacia-demo.gordex.dev` y hace proxy de `farmacia-docs.gordex.dev` a `docs:3001`.
 - `deploy/Dockerfile.docs`: inicia Next.js en `0.0.0.0:3001` y contiene Node.js para su healthcheck.
 - La imagen frontend basada en Caddy incluye el `wget` de BusyBox usado por su healthcheck.
@@ -135,10 +135,11 @@ Ejecutar los servicios one-shot en este orden estricto:
 ```bash
 SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -f deploy/compose.yml --profile init run --rm migrate
 SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -f deploy/compose.yml --profile init run --rm seed-operational
+SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -f deploy/compose.yml --profile init run --rm seed-demo
 SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -f deploy/compose.yml --profile init run --rm seed-prediction
 ```
 
-Cada comando debe finalizar con código cero. El último carga datos predictivos reproducibles con `--as-of=2026-08-26` y `--seed=20260826`.
+Cada comando debe finalizar con código cero. `seed-demo` carga dos años de operación farmacéutica realista y `seed-prediction` agrega escenarios predictivos especializados; ambos usan `--as-of=2026-08-26` y `--seed=20260826`.
 
 No volver a ejecutar `seed-operational` en una base que se quiera conservar: su comportamiento es destructivo.
 
