@@ -268,6 +268,12 @@ async function persistPredictionSeed(tx: Prisma.TransactionClient, plan: Predict
       scenario.days.find((day) => day.date === date)!.observedDemand > 0
     )
   );
+  const [cashSessionCorrelative, saleCorrelative] = await Promise.all([
+    tx.cashSession.aggregate({ _max: { correlativeNumber: true } }),
+    tx.sale.aggregate({ _max: { correlativeNumber: true } })
+  ]);
+  const cashSessionCorrelativeNumber = (cashSessionCorrelative._max.correlativeNumber ?? 0) + 1;
+  const firstSaleCorrelativeNumber = (saleCorrelative._max.correlativeNumber ?? 0) + 1;
   const cashSessionId = "prediction-cash-session";
   const totalSalesAmount = saleDays.reduce((total, date) =>
     total + plan.scenarios.reduce((dayTotal, scenario) =>
@@ -276,8 +282,8 @@ async function persistPredictionSeed(tx: Prisma.TransactionClient, plan: Predict
   await tx.cashSession.create({
     data: {
       id: cashSessionId,
-      correlativeNumber: 1,
-      correlativeCode: "CAJ-PRED-000001",
+      correlativeNumber: cashSessionCorrelativeNumber,
+      correlativeCode: `CAJ-PRED-${String(cashSessionCorrelativeNumber).padStart(6, "0")}`,
       openedByUserId: seller.id,
       closedByUserId: seller.id,
       initialAmount: 0,
@@ -295,6 +301,7 @@ async function persistPredictionSeed(tx: Prisma.TransactionClient, plan: Predict
   });
 
   for (const [saleIndex, date] of saleDays.entries()) {
+    const saleCorrelativeNumber = firstSaleCorrelativeNumber + saleIndex;
     const saleId = `prediction-sale-${date}`;
     const dayEntries = plan.scenarios
       .map((scenario) => ({ scenario, day: scenario.days.find((day) => day.date === date)! }))
@@ -306,8 +313,8 @@ async function persistPredictionSeed(tx: Prisma.TransactionClient, plan: Predict
       data: {
         id: saleId,
         idempotencyKey: `prediction-${date}`,
-        correlativeNumber: saleIndex + 1,
-        correlativeCode: `VTA-PRED-${String(saleIndex + 1).padStart(6, "0")}`,
+        correlativeNumber: saleCorrelativeNumber,
+        correlativeCode: `VTA-PRED-${String(saleCorrelativeNumber).padStart(6, "0")}`,
         sellerUserId: seller.id,
         cashSessionId,
         status: "confirmed",
