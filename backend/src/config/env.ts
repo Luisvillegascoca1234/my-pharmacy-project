@@ -11,7 +11,11 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   FRONTEND_URL: z.string().url().default("http://localhost:5173"),
   JWT_SECRET: z.string().min(32).default("dev-only-auth-secret-change-before-production"),
-  JWT_EXPIRES_IN: z.string().min(1).default("8h")
+  JWT_EXPIRES_IN: z.string().min(1).default("8h"),
+  STOCK_PLANNING_SCHEDULER_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true")
 });
 
 export const env = EnvSchema.parse(process.env);

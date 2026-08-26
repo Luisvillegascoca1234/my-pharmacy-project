@@ -1,0 +1,49 @@
+FROM node:22-bookworm-slim AS base
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN corepack enable \
+    && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+FROM base AS dependencies
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json backend/package.json
+COPY docs-app/package.json docs-app/package.json
+COPY frontend/package.json frontend/package.json
+COPY packages/shared/package.json packages/shared/package.json
+
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+FROM dependencies AS build
+
+COPY docs-app docs-app
+
+ARG NEXT_PUBLIC_DOCS_URL=https://farmacia-docs.gordex.dev
+ENV NEXT_PUBLIC_DOCS_URL=$NEXT_PUBLIC_DOCS_URL
+
+RUN pnpm --filter @pharmacy-pos/docs exec fumadocs-mdx \
+    && pnpm --filter @pharmacy-pos/docs build
+
+FROM base AS runtime
+
+ENV NODE_ENV=production
+
+COPY --from=build --chown=node:node /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/docs-app/package.json ./docs-app/package.json
+COPY --from=build --chown=node:node /app/docs-app/node_modules ./docs-app/node_modules
+COPY --from=build --chown=node:node /app/docs-app/.next ./docs-app/.next
+COPY --from=build --chown=node:node /app/docs-app/public ./docs-app/public
+COPY --from=build --chown=node:node /app/docs-app/next.config.mjs ./docs-app/next.config.mjs
+
+WORKDIR /app/docs-app
+
+USER node
+
+EXPOSE 3001
+
+CMD ["./node_modules/.bin/next", "start", "--hostname", "0.0.0.0", "--port", "3001"]

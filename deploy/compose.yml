@@ -1,0 +1,188 @@
+name: pharmacy-showcase
+
+x-backend-environment: &backend-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:?Set POSTGRES_USER in deploy/.env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in deploy/.env}?schema=public
+  NODE_ENV: production
+  PORT: "4000"
+  APP_VERSION: ${SHOWCASE_IMAGE_TAG:-showcase}
+  FRONTEND_URL: https://farmacia-demo.gordex.dev
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in deploy/.env}
+  JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+  STOCK_PLANNING_SCHEDULER_ENABLED: "false"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in deploy/.env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in deploy/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - showcase
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 30s
+
+  migrate:
+    image: pharmacy-showcase-backend:${SHOWCASE_IMAGE_TAG:-showcase}
+    profiles: [init]
+    restart: "no"
+    environment: *backend-environment
+    command:
+      - /app/backend/node_modules/.bin/prisma
+      - migrate
+      - deploy
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - showcase
+
+  seed-operational:
+    image: pharmacy-showcase-backend:${SHOWCASE_IMAGE_TAG:-showcase}
+    profiles: [init]
+    restart: "no"
+    environment: *backend-environment
+    command:
+      - node
+      - /app/backend/dist/prisma/seed.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - showcase
+
+  seed-prediction:
+    image: pharmacy-showcase-backend:${SHOWCASE_IMAGE_TAG:-showcase}
+    profiles: [init]
+    restart: "no"
+    environment: *backend-environment
+    command:
+      - node
+      - /app/backend/dist/src/scripts/seed-stock-planning-prediction.js
+      - --as-of=2026-08-26
+      - --seed=20260826
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - showcase
+
+  backend:
+    image: pharmacy-showcase-backend:${SHOWCASE_IMAGE_TAG:-showcase}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    restart: unless-stopped
+    init: true
+    environment: *backend-environment
+    expose:
+      - "4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - showcase
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:4000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    stop_grace_period: 20s
+
+  docs:
+    image: pharmacy-showcase-docs:${SHOWCASE_IMAGE_TAG:-showcase}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.docs
+    restart: unless-stopped
+    init: true
+    expose:
+      - "3001"
+    networks:
+      - showcase
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3001/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    stop_grace_period: 20s
+
+  frontend:
+    image: pharmacy-showcase-frontend:${SHOWCASE_IMAGE_TAG:-showcase}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      docs:
+        condition: service_healthy
+    networks:
+      showcase:
+        aliases:
+          - caddy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --quiet --spider --header='Host: farmacia-demo.gordex.dev' http://127.0.0.1/
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    stop_grace_period: 10s
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.8.2
+    restart: unless-stopped
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token-file
+      - /run/secrets/tunnel-token
+    volumes:
+      - ./secrets/tunnel-token:/run/secrets/tunnel-token:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      docs:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - showcase
+    stop_grace_period: 20s
+
+volumes:
+  postgres-data:
+    name: pharmacy-showcase-postgres-data
+
+networks:
+  showcase:
+    name: pharmacy-showcase-network
+    driver: bridge
