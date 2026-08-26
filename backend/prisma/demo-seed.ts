@@ -716,6 +716,7 @@ async function main() {
 
   const pendingCartRows: Prisma.PendingCartCreateManyInput[] = [];
   const pendingCartItemRows: Prisma.PendingCartItemCreateManyInput[] = [];
+  const convertedSaleCandidates = salePlans.filter((sale) => sale.status === "confirmed").slice(-4).reverse();
   for (let index = 0; index < 24; index += 1) {
     const status = index < 8 ? "active" : index < 14 ? "expired" : index < 20 ? "discarded" : "converted";
     const createdAt = addDays(asOf, status === "active" ? -1 : -(4 + index));
@@ -723,7 +724,7 @@ async function main() {
     const quantity = 1 + (index % 3);
     const cartId = `demo-cart-${String(index + 1).padStart(3, "0")}`;
     const convertedSale = status === "converted"
-      ? [...salePlans].reverse().find((sale, position) => sale.status === "confirmed" && position >= index - 20)
+      ? convertedSaleCandidates[index - 20]
       : undefined;
     pendingCartRows.push({
       id: cartId,
