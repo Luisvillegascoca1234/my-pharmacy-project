@@ -123,6 +123,7 @@ La carga es determinista y crea un escenario proporcional de una farmacia de una
 - productos agotados, con stock bajo y lotes próximos a vencer;
 - carritos activos, vencidos, descartados y convertidos;
 - cierres de caja conformes y diferencias menores de arqueo;
+- un cálculo inicial de planificación con pronósticos y recomendaciones para todos los productos activos;
 - evidencia de auditoría para operaciones representativas.
 
 La fecha `--as-of` permite mover todo el escenario a la fecha de la presentación. La opción `--seed` conserva exactamente la misma distribución de ventas, importes, productos y turnos entre ejecuciones.

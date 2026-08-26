@@ -138,7 +138,7 @@ SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -
 SHOWCASE_IMAGE_TAG="$SHOWCASE_IMAGE_TAG" docker compose --env-file deploy/.env -f deploy/compose.yml --profile init run --rm seed-realistic
 ```
 
-Cada comando debe finalizar con código cero. `seed-realistic` carga dos años de operación farmacéutica reproducible con `--as-of=2026-08-26` y `--seed=20260826`. El motor de planificación utilizará esta misma historia operativa cuando el superadministrador ejecute **Recalcular ahora**.
+Cada comando debe finalizar con código cero. `seed-realistic` carga dos años de operación farmacéutica reproducible con `--as-of=2026-08-26` y `--seed=20260826` y, antes de terminar, ejecuta el cálculo inicial de planificación sobre esa historia. Al abrir **Qué comprar**, los pronósticos y sus detalles ya deben estar disponibles; **Recalcular ahora** queda reservado para actualizaciones posteriores.
 
 No volver a ejecutar `seed-operational` en una base que se quiera conservar: su comportamiento es destructivo.
 
