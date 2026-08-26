@@ -1,17 +1,21 @@
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ContextNavigation, purchasingNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
+  ChevronDown,
   ClipboardPenLine,
   PackageCheck,
   RefreshCcw,
+  Settings2,
   ShieldAlert,
-  Sparkles
+  ShoppingCart,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +55,8 @@ const quantityFormatter = new Intl.NumberFormat("es-BO", {
 });
 
 export function StockPlanningPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const planning = useStockPlanning();
   const [editingProduct, setEditingProduct] = useState<StockPlanningProduct | null>(null);
   const [detailProductId, setDetailProductId] = useState<string | null>(null);
@@ -64,13 +70,21 @@ export function StockPlanningPage() {
     [planning.analyticsByProductId, planning.executions, planning.products]
   );
 
+  useEffect(() => {
+    const requestedSearch = searchParams.get("search")?.trim();
+
+    if (requestedSearch) {
+      void planning.load({ search: requestedSearch });
+    }
+  }, [searchParams]);
+
   if (!planning.canAccess) {
     return (
       <section className="mx-auto grid max-w-3xl gap-5">
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Acceso no autorizado</AlertTitle>
-          <AlertDescription>Tu rol actual no permite consultar la planificación administrativa de stock.</AlertDescription>
+          <AlertDescription>No tienes permiso para consultar las recomendaciones de compra.</AlertDescription>
         </Alert>
       </section>
     );
@@ -78,30 +92,32 @@ export function StockPlanningPage() {
 
   return (
     <section className="grid gap-6">
+      <ContextNavigation ariaLabel="Opciones de abastecimiento" items={purchasingNavigation} />
       <div className="relative overflow-hidden rounded-xl border bg-card">
         <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-muted/40 lg:block" />
-        <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end">
+        <div className="relative grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
           <div className="space-y-3">
-            <Badge className="w-fit" variant="secondary">
-              Inventario farmacéutico
-            </Badge>
             <div className="max-w-3xl space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Planificación de stock</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Qué medicamentos comprar</h1>
               <p className="text-sm leading-6 text-muted-foreground">
-                Convierte la historia operativa en una señal consultiva de abastecimiento. Cada producto conserva su
-                madurez, trayectoria, banda predictiva y límites de evidencia sin confundir una referencia con un pronóstico.
+                Revisa las cantidades sugeridas y crea las compras necesarias.
               </p>
             </div>
+            <Button className="w-fit" type="button" variant="outline" onClick={() => navigate("/purchases?status=draft")}>
+              <ShoppingCart aria-hidden="true" />
+              Ver compras en borrador
+            </Button>
           </div>
-          <div className="grid gap-2 rounded-lg border bg-background/80 p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Sparkles aria-hidden="true" className="size-4 text-primary" />
-              Lectura analítica gradual
+          <div className="grid gap-3 rounded-lg border bg-background/80 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <PackageCheck aria-hidden="true" className="size-4 text-primary" />
+              Cómo usar esta pantalla
             </div>
-            <p className="text-xs leading-5 text-muted-foreground">
-              La referencia configurada permanece hasta que la historia habilita una predicción. La confianza resume
-              calidad de evidencia, no una garantía de disponibilidad futura.
-            </p>
+            <ol className="grid gap-2 text-xs leading-5 text-muted-foreground">
+              <li><strong className="text-foreground">1.</strong> Empieza por “Comprar hoy”.</li>
+              <li><strong className="text-foreground">2.</strong> Revisa cantidad, motivo y costo aproximado.</li>
+              <li><strong className="text-foreground">3.</strong> Crea la compra o revisa el borrador existente.</li>
+            </ol>
           </div>
         </div>
       </div>
@@ -112,39 +128,18 @@ export function StockPlanningPage() {
         summary={planning.summary}
       />
 
-      <StockPlanningGovernance
-        canGovern={planning.canGovern}
-        configuration={planning.configuration}
-        engineState={planning.engineState}
-        error={planning.governanceError}
-        executions={planning.executions}
-        operation={planning.governanceStatus}
-        onRun={planning.runManualExecution}
-        onSave={planning.updateConfiguration}
-      />
-
-      <ForecastConfidenceGuide />
-      <StaleForecastNotice products={productAnalytics} />
       <ReplenishmentFilters
         disabled={planning.status === "loading"}
         products={planning.products}
         onApply={(filters) => void planning.load(filters)}
       />
-      <StockPlanningParquetExports
-        executions={planning.executions}
-        products={planning.products}
-        surface="stock-planning"
-      />
-      <PredictiveAlerts alerts={planning.alerts} />
 
       <Card>
         <CardHeader className="gap-4 border-b">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <CardTitle>Recomendaciones priorizadas</CardTitle>
-              <CardDescription>
-                Demanda, seguridad, meta, sugerencia y riesgos en unidad base. Esta superficie no crea compras ni modifica lotes.
-              </CardDescription>
+              <CardTitle>Medicamentos a revisar</CardTitle>
+              <CardDescription>Los casos más urgentes aparecen primero.</CardDescription>
             </div>
             <Button
               disabled={planning.status === "loading"}
@@ -174,9 +169,66 @@ export function StockPlanningPage() {
               planning.clearUpdateError();
               setEditingProduct(product);
             }}
+            onCreatePurchase={(product) => {
+              const params = new URLSearchParams({
+                productId: product.productId,
+                quantity: String(Math.max(product.result.quantityBase, 1)),
+                supplierId: product.supplierId
+              });
+              navigate(`/purchases/new?${params.toString()}`);
+            }}
+            onReviewDraft={(product) => navigate(`/purchases?status=draft&supplierId=${encodeURIComponent(product.supplierId)}`)}
           />
         </CardContent>
       </Card>
+
+      <Collapsible className="group/advanced">
+        <Card>
+          <CardHeader>
+            <CollapsibleTrigger asChild>
+              <Button className="h-auto w-full justify-between gap-4 px-0 text-left" type="button" variant="ghost">
+                <span className="flex items-start gap-3">
+                  <span className="rounded-lg border bg-muted/30 p-2">
+                    <Settings2 aria-hidden="true" className="size-4 text-primary" />
+                  </span>
+                  <span>
+                    <span className="block font-semibold text-foreground">Configuración técnica</span>
+                    <span className="mt-1 block text-xs font-normal leading-5 text-muted-foreground">
+                      Configuración y archivos para administradores especializados.
+                    </span>
+                  </span>
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="size-4 shrink-0 transition-transform group-data-[state=open]/advanced:rotate-180"
+                />
+              </Button>
+            </CollapsibleTrigger>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="grid gap-5 border-t pt-5">
+              <StockPlanningGovernance
+                canGovern={planning.canGovern}
+                configuration={planning.configuration}
+                engineState={planning.engineState}
+                error={planning.governanceError}
+                executions={planning.executions}
+                operation={planning.governanceStatus}
+                onRun={planning.runManualExecution}
+                onSave={planning.updateConfiguration}
+              />
+              <PredictiveAlerts alerts={planning.alerts} />
+              <ForecastConfidenceGuide />
+              <StaleForecastNotice products={productAnalytics} />
+              <StockPlanningParquetExports
+                executions={planning.executions}
+                products={planning.products}
+                surface="stock-planning"
+              />
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <StockPlanningDetail
         data={planning.detailData}
@@ -345,11 +397,11 @@ function ConfigurationDialog({
       <DialogContent className="sm:max-w-lg">
         <form className="contents" onSubmit={(event) => void handleSubmit(event)}>
           <DialogHeader>
-            <DialogTitle>Parámetros de reposición</DialogTitle>
+            <DialogTitle>Cambiar criterio de compra</DialogTitle>
             <DialogDescription>
               {product
-                ? `${product.commercialName} · ${product.internalCode}. Los cambios afectan referencias futuras y no modifican inventario.`
-                : "Selecciona un producto para editar su configuración."}
+                ? `${product.commercialName} · ${product.internalCode}. Define cuántos días quieres cubrir y su prioridad de abastecimiento.`
+                : "Selecciona un medicamento para cambiar su criterio."}
             </DialogDescription>
           </DialogHeader>
 
@@ -362,7 +414,7 @@ function ConfigurationDialog({
               </Alert>
             ) : null}
 
-            <Field label="Criticidad farmacéutica">
+            <Field label="Prioridad de abastecimiento">
               <NativeSelect
                 className="w-full"
                 value={criticality}
@@ -371,13 +423,13 @@ function ConfigurationDialog({
                   if (result.success) setCriticality(result.data);
                 }}
               >
-                <NativeSelectOption value="normal">Normal · protección 90%</NativeSelectOption>
-                <NativeSelectOption value="high">Alta · protección 95%</NativeSelectOption>
-                <NativeSelectOption value="critical">Crítica · protección 99%</NativeSelectOption>
+                <NativeSelectOption value="normal">Normal</NativeSelectOption>
+                <NativeSelectOption value="high">Alta</NativeSelectOption>
+                <NativeSelectOption value="critical">Crítica</NativeSelectOption>
               </NativeSelect>
             </Field>
 
-            <Field label="Origen de cobertura">
+            <Field label="Días de cobertura">
               <NativeSelect
                 className="w-full"
                 value={coverageMode}
@@ -387,13 +439,13 @@ function ConfigurationDialog({
                   }
                 }}
               >
-                <NativeSelectOption value="global">Heredar cobertura global ({globalCoverageDays} días)</NativeSelectOption>
-                <NativeSelectOption value="product">Usar cobertura específica</NativeSelectOption>
+                <NativeSelectOption value="global">Usar criterio general ({globalCoverageDays} días)</NativeSelectOption>
+                <NativeSelectOption value="product">Elegir días para este medicamento</NativeSelectOption>
               </NativeSelect>
             </Field>
 
             {coverageMode === "product" ? (
-              <Field label="Cobertura específica en días">
+              <Field label="Cuántos días quieres cubrir">
                 <Input
                   aria-invalid={!coverageIsValid}
                   max={365}
@@ -407,17 +459,17 @@ function ConfigurationDialog({
               </Field>
             ) : (
               <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
-                El producto seguirá automáticamente la cobertura global vigente de {globalCoverageDays} días.
+                Este medicamento usará la cobertura general de {globalCoverageDays} días.
               </div>
             )}
 
-            <Field label="Presentación preferida de reposición">
+            <Field label="Cómo prefieres pedirlo">
               <NativeSelect
                 className="w-full"
                 value={preferredPresentationId}
                 onChange={(event) => setPreferredPresentationId(event.target.value)}
               >
-                <NativeSelectOption value="">Sin presentación · mantener unidad base</NativeSelectOption>
+                <NativeSelectOption value="">Usar la unidad mínima</NativeSelectOption>
                 {presentationOptions.map((option) => (
                   <NativeSelectOption key={option.id} value={option.id}>
                     {option.name} ({option.abbreviation}) · {quantityFormatter.format(option.conversionFactor)} unidades base
@@ -438,7 +490,7 @@ function ConfigurationDialog({
             </Button>
             <Button disabled={updating || !coverageIsValid || !product} type="submit">
               {updating ? <Spinner /> : <ClipboardPenLine aria-hidden="true" />}
-              Guardar parámetros
+              Guardar criterio
             </Button>
           </DialogFooter>
         </form>

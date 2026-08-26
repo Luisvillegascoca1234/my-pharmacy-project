@@ -1,8 +1,7 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AuthenticatedUser } from "@pharmacy-pos/shared";
 import { Bell, LogOut, Search, UserCircle } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
@@ -17,8 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeSelector } from "@/components/theme-selector";
-import { getVisibleNavigationGroups } from "@/routes/navigation";
-import { getRouteTitle } from "@/routes/app-routes";
+import { getVisibleNavigationSearchGroups } from "@/routes/navigation";
 import { AppSidebar } from "./app-sidebar";
 
 type AppShellProps = {
@@ -27,31 +25,44 @@ type AppShellProps = {
 };
 
 export function AppShell({ children, user }: AppShellProps) {
-  const location = useLocation();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
-  const title = getRouteTitle(location.pathname);
-  const visibleGroups = useMemo(() => getVisibleNavigationGroups(user.role.name), [user.role.name]);
+  const visibleGroups = useMemo(() => getVisibleNavigationSearchGroups(user.role.name), [user.role.name]);
+
+  useEffect(() => {
+    const openSearch = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", openSearch);
+    return () => window.removeEventListener("keydown", openSearch);
+  }, []);
 
   return (
     <SidebarProvider>
       <AppSidebar user={user} />
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
-          <SidebarTrigger aria-label="Alternar navegación" />
-          <Separator className="h-6" orientation="vertical" />
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Consola operativa</p>
-            <h1 className="truncate text-base font-semibold text-foreground sm:text-lg">{title}</h1>
-          </div>
-          <Badge className="ml-1 hidden lg:inline-flex" variant="outline">
-            {user.role.displayName}
-          </Badge>
+        <header className="sticky top-0 z-20 flex h-[4.5rem] shrink-0 items-center gap-3 border-b bg-background/88 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+          <SidebarTrigger aria-label="Alternar navegación" className="rounded-lg border bg-card shadow-xs" />
+          <Separator className="mx-1 h-7" orientation="vertical" />
           <div className="ml-auto flex items-center gap-2">
+            <Button
+              className="hidden h-9 min-w-56 justify-start gap-2 border bg-card px-3 font-normal text-muted-foreground shadow-xs lg:inline-flex"
+              type="button"
+              variant="outline"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search aria-hidden="true" className="size-4" />
+              <span>Buscar pantalla o tarea</span>
+              <kbd className="ml-auto rounded border bg-muted px-1.5 py-0.5 text-[0.625rem] font-semibold">Ctrl K</kbd>
+            </Button>
             <ThemeSelector />
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button aria-label="Buscar en el sistema" size="icon" variant="outline" onClick={() => setSearchOpen(true)}>
+                <Button aria-label="Buscar en el sistema" className="bg-card shadow-xs lg:hidden" size="icon" variant="outline" onClick={() => setSearchOpen(true)}>
                   <Search aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
@@ -59,15 +70,15 @@ export function AppShell({ children, user }: AppShellProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button aria-label="Alertas operativas" size="icon" variant="outline" onClick={() => navigate("/alerts")}>
+                <Button aria-label="Alertas" className="relative bg-card shadow-xs" size="icon" variant="outline" onClick={() => navigate("/alerts")}>
                   <Bell aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Alertas operativas</TooltipContent>
+              <TooltipContent>Alertas</TooltipContent>
             </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button aria-label="Menú de usuario" className="hidden max-w-56 gap-2 sm:inline-flex" variant="outline">
+                <Button aria-label="Menú de usuario" className="hidden max-w-56 gap-2 bg-card shadow-xs sm:inline-flex" variant="outline">
                   <UserCircle aria-hidden="true" />
                   <span className="truncate">{user.fullName}</span>
                 </Button>
@@ -88,12 +99,12 @@ export function AppShell({ children, user }: AppShellProps) {
             </DropdownMenu>
           </div>
         </header>
-        <main className="w-full px-4 py-6 sm:px-6 lg:px-8">{children}</main>
-        <CommandDialog open={searchOpen} title="Buscar en el sistema" description="Busca un módulo operativo." onOpenChange={setSearchOpen}>
+        <main className="w-full px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{children}</main>
+        <CommandDialog open={searchOpen} title="Buscar en el sistema" description="Busca una pantalla o tarea." onOpenChange={setSearchOpen}>
           <Command>
-            <CommandInput placeholder="Buscar módulo..." />
+            <CommandInput placeholder="Buscar pantalla o tarea..." />
             <CommandList>
-              <CommandEmpty>No hay módulos disponibles.</CommandEmpty>
+              <CommandEmpty>No se encontraron resultados.</CommandEmpty>
               {visibleGroups.map((group) => (
                 <CommandGroup key={group.label} heading={group.label}>
                   {group.items.map((item) => (

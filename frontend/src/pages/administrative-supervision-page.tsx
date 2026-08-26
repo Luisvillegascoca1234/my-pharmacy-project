@@ -11,7 +11,6 @@ import {
   RefreshCcw,
   Search,
   ShieldAlert,
-  ShieldCheck,
   ShoppingBasket,
   Trash2,
   WalletCards
@@ -63,7 +62,11 @@ import { getSaleCancellationBlockMessage, isSaleCancellationAllowed } from "./sa
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
-const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/La_Paz"
+});
 
 const cashStatusLabels: Record<"all" | SupervisableCashSession["status"], string> = {
   all: "Todas",
@@ -74,8 +77,8 @@ const cashStatusLabels: Record<"all" | SupervisableCashSession["status"], string
 const cashErrorMessages: Record<CashSupervisionDataErrorCode, string> = {
   "already-closed": "La caja ya fue cerrada. Actualiza la supervisión antes de continuar.",
   "amount-invalid": "El monto contado final debe ser mayor o igual a cero y tener hasta dos decimales.",
-  "cash-session-closed": "La caja ya no está abierta para cierre administrativo.",
-  forbidden: "Esta caja no está disponible para supervisión o cierre con el alcance actual.",
+  "cash-session-closed": "La caja ya fue cerrada.",
+  forbidden: "No tienes permiso para cerrar esta caja.",
   "not-found": "No se encontró la caja solicitada.",
   "session-invalid": "Tu sesión no permite supervisar caja. Vuelve a iniciar sesión.",
   unknown: "No se pudo completar la supervisión de caja. Intenta nuevamente."
@@ -90,11 +93,11 @@ const saleStatusLabels: Record<SalesStatusFilter, string> = {
 
 const saleErrorMessages: Record<SalesDataErrorCode, string> = {
   "cash-session-closed": "La caja asociada ya fue cerrada.",
-  forbidden: "Esta venta no está disponible dentro del alcance de supervisión actual.",
+  forbidden: "No tienes permiso para consultar esta venta.",
   "not-current-day": "La venta ya no corresponde al turno permitido.",
   "not-found": "No se encontró la venta solicitada.",
   "sale-already-cancelled": "La venta ya fue anulada.",
-  "sale-not-cancelable": "La venta no cumple las reglas vigentes de anulación.",
+  "sale-not-cancelable": "Esta venta ya no se puede anular.",
   "session-invalid": "Tu sesión no permite supervisar ventas. Vuelve a iniciar sesión.",
   unknown: "No se pudo completar la consulta de ventas.",
   validation: "Revisa los filtros ingresados."
@@ -109,15 +112,15 @@ const pendingStatusLabels: Record<PendingCartStatusFilter, string> = {
 };
 
 const pendingErrorMessages: Record<PendingCartDataErrorCode, string> = {
-  "cash-session-closed": "La caja activa no permite completar esta operación.",
-  forbidden: "Este pendiente no está disponible dentro del alcance de supervisión actual.",
-  "not-found": "No se encontró el pendiente solicitado.",
-  "pending-expired": "El pendiente ya venció.",
-  "price-changed": "El pendiente tiene cambios de precio pendientes de revisión.",
-  "product-not-saleable": "El pendiente contiene productos no vendibles.",
-  "session-invalid": "Tu sesión no permite supervisar pendientes. Vuelve a iniciar sesión.",
-  "stock-insufficient": "El pendiente contiene productos sin stock suficiente.",
-  unknown: "No se pudo completar la operación sobre pendientes.",
+  "cash-session-closed": "La caja ya está cerrada.",
+  forbidden: "No tienes permiso para consultar esta venta guardada.",
+  "not-found": "No se encontró la venta guardada.",
+  "pending-expired": "La venta guardada ya venció.",
+  "price-changed": "La venta guardada tiene precios que debes revisar.",
+  "product-not-saleable": "La venta guardada contiene productos que ya no se pueden vender.",
+  "session-invalid": "Tu sesión no permite supervisar ventas guardadas. Vuelve a iniciar sesión.",
+  "stock-insufficient": "La venta guardada contiene productos sin stock suficiente.",
+  unknown: "No se pudo actualizar la venta guardada.",
   validation: "Revisa los datos ingresados."
 };
 
@@ -210,12 +213,12 @@ export function AdministrativeSupervisionPage() {
     setCloseError(null);
 
     if (!selectedCashSession) {
-      setCloseError("Selecciona una caja abierta para cierre administrativo.");
+      setCloseError("Selecciona una caja abierta.");
       return;
     }
 
     if (selectedCashSession.status !== "open" || selectedCashSession.canClose === false) {
-      setCloseError("Esta caja no está habilitada para cierre administrativo.");
+      setCloseError("Esta caja no puede cerrarse desde esta pantalla.");
       return;
     }
 
@@ -313,41 +316,38 @@ export function AdministrativeSupervisionPage() {
     <section className="grid gap-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Intervención administrativa
-          </Badge>
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Supervisión POS</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Supervisar ventas</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Control de cajas de vendedores, ventas anulables y pendientes obsoletos en mostrador.
+              Revisa las cajas, las ventas y las ventas guardadas del equipo.
             </p>
           </div>
         </div>
         <div className="grid gap-2 sm:grid-cols-3 xl:w-[620px]">
           <Metric label="Cajas abiertas" value={cashSummary.open} />
-          <Metric label="Ventas anulables" value={salesSummary.cancelable} />
-          <Metric label="Pendientes vencidos" value={pendingSummary.expired} />
+          <Metric label="Se pueden anular" value={salesSummary.cancelable} />
+          <Metric label="Guardadas vencidas" value={pendingSummary.expired} />
         </div>
       </div>
 
       <OperationalScopeNotice
         canSupervise={canUseAdministrativeViews}
-        ownRecordsDescription="Esta superficie no está disponible para alcance propio."
-        supervisionDescription="Puedes consultar caja, ventas y pendientes de otros vendedores; cada intervención depende de la evaluación efectiva del servidor."
+        ownRecordsDescription="Esta pantalla está disponible únicamente para supervisores."
+        supervisionDescription="Puedes consultar las cajas y ventas de otros vendedores. Las acciones aparecen solo cuando corresponden."
       />
 
       {!canUseAdministrativeViews ? (
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Acceso denegado</AlertTitle>
-          <AlertDescription>El rol de tu usuario no incluye supervisión administrativa de caja, ventas y pendientes.</AlertDescription>
+          <AlertDescription>No tienes permiso para supervisar cajas y ventas de otros vendedores.</AlertDescription>
         </Alert>
       ) : null}
 
       {cash.lastClosedCashSession ? (
         <Alert>
           <BadgeCheck aria-hidden="true" />
-          <AlertTitle>Caja cerrada administrativamente</AlertTitle>
+          <AlertTitle>Caja cerrada</AlertTitle>
           <AlertDescription>
             {cash.lastClosedCashSession.correlativeCode} quedó cerrada con diferencia{" "}
             {formatMoney(cash.lastClosedCashSession.differenceAmount ?? 0)}
@@ -368,7 +368,7 @@ export function AdministrativeSupervisionPage() {
           </TabsTrigger>
           <TabsTrigger value="pending">
             <ShoppingBasket aria-hidden="true" />
-            Pendientes
+            Guardadas
           </TabsTrigger>
         </TabsList>
 
@@ -377,16 +377,17 @@ export function AdministrativeSupervisionPage() {
             <Card>
               <CardHeader className="gap-4">
                 <HeaderWithRefresh
-                  description="Estado, responsable, apertura, esperado y diferencia de cajas de vendedores."
+                  description="Revisa el estado y los importes de las cajas del equipo."
                   disabled={!cash.canSupervise || cash.listStatus === "loading"}
                   isLoading={cash.listStatus === "loading"}
-                  title="Cajas supervisables"
+                  title="Cajas del equipo"
                   onRefresh={() => void cash.reload()}
                 />
                 <form className="grid gap-3 lg:grid-cols-[160px_160px_160px_minmax(0,1fr)_auto_auto]" onSubmit={applyCashFilters}>
-                  <Input disabled={!cash.canSupervise} type="date" value={cash.fromDate} onChange={(event) => cash.setFromDate(event.currentTarget.value)} />
-                  <Input disabled={!cash.canSupervise} type="date" value={cash.toDate} onChange={(event) => cash.setToDate(event.currentTarget.value)} />
+                  <Input aria-label="Desde" disabled={!cash.canSupervise} type="date" value={cash.fromDate} onChange={(event) => cash.setFromDate(event.currentTarget.value)} />
+                  <Input aria-label="Hasta" disabled={!cash.canSupervise} type="date" value={cash.toDate} onChange={(event) => cash.setToDate(event.currentTarget.value)} />
                   <NativeSelect
+                    aria-label="Estado"
                     className="w-full"
                     disabled={!cash.canSupervise}
                     value={cash.status}
@@ -399,6 +400,7 @@ export function AdministrativeSupervisionPage() {
                     ))}
                   </NativeSelect>
                   <Input
+                    aria-label="Vendedor"
                     disabled={!cash.canSupervise}
                     placeholder="ID de vendedor"
                     value={cashSellerInput}
@@ -417,7 +419,7 @@ export function AdministrativeSupervisionPage() {
                 {cashError ? (
                   <Alert variant="destructive">
                     <AlertCircle aria-hidden="true" />
-                    <AlertTitle>No se pudo operar caja</AlertTitle>
+                    <AlertTitle>No se pudo actualizar la caja</AlertTitle>
                     <AlertDescription>{cashError}</AlertDescription>
                   </Alert>
                 ) : null}
@@ -448,8 +450,8 @@ export function AdministrativeSupervisionPage() {
                           colSpan={7}
                           description={
                             cash.listStatus === "loading"
-                              ? "Consultando cajas según filtros administrativos."
-                              : "No hay cajas visibles para los filtros actuales."
+                              ? "Buscando cajas con los filtros actuales."
+                              : "No hay cajas para los filtros actuales."
                           }
                           icon={cash.listStatus === "loading" ? <Spinner /> : <FileSearch aria-hidden="true" />}
                           title={cash.listStatus === "loading" ? "Cargando cajas" : "Sin cajas"}
@@ -489,10 +491,10 @@ export function AdministrativeSupervisionPage() {
             <Card>
               <CardHeader className="gap-4">
                 <HeaderWithRefresh
-                  description="Ventas de mostrador con filtros de fecha, vendedor, caja y estado."
+                  description="Busca por fecha, vendedor, caja o estado."
                   disabled={!sales.canSupervise || sales.listStatus === "loading"}
                   isLoading={sales.listStatus === "loading"}
-                  title="Ventas supervisables"
+                  title="Ventas del equipo"
                   onRefresh={() => void sales.reload()}
                 />
                 <form className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_150px_150px_150px_auto_auto]" onSubmit={applySalesFilters}>
@@ -507,18 +509,21 @@ export function AdministrativeSupervisionPage() {
                     />
                   </div>
                   <Input
+                    aria-label="Desde"
                     disabled={!sales.canSupervise}
                     type="date"
                     value={sales.fromDate}
                     onChange={(event) => sales.setFromDate(event.currentTarget.value)}
                   />
                   <Input
+                    aria-label="Hasta"
                     disabled={!sales.canSupervise}
                     type="date"
                     value={sales.toDate}
                     onChange={(event) => sales.setToDate(event.currentTarget.value)}
                   />
                   <NativeSelect
+                    aria-label="Estado"
                     className="w-full"
                     disabled={!sales.canSupervise}
                     value={sales.status}
@@ -540,12 +545,14 @@ export function AdministrativeSupervisionPage() {
                 </form>
                 <div className="grid gap-3 md:grid-cols-2">
                   <Input
+                    aria-label="Vendedor"
                     disabled={!sales.canSupervise}
                     placeholder="ID de vendedor"
                     value={salesSellerInput}
                     onChange={(event) => setSalesSellerInput(event.currentTarget.value)}
                   />
                   <Input
+                    aria-label="Caja"
                     disabled={!sales.canSupervise}
                     placeholder="ID de caja"
                     value={salesCashInput}
@@ -588,8 +595,8 @@ export function AdministrativeSupervisionPage() {
                           colSpan={7}
                           description={
                             sales.listStatus === "loading"
-                              ? "Consultando ventas según filtros administrativos."
-                              : "No hay ventas visibles para los filtros actuales."
+                              ? "Buscando ventas con los filtros actuales."
+                              : "No hay ventas para los filtros actuales."
                           }
                           icon={sales.listStatus === "loading" ? <Spinner /> : <FileSearch aria-hidden="true" />}
                           title={sales.listStatus === "loading" ? "Cargando ventas" : "Sin ventas"}
@@ -605,7 +612,7 @@ export function AdministrativeSupervisionPage() {
                   onNext={() => sales.setPage(sales.pagination.page + 1)}
                   onPrevious={() => sales.setPage(sales.pagination.page - 1)}
                 >
-                  Anulables: {salesSummary.cancelable}. Anuladas: {salesSummary.cancelled}. Importe visible: {formatMoney(salesSummary.totalAmount)}.
+                  {salesSummary.cancelable} se pueden anular · {salesSummary.cancelled} anuladas · Total {formatMoney(salesSummary.totalAmount)}
                 </PaginationFooter>
               </CardContent>
             </Card>
@@ -623,10 +630,10 @@ export function AdministrativeSupervisionPage() {
             <Card>
               <CardHeader className="gap-4">
                 <HeaderWithRefresh
-                  description="Pendientes de todos los vendedores, expiración y descarte supervisado."
+                  description="Revisa las ventas guardadas por todos los vendedores."
                   disabled={!pending.canSupervise || pending.listStatus === "loading"}
                   isLoading={pending.listStatus === "loading"}
-                  title="Pendientes globales"
+                  title="Ventas guardadas del equipo"
                   onRefresh={() => void pending.reload()}
                 />
                 <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_160px_auto_auto]" onSubmit={applyPendingFilters}>
@@ -641,6 +648,7 @@ export function AdministrativeSupervisionPage() {
                     />
                   </div>
                   <NativeSelect
+                    aria-label="Estado"
                     className="w-full"
                     disabled={!pending.canSupervise}
                     value={pending.status}
@@ -665,7 +673,7 @@ export function AdministrativeSupervisionPage() {
                 {pendingError ? (
                   <Alert variant="destructive">
                     <AlertCircle aria-hidden="true" />
-                    <AlertTitle>No se pudo operar pendientes</AlertTitle>
+                    <AlertTitle>No se pudo actualizar la venta guardada</AlertTitle>
                     <AlertDescription>{pendingError}</AlertDescription>
                   </Alert>
                 ) : null}
@@ -673,7 +681,7 @@ export function AdministrativeSupervisionPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Pendiente</TableHead>
+                        <TableHead>Venta guardada</TableHead>
                         <TableHead className="w-[170px]">Vendedor</TableHead>
                         <TableHead className="w-[138px]">Expiración</TableHead>
                         <TableHead className="w-[118px] text-right">Total</TableHead>
@@ -697,11 +705,11 @@ export function AdministrativeSupervisionPage() {
                           colSpan={6}
                           description={
                             pending.listStatus === "loading"
-                              ? "Consultando pendientes de todos los vendedores."
-                              : "No hay pendientes visibles para los filtros actuales."
+                              ? "Buscando ventas guardadas."
+                              : "No hay ventas guardadas para los filtros actuales."
                           }
                           icon={pending.listStatus === "loading" ? <Spinner /> : <FileSearch aria-hidden="true" />}
-                          title={pending.listStatus === "loading" ? "Cargando pendientes" : "Sin pendientes"}
+                          title={pending.listStatus === "loading" ? "Cargando ventas" : "Sin ventas guardadas"}
                         />
                       ) : null}
                     </TableBody>
@@ -730,7 +738,7 @@ export function AdministrativeSupervisionPage() {
             <AlertDialogMedia>
               <Banknote aria-hidden="true" />
             </AlertDialogMedia>
-            <AlertDialogTitle>Confirmar cierre administrativo</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar cierre de caja</AlertDialogTitle>
             <AlertDialogDescription>
               {selectedCashSession
                 ? `Cerrarás ${selectedCashSession.correlativeCode} de ${selectedCashSession.openedByUser.fullName} con contado final ${formatMoney(Number(closeAmountInput || 0))}.`
@@ -759,11 +767,11 @@ export function AdministrativeSupervisionPage() {
             <AlertDialogMedia className="bg-destructive/10 text-destructive">
               <Trash2 aria-hidden="true" />
             </AlertDialogMedia>
-            <AlertDialogTitle>Descartar pendiente</AlertDialogTitle>
+            <AlertDialogTitle>Descartar venta guardada</AlertDialogTitle>
             <AlertDialogDescription>
               {discardTarget
-                ? `El pendiente ${getPendingCartDisplayName(discardTarget)} quedará descartado y no podrá cobrarse desde POS.`
-                : "Selecciona un pendiente antes de confirmar."}
+                ? `La venta ${getPendingCartDisplayName(discardTarget)} se descartará y ya no podrá cobrarse.`
+                : "Selecciona una venta guardada antes de confirmar."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Field>
@@ -771,11 +779,11 @@ export function AdministrativeSupervisionPage() {
             <Textarea
               disabled={isDiscardingPending}
               maxLength={240}
-              placeholder="Ej. pendiente vencido o pedido duplicado"
+              placeholder="Ej. venta vencida o pedido duplicado"
               value={discardReasonInput}
               onChange={(event) => setDiscardReasonInput(event.currentTarget.value)}
             />
-            <FieldDescription>Opcional, queda asociado al pendiente supervisado.</FieldDescription>
+            <FieldDescription>Opcional.</FieldDescription>
           </Field>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDiscardingPending}>Volver</AlertDialogCancel>
@@ -848,7 +856,7 @@ function CashSessionRow({ cashSession, isSelected, onSelect }: CashSessionRowPro
       <TableCell>{formatDateTime(cashSession.openedAt)}</TableCell>
       <TableCell className="text-right font-medium">{formatMoney(cashSession.expectedAmount)}</TableCell>
       <TableCell className={getDifferenceClassName(cashSession.differenceAmount)}>
-        {cashSession.differenceAmount === undefined ? "Pendiente" : formatMoney(cashSession.differenceAmount)}
+        {cashSession.differenceAmount === undefined ? "Sin cerrar" : formatMoney(cashSession.differenceAmount)}
       </TableCell>
       <TableCell>
         <CashStatusBadge cashSession={cashSession} />
@@ -895,7 +903,7 @@ function CashClosePanel({
                 <WalletCards aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>Selecciona una caja</EmptyTitle>
-              <EmptyDescription>El cierre administrativo se habilita para cajas abiertas de vendedores.</EmptyDescription>
+              <EmptyDescription>Selecciona una caja abierta del equipo.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -908,7 +916,7 @@ function CashClosePanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cierre administrativo</CardTitle>
+        <CardTitle>Cerrar caja</CardTitle>
         <CardDescription>
           {selectedCashSession.correlativeCode} abierta por {selectedCashSession.openedByUser.fullName}.
         </CardDescription>
@@ -940,7 +948,7 @@ function CashClosePanel({
             </FieldDescription>
           </Field>
           <Field>
-            <FieldLabel>Nota administrativa</FieldLabel>
+            <FieldLabel>Nota de cierre</FieldLabel>
             <Textarea
               disabled={!canClose || isClosing}
               maxLength={240}
@@ -948,12 +956,12 @@ function CashClosePanel({
               value={closeNote}
               onChange={(event) => onCloseNoteChange(event.currentTarget.value)}
             />
-            <FieldDescription>Opcional, queda asociada al cierre de caja ajena.</FieldDescription>
+            <FieldDescription>Opcional. Úsala para explicar el motivo del cierre.</FieldDescription>
             <FieldError>{closeError}</FieldError>
           </Field>
           <Button disabled={!canClose || isClosing} type="submit">
             {isClosing ? <Spinner /> : <Banknote aria-hidden="true" />}
-            Preparar cierre
+            Continuar
           </Button>
         </form>
       </CardContent>
@@ -1033,7 +1041,7 @@ function SaleSupervisionDetailPanel({ isLoading, onOpenCancellationFlow, sale }:
                 <ClipboardList aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>Selecciona una venta</EmptyTitle>
-              <EmptyDescription>El detalle administrativo mostrará caja, vendedor, pago y acceso a anulación permitida.</EmptyDescription>
+              <EmptyDescription>El detalle mostrará la caja, el vendedor, el pago y si puede anularse.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -1057,7 +1065,6 @@ function SaleSupervisionDetailPanel({ isLoading, onOpenCancellationFlow, sale }:
       <CardContent className="grid gap-5">
         <div className="grid gap-2 rounded-md border bg-muted/30 p-3 text-sm">
           <DetailLine label="Vendedor" value={`${sale.sellerUser.fullName} · ${sale.sellerUser.email}`} />
-          <DetailLine label="ID de caja" value={sale.cashSessionId} />
           <DetailLine label="Total" value={formatMoney(sale.totalAmount)} />
           <DetailLine label="Recibido" value={formatMoney(sale.payment.receivedAmount)} />
           <DetailLine label="Cambio" value={formatMoney(sale.payment.changeAmount)} />
@@ -1154,8 +1161,8 @@ function PendingCartDetailPanel({ cart }: { cart: PendingCart | null }) {
               <EmptyMedia variant="icon">
                 <ShoppingBasket aria-hidden="true" />
               </EmptyMedia>
-              <EmptyTitle>Selecciona un pendiente</EmptyTitle>
-              <EmptyDescription>El detalle mostrará expiración, vendedor, totales y observaciones de revalidación.</EmptyDescription>
+              <EmptyTitle>Selecciona una venta guardada</EmptyTitle>
+              <EmptyDescription>El detalle mostrará el vendedor, los productos y los totales.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -1180,8 +1187,8 @@ function PendingCartDetailPanel({ cart }: { cart: PendingCart | null }) {
         <div className="grid gap-2 rounded-md border bg-muted/30 p-3 text-sm">
           <DetailLine label="Creado" value={formatDateTime(cart.createdAt)} />
           <DetailLine label="Expira" value={formatDateTime(cart.expiresAt)} />
-          <DetailLine label="Total referencial" value={formatMoney(cart.referenceTotalAmount)} />
-          <DetailLine label="Total actual" value={formatMoney(cart.currentTotalAmount ?? cart.referenceTotalAmount)} />
+          <DetailLine label="Total guardado" value={formatMoney(cart.referenceTotalAmount)} />
+          <DetailLine label="Total actualizado" value={formatMoney(cart.currentTotalAmount ?? cart.referenceTotalAmount)} />
           {cart.discardReason ? <DetailLine label="Motivo de descarte" value={cart.discardReason} /> : null}
         </div>
         {cart.note ? <div className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">{cart.note}</div> : null}
@@ -1205,7 +1212,7 @@ function PendingCartDetailPanel({ cart }: { cart: PendingCart | null }) {
         {issues.length > 0 ? (
           <Alert variant="destructive">
             <AlertCircle aria-hidden="true" />
-            <AlertTitle>Observaciones de revalidación</AlertTitle>
+            <AlertTitle>Productos por revisar</AlertTitle>
             <AlertDescription>{issues.map((issue) => pendingIssueLabels[issue.code]).join(", ")}.</AlertDescription>
           </Alert>
         ) : null}
@@ -1266,9 +1273,9 @@ function PaginationFooter({ children, disabled, onNext, onPrevious, page, totalP
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-xl font-semibold text-foreground" title={String(value)}>
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground" title={String(value)}>
         {value}
       </p>
     </div>

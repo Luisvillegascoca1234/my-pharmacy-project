@@ -1,4 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
+import { ContextNavigation, salesNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
   BadgeCheck,
@@ -48,7 +49,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
-const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/La_Paz"
+});
 
 const preparedStatusLabels: Record<PreparedInvoiceStatus, string> = {
   cancelled: "Cancelada",
@@ -60,20 +65,20 @@ const invoiceBlockLabels: Record<PreparedInvoiceEligibilityBlockReason, string> 
   "sale-cancelled": "La venta fue anulada y no puede prepararse como comprobante interno.",
   "sale-not-found": "No se encontró la venta solicitada.",
   "sale-returned": "La venta tiene devolución total y no puede prepararse como comprobante interno.",
-  unknown: "La venta no cumple las reglas vigentes para preparar comprobante interno."
+  unknown: "Esta venta no puede usarse para preparar un comprobante interno."
 };
 
 const errorMessages: Record<BillingDataErrorCode, string> = {
   "active-invoice-exists": "La venta ya cuenta con un comprobante interno preparado activo. Abre el detalle existente antes de crear otro.",
   "already-cancelled": "El comprobante interno preparado ya fue cancelado previamente.",
-  forbidden: "Tu usuario no tiene permiso para operar comprobantes internos preparados.",
+  forbidden: "No tienes permiso para preparar comprobantes internos.",
   "not-found": "No se encontró el comprobante interno preparado solicitado.",
   "sale-cancelled": "La venta fue anulada y no puede convertirse en comprobante interno preparado.",
   "sale-not-found": "No se encontró la venta seleccionada.",
   "sale-not-invoiceable": "La venta no cumple las reglas para preparar comprobante interno.",
   "sale-returned": "La venta tiene devolución total y no puede convertirse en comprobante interno preparado.",
-  "session-invalid": "Tu sesión no permite operar comprobantes internos preparados. Vuelve a iniciar sesión.",
-  unknown: "No se pudo completar la operación. Intenta nuevamente.",
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
+  unknown: "No se pudo actualizar el comprobante. Intenta nuevamente.",
   validation: "Revisa los datos ingresados antes de continuar."
 };
 
@@ -93,6 +98,7 @@ export function InvoicesPage() {
   const [cancelReasonInput, setCancelReasonInput] = useState("");
   const [cancelReasonError, setCancelReasonError] = useState<string | null>(null);
   const [isCancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [activeView, setActiveView] = useState<"prepare" | "history">("prepare");
   const isLoadingInvoiceableSales = billing.invoiceableSalesStatus === "loading";
   const isLoadingPreparedInvoices = billing.preparedInvoicesStatus === "loading";
   const isLoadingDetail = billing.detailStatus === "loading";
@@ -157,7 +163,7 @@ export function InvoicesPage() {
     setPreparationError(null);
 
     if (!preparationSale) {
-      setPreparationError("Selecciona una venta preparable.");
+      setPreparationError("Selecciona una venta.");
       return;
     }
 
@@ -181,6 +187,7 @@ export function InvoicesPage() {
       setPreparationSale(null);
       await billing.reloadInvoiceableSales();
       await billing.reloadPreparedInvoices();
+      setActiveView("history");
     }
   }
 
@@ -224,22 +231,23 @@ export function InvoicesPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Consultas de ventas" items={salesNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
           <Badge className="w-fit" variant="secondary">
-            Documento interno no tributario
+            Comprobante interno · No tributario
           </Badge>
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Comprobantes internos preparados</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Comprobantes internos</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Preparación administrativa de comprobantes internos desde ventas POS. Esta pantalla no emite documentos tributarios SIAT, no genera CUF, QR fiscal ni envío al SIN.
+              Prepara constancias internas de venta. No son facturas tributarias ni se envían al SIN.
             </p>
           </div>
         </div>
         <div className="grid gap-2 sm:grid-cols-3 xl:w-[600px]">
-          <Metric label="Preparadas" value={preparedSummary.prepared} />
-          <Metric label="Canceladas" value={preparedSummary.cancelled} />
-          <Metric label="Importe visible" value={formatMoney(preparedSummary.totalAmount)} />
+          <Metric label="Preparados" value={preparedSummary.prepared} />
+          <Metric label="Cancelados" value={preparedSummary.cancelled} />
+          <Metric label="Total listado" value={formatMoney(preparedSummary.totalAmount)} />
         </div>
       </div>
 
@@ -247,7 +255,7 @@ export function InvoicesPage() {
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Permiso insuficiente</AlertTitle>
-          <AlertDescription>Solo administración y superadministración pueden preparar o cancelar comprobantes internos.</AlertDescription>
+          <AlertDescription>No tienes permiso para preparar o cancelar comprobantes internos.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -256,8 +264,7 @@ export function InvoicesPage() {
           <BadgeCheck aria-hidden="true" />
           <AlertTitle>Comprobante interno preparado</AlertTitle>
           <AlertDescription>
-            {billing.lastPreparedInvoice.correlativeCode} quedó registrada como comprobante interno preparado para la venta{" "}
-            {billing.lastPreparedInvoice.saleCorrelativeCode}.
+            Se preparó {billing.lastPreparedInvoice.correlativeCode} para la venta {billing.lastPreparedInvoice.saleCorrelativeCode}.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -266,25 +273,30 @@ export function InvoicesPage() {
         <Alert>
           <XCircle aria-hidden="true" />
           <AlertTitle>Comprobante interno cancelado</AlertTitle>
-          <AlertDescription>{billing.lastPreparedInvoice.correlativeCode} ahora figura como cancelada en el historial interno.</AlertDescription>
+          <AlertDescription>{billing.lastPreparedInvoice.correlativeCode} quedó cancelado.</AlertDescription>
         </Alert>
       ) : null}
 
       {visibleError ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo completar la operación</AlertTitle>
+          <AlertTitle>No se pudo actualizar el comprobante</AlertTitle>
           <AlertDescription>{visibleError}</AlertDescription>
         </Alert>
       ) : null}
 
-      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card>
+      <div className="flex w-fit rounded-lg border bg-muted/25 p-1" aria-label="Vista de comprobantes">
+        <Button size="sm" type="button" variant={activeView === "prepare" ? "default" : "ghost"} onClick={() => setActiveView("prepare")}>Preparar</Button>
+        <Button size="sm" type="button" variant={activeView === "history" ? "default" : "ghost"} onClick={() => setActiveView("history")}>Historial</Button>
+      </div>
+
+      <div className="grid gap-5">
+        <Card className={activeView !== "prepare" ? "hidden" : undefined}>
           <CardHeader className="gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle>Ventas preparables</CardTitle>
-                <CardDescription>Ventas POS elegibles para preparar comprobante interno, filtradas por texto, vendedor y fecha.</CardDescription>
+                <CardTitle>Ventas sin comprobante</CardTitle>
+                <CardDescription>Selecciona una venta para preparar su comprobante interno.</CardDescription>
               </div>
               <Button disabled={!canOperate || isLoadingInvoiceableSales} size="sm" type="button" variant="outline" onClick={() => void billing.reloadInvoiceableSales()}>
                 {isLoadingInvoiceableSales ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -304,12 +316,14 @@ export function InvoicesPage() {
                 />
               </div>
               <Input
+                aria-label="Desde"
                 disabled={!canOperate}
                 type="date"
                 value={billing.invoiceableFromDate}
                 onChange={(event) => billing.setInvoiceableFromDate(event.currentTarget.value)}
               />
               <Input
+                aria-label="Hasta"
                 disabled={!canOperate}
                 type="date"
                 value={billing.invoiceableToDate}
@@ -323,8 +337,9 @@ export function InvoicesPage() {
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
               <Input
+                aria-label="Identificador interno del vendedor"
                 disabled={!canOperate}
-                placeholder="ID de vendedor"
+                placeholder="Filtro avanzado: ID de vendedor"
                 value={invoiceableSellerInput}
                 onChange={(event) => setInvoiceableSellerInput(event.currentTarget.value)}
               />
@@ -337,7 +352,7 @@ export function InvoicesPage() {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[132px]">Venta POS</TableHead>
+                  <TableHead className="w-[132px]">Venta</TableHead>
                   <TableHead>Vendedor</TableHead>
                   <TableHead className="w-[130px]">Caja</TableHead>
                   <TableHead className="w-[138px]">Fecha</TableHead>
@@ -364,11 +379,11 @@ export function InvoicesPage() {
                       <Empty>
                         <EmptyHeader>
                           <EmptyMedia variant="icon">{isLoadingInvoiceableSales ? <Spinner /> : <FileSearch aria-hidden="true" />}</EmptyMedia>
-                          <EmptyTitle>{isLoadingInvoiceableSales ? "Cargando ventas" : "Sin ventas preparables"}</EmptyTitle>
+                          <EmptyTitle>{isLoadingInvoiceableSales ? "Cargando ventas" : "No hay ventas disponibles"}</EmptyTitle>
                           <EmptyDescription>
                             {isLoadingInvoiceableSales
-                              ? "Consultando ventas POS según permisos y filtros actuales."
-                              : "Ajusta filtros o revisa si la venta ya fue anulada, devuelta o tiene un comprobante interno activo."}
+                              ? "Buscando ventas con los filtros actuales."
+                              : "Ajusta los filtros o revisa si la venta ya tiene un comprobante."}
                           </EmptyDescription>
                         </EmptyHeader>
                       </Empty>
@@ -389,12 +404,12 @@ export function InvoicesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={activeView !== "history" ? "hidden" : undefined}>
           <CardHeader className="gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle>Comprobantes internos preparados</CardTitle>
-                <CardDescription>Listado administrativo por estado, correlativo interno, venta POS, texto y fechas.</CardDescription>
+                <CardTitle>Historial de comprobantes</CardTitle>
+                <CardDescription>Consulta los comprobantes preparados y cancelados.</CardDescription>
               </div>
               <Button disabled={!canOperate || isLoadingPreparedInvoices} size="sm" type="button" variant="outline" onClick={() => void billing.reloadPreparedInvoices()}>
                 {isLoadingPreparedInvoices ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -414,18 +429,21 @@ export function InvoicesPage() {
                 />
               </div>
               <Input
+                aria-label="Desde"
                 disabled={!canOperate}
                 type="date"
                 value={billing.preparedInvoiceFromDate}
                 onChange={(event) => billing.setPreparedInvoiceFromDate(event.currentTarget.value)}
               />
               <Input
+                aria-label="Hasta"
                 disabled={!canOperate}
                 type="date"
                 value={billing.preparedInvoiceToDate}
                 onChange={(event) => billing.setPreparedInvoiceToDate(event.currentTarget.value)}
               />
               <NativeSelect
+                aria-label="Estado"
                 disabled={!canOperate}
                 value={billing.preparedInvoiceStatus}
                 onChange={(event) => billing.setPreparedInvoiceStatus(event.currentTarget.value as PreparedInvoiceStatusFilter)}
@@ -444,8 +462,9 @@ export function InvoicesPage() {
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
               <Input
+                aria-label="Identificador interno de la venta"
                 disabled={!canOperate}
-                placeholder="ID de venta"
+                placeholder="Filtro avanzado: ID de venta"
                 value={preparedSaleIdInput}
                 onChange={(event) => setPreparedSaleIdInput(event.currentTarget.value)}
               />
@@ -460,7 +479,7 @@ export function InvoicesPage() {
                 <TableRow>
                   <TableHead className="w-[138px]">Comprobante</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead className="w-[132px]">Venta POS</TableHead>
+                  <TableHead className="w-[132px]">Venta</TableHead>
                   <TableHead className="w-[132px]">Fecha</TableHead>
                   <TableHead className="w-[112px] text-right">Total</TableHead>
                   <TableHead className="w-[110px]">Estado</TableHead>
@@ -545,9 +564,9 @@ export function InvoicesPage() {
             <AlertDialogMedia className="bg-destructive/10 text-destructive">
               <Ban aria-hidden="true" />
             </AlertDialogMedia>
-            <AlertDialogTitle>Confirmar cancelación interna</AlertDialogTitle>
+            <AlertDialogTitle>Confirmar cancelación</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción cancelará el comprobante interno preparado. No realiza anulación tributaria ni reversa SIAT. Motivo: {cancelReasonInput.trim()}.
+              Se cancelará este comprobante interno. La venta no será anulada. Motivo: {cancelReasonInput.trim()}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -576,9 +595,6 @@ function InvoiceableSaleRow({ disabled, onOpenInvoice, onPrepare, sale }: Invoic
       <TableCell className="min-w-0">
         <p className="truncate font-medium text-foreground" title={sale.correlativeCode}>
           {sale.correlativeCode}
-        </p>
-        <p className="truncate text-xs text-muted-foreground" title={sale.id}>
-          {sale.id}
         </p>
       </TableCell>
       <TableCell className="min-w-0">
@@ -616,7 +632,7 @@ function InvoiceableSaleRow({ disabled, onOpenInvoice, onPrepare, sale }: Invoic
 
 function InvoiceableSaleBadge({ sale }: { sale: InvoiceableSaleSummary }) {
   if (sale.canPrepareInvoice) {
-    return <Badge variant="default">Facturable</Badge>;
+    return <Badge variant="default">Listo para preparar</Badge>;
   }
 
   return <Badge variant={sale.invoiceBlockedReason === "active-invoice-exists" ? "secondary" : "destructive"}>{getInvoiceBlockMessage(sale)}</Badge>;
@@ -634,9 +650,6 @@ function PreparedInvoiceRow({ invoice, isSelected, onOpen }: PreparedInvoiceRowP
       <TableCell className="min-w-0">
         <p className="truncate font-medium text-foreground" title={invoice.correlativeCode}>
           {invoice.correlativeCode}
-        </p>
-        <p className="truncate text-xs text-muted-foreground" title={invoice.id}>
-          {invoice.id}
         </p>
       </TableCell>
       <TableCell className="min-w-0">
@@ -704,8 +717,8 @@ function PreparationPanel({
               <EmptyMedia variant="icon">
                 <FileText aria-hidden="true" />
               </EmptyMedia>
-              <EmptyTitle>Selecciona una venta preparable</EmptyTitle>
-              <EmptyDescription>El formulario preparará un comprobante interno sin emisión tributaria SIAT.</EmptyDescription>
+              <EmptyTitle>Selecciona una venta</EmptyTitle>
+              <EmptyDescription>Completa el NIT y la razón social para preparar el comprobante.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -738,15 +751,15 @@ function PreparationPanel({
             />
           </Field>
           <Field>
-            <FieldLabel>Notas administrativas internas</FieldLabel>
+          <FieldLabel>Notas</FieldLabel>
             <Textarea
               disabled={!canOperate || isPreparing}
               maxLength={500}
-              placeholder="Observaciones internas para archivo administrativo"
+              placeholder="Observaciones opcionales"
               value={fiscalNotes}
               onChange={(event) => onFiscalNotesChange(event.currentTarget.value)}
             />
-            <FieldDescription>Opcional. No se envía al SIN desde esta pantalla.</FieldDescription>
+            <FieldDescription>Opcional.</FieldDescription>
             <FieldError>{error}</FieldError>
           </Field>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -807,7 +820,7 @@ function PreparedInvoiceDetailPanel({
                 <ClipboardList aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>Selecciona un comprobante</EmptyTitle>
-              <EmptyDescription>El detalle mostrará snapshot de venta, caja, vendedor, datos fiscales, total e ítems.</EmptyDescription>
+              <EmptyDescription>El detalle mostrará la venta, la caja, el cliente, el total y los productos.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -822,7 +835,7 @@ function PreparedInvoiceDetailPanel({
           <div>
             <CardTitle>{invoice.correlativeCode}</CardTitle>
             <CardDescription>
-              Comprobante interno preparado · Venta POS {invoice.saleCorrelativeCode} · {formatDateTime(invoice.preparedAt)}
+              Comprobante interno preparado · Venta {invoice.saleCorrelativeCode} · {formatDateTime(invoice.preparedAt)}
             </CardDescription>
           </div>
           <PreparedInvoiceStatusBadge status={invoice.status} />
@@ -831,18 +844,16 @@ function PreparedInvoiceDetailPanel({
       <CardContent className="grid gap-5">
         <div className="grid gap-3 rounded-md border bg-muted/30 p-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <InfoLine label="Vendedor" value={`${invoice.sellerName} · ${invoice.sellerEmail}`} />
-          <InfoLine label="Caja" value={`${invoice.cashSessionCode} · ${invoice.cashSessionId}`} />
+          <InfoLine label="Caja" value={invoice.cashSessionCode} />
           <InfoLine label="NIT" value={invoice.customerNit} />
           <InfoLine label="Razón social" value={invoice.customerBusinessName} />
-          <InfoLine label="ID venta" value={invoice.saleId} />
-          <InfoLine label="ID comprobante" value={invoice.id} />
           <InfoLine label="Total" value={formatMoney(invoice.totalAmount)} />
-          <InfoLine label="Emisión tributaria" value="No emitida" />
+          <InfoLine label="Tipo" value="Comprobante interno" />
         </div>
 
         {invoice.fiscalNotes ? (
           <div className="rounded-md border bg-muted/30 p-3 text-sm">
-            <p className="font-medium text-foreground">Notas administrativas internas</p>
+            <p className="font-medium text-foreground">Notas</p>
             <p className="mt-1 text-muted-foreground">{invoice.fiscalNotes}</p>
           </div>
         ) : null}
@@ -852,7 +863,7 @@ function PreparedInvoiceDetailPanel({
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead className="w-[78px] text-right">Cant.</TableHead>
+                <TableHead className="w-[78px] text-right">Cantidad</TableHead>
                 <TableHead className="w-[116px] text-right">Unitario</TableHead>
                 <TableHead className="w-[116px] text-right">Subtotal</TableHead>
               </TableRow>
@@ -879,9 +890,9 @@ function PreparedInvoiceDetailPanel({
 
         {invoice.status === "cancelled" ? (
           <div className="grid gap-2 rounded-md border bg-muted/30 p-3 text-sm">
-            <p className="font-medium text-foreground">Evidencia de cancelación</p>
-            <InfoLine label="Fecha" value={invoice.cancelledAt ? formatDateTime(invoice.cancelledAt) : "Sin fecha expuesta"} />
-            <InfoLine label="Motivo" value={invoice.cancelReason ?? "Sin motivo expuesto"} />
+            <p className="font-medium text-foreground">Datos de la cancelación</p>
+            <InfoLine label="Fecha" value={invoice.cancelledAt ? formatDateTime(invoice.cancelledAt) : "Sin fecha"} />
+            <InfoLine label="Motivo" value={invoice.cancelReason ?? "Sin motivo"} />
             {invoice.cancelledByUser ? <InfoLine label="Usuario" value={`${invoice.cancelledByUser.fullName} · ${invoice.cancelledByUser.email}`} /> : null}
           </div>
         ) : null}
@@ -892,12 +903,12 @@ function PreparedInvoiceDetailPanel({
             <Textarea
               disabled={!canCancel || isCancelling}
               maxLength={500}
-              placeholder="Ej. datos fiscales preparados con NIT incorrecto antes de emisión real"
+              placeholder="Ej. NIT incorrecto"
               value={cancelReason}
               onChange={(event) => onCancelReasonChange(event.currentTarget.value)}
             />
             <FieldDescription>
-              {canCancel ? "Obligatorio. Entre 5 y 500 caracteres para auditoría administrativa." : "La factura ya no admite cancelación interna."}
+              {canCancel ? "Obligatorio. Quedará guardado en el historial." : "El comprobante ya no puede cancelarse."}
             </FieldDescription>
             <FieldError>{cancelReasonError}</FieldError>
           </Field>
@@ -960,9 +971,9 @@ function InfoLine({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-xl font-semibold text-foreground" title={String(value)}>
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground" title={String(value)}>
         {value}
       </p>
     </div>

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { ContextNavigation, purchasingNavigation } from "@/components/context-navigation";
+import { Link, useSearchParams } from "react-router-dom";
 import type { PurchaseStatusFilter } from "@/modules/purchases";
 import {
   AlertCircle,
@@ -77,6 +78,7 @@ function getPurchaseStatusVariant(status: Exclude<PurchaseStatusFilter, "all">) 
 }
 
 export function PurchasesPage() {
+  const [searchParams] = useSearchParams();
   const purchases = usePurchases();
   const suppliers = useSuppliers();
   const isLoading = purchases.listStatus === "loading";
@@ -106,27 +108,30 @@ export function PurchasesPage() {
     }
   }, [setSupplierPageSize, supplierPageSize]);
 
+  useEffect(() => {
+    const requestedStatus = searchParams.get("status");
+    const requestedSupplierId = searchParams.get("supplierId")?.trim() ?? "";
+
+    if (requestedStatus && purchaseStatusOptions.includes(requestedStatus as PurchaseStatusFilter)) {
+      purchases.setStatus(requestedStatus as PurchaseStatusFilter);
+    }
+
+    if (requestedSupplierId) {
+      purchases.setSupplierId(requestedSupplierId);
+    }
+  }, [searchParams, purchases.setStatus, purchases.setSupplierId]);
+
   if (!purchases.canManage) {
     return (
       <section className="grid gap-5">
-        <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Compras y abastecimiento
-          </Badge>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Compras</h1>
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              La gestión de compras está disponible para administración y superadministración.
-            </p>
-          </div>
-        </div>
+        <ContextNavigation ariaLabel="Opciones de abastecimiento" items={purchasingNavigation} />
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <AlertCircle aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>Permiso insuficiente</EmptyTitle>
-            <EmptyDescription>Tu rol actual no permite consultar ni gestionar compras recibidas.</EmptyDescription>
+            <EmptyDescription>No tienes permiso para consultar o registrar compras.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       </section>
@@ -135,15 +140,13 @@ export function PurchasesPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Opciones de abastecimiento" items={purchasingNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Compras y abastecimiento
-          </Badge>
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Compras</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Consulta compras por proveedor, estado, fecha comercial y recepción antes de registrar ingresos de inventario.
+              Revisa compras pendientes, recibidas o anuladas.
             </p>
           </div>
         </div>
@@ -167,7 +170,12 @@ export function PurchasesPage() {
           <div className="flex flex-col gap-3">
             <div>
               <CardTitle>Lista de compras</CardTitle>
-              <CardDescription>Filtra compras registradas sin depender de datos simulados ni clientes internos.</CardDescription>
+              <CardDescription>Empieza por las compras que todavía no fueron recibidas.</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2" aria-label="Estados rápidos de compra">
+              <Button size="sm" type="button" variant={purchases.status === "draft" ? "default" : "outline"} onClick={() => purchases.setStatus("draft")}>Por recibir</Button>
+              <Button size="sm" type="button" variant={purchases.status === "received" ? "default" : "outline"} onClick={() => purchases.setStatus("received")}>Recibidas</Button>
+              <Button size="sm" type="button" variant={purchases.status === "all" ? "default" : "outline"} onClick={() => purchases.setStatus("all")}>Todas</Button>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_190px_220px_160px_160px]">
               <div className="relative">
@@ -236,7 +244,7 @@ export function PurchasesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Proveedor</TableHead>
-                  <TableHead>Fecha comercial</TableHead>
+                  <TableHead>Fecha de compra</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Recepción</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -265,7 +273,7 @@ export function PurchasesPage() {
                       <div className="space-y-1">
                         <p className="text-sm text-foreground">{formatDate(purchase.receivedAt)}</p>
                         <p className="text-xs text-muted-foreground">
-                          {purchase.receivedByUserId ? "Recepción registrada" : "Sin recepción"}
+                          {purchase.receivedByUserId ? "Stock ingresado" : "Pendiente de recibir"}
                         </p>
                       </div>
                     </TableCell>

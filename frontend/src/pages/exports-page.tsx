@@ -1,5 +1,6 @@
 import type { CsvExportDataErrorCode, CsvExportFile, CsvExportRequestStatus } from "@/modules/exports";
 import type { ReactNode } from "react";
+import { ContextNavigation, reportsNavigation } from "@/components/context-navigation";
 import { AlertCircle, BadgeCheck, Download, FileDown, FileSpreadsheet, Info, RotateCcw, ShieldAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CSV_EXPORT_SEPARATOR,
   INVENTORY_MOVEMENTS_CSV_FILE_NAME,
@@ -19,8 +21,8 @@ import { useStockPlanning } from "@/modules/stock-planning";
 import { StockPlanningParquetExports } from "@/pages/stock-planning/stock-planning-parquet-exports";
 
 const errorMessages: Record<CsvExportDataErrorCode, string> = {
-  forbidden: "Tu usuario no tiene permiso para descargar extracciones CSV auditadas.",
-  "session-invalid": "Tu sesion vencio o ya no permite descargar extracciones CSV. Vuelve a iniciar sesion.",
+  forbidden: "No tienes permiso para descargar archivos CSV.",
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
   unknown: "No se pudo completar la descarga. Intenta nuevamente.",
   validation: "Revisa el rango de fechas. La fecha inicial no puede ser posterior a la fecha final."
 };
@@ -55,22 +57,17 @@ export function ExportsPage() {
 
   return (
     <section className="grid gap-6">
+      <ContextNavigation ariaLabel="Opciones de análisis" items={reportsNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Extracciones auditadas
-          </Badge>
-          <div className="max-w-3xl space-y-2">
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Exportaciones de datos</h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Descarga operativa de ventas y movimientos de inventario para analisis externo. Cada descarga genera registro de
-              auditoria; las consultas visuales de reportes no se auditan como extraccion.
-            </p>
-          </div>
+        <div className="max-w-3xl space-y-2">
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Descargar datos</h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Descarga ventas y movimientos de inventario para revisarlos fuera del sistema.
+          </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-2 xl:w-[520px]">
-          <ExportRule icon={<FileSpreadsheet aria-hidden="true" />} label={`Separador ${CSV_EXPORT_SEPARATOR}`} value="Regional" />
-          <ExportRule icon={<Info aria-hidden="true" />} label="Fechas ISO" value="YYYY-MM-DD" />
+          <ExportRule icon={<FileSpreadsheet aria-hidden="true" />} label="Formato" value={`CSV · separador ${CSV_EXPORT_SEPARATOR}`} />
+          <ExportRule icon={<Info aria-hidden="true" />} label="Fechas" value="Año-mes-día" />
         </div>
       </div>
 
@@ -78,7 +75,7 @@ export function ExportsPage() {
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Permiso insuficiente</AlertTitle>
-          <AlertDescription>Solo administracion y superadministracion pueden descargar archivos CSV auditados.</AlertDescription>
+          <AlertDescription>No tienes permiso para descargar estos archivos.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -92,30 +89,35 @@ export function ExportsPage() {
 
       <Alert>
         <ShieldAlert aria-hidden="true" />
-        <AlertTitle>Registro de auditoria por descarga</AlertTitle>
+        <AlertTitle>Descargas registradas</AlertTitle>
         <AlertDescription>
-          El archivo descargado queda asociado al usuario, direccion IP, agente de navegador y rango solicitado. Usa estas
-          extracciones solo para conciliacion, respaldo operativo o analisis autorizado.
+          El sistema registra quién descarga cada archivo y qué fechas consultó.
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-5 xl:grid-cols-2">
-        <ExportCard
-          description="Ventas confirmadas, anuladas y devueltas con margen, caja, vendedor y fecha de confirmacion."
+      <Tabs defaultValue="csv">
+        <TabsList className="grid w-full max-w-lg grid-cols-2">
+          <TabsTrigger value="csv">Archivos para uso diario</TabsTrigger>
+          <TabsTrigger value="evidence">Archivos técnicos</TabsTrigger>
+        </TabsList>
+        <TabsContent className="mt-5" value="csv">
+          <div className="grid gap-5 xl:grid-cols-2">
+            <ExportCard
+          description="Ventas confirmadas, anuladas y devueltas, con caja, vendedor y fecha."
           disabled={!canOperate}
           fileName={SALES_CSV_FILE_NAME}
           fromDate={exportsState.salesFromDate}
           status={exportsState.salesExportStatus}
-          title="Ventas POS"
+          title="Ventas"
           toDate={exportsState.salesToDate}
           onClear={clearSalesFilters}
           onDownload={() => void downloadSales()}
           onFromDateChange={exportsState.setSalesFromDate}
           onToDateChange={exportsState.setSalesToDate}
-        />
+            />
 
-        <ExportCard
-          description="Movimientos de inventario por lote, producto, tipo, referencia, motivo y usuario asociado."
+            <ExportCard
+          description="Entradas y salidas de inventario por producto, lote, motivo y usuario."
           disabled={!canOperate}
           fileName={INVENTORY_MOVEMENTS_CSV_FILE_NAME}
           fromDate={exportsState.inventoryMovementsFromDate}
@@ -126,14 +128,17 @@ export function ExportsPage() {
           onDownload={() => void downloadInventoryMovements()}
           onFromDateChange={exportsState.setInventoryMovementsFromDate}
           onToDateChange={exportsState.setInventoryMovementsToDate}
-        />
-      </div>
-
-      <StockPlanningParquetExports
-        executions={stockPlanning.executions}
-        products={stockPlanning.products}
-        surface="exports"
-      />
+            />
+          </div>
+        </TabsContent>
+        <TabsContent className="mt-5" value="evidence">
+          <StockPlanningParquetExports
+            executions={stockPlanning.executions}
+            products={stockPlanning.products}
+            surface="exports"
+          />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
@@ -188,7 +193,7 @@ function ExportCard({
         <div className="rounded-md border bg-muted/30 p-3 text-sm">
           <InfoLine label="Archivo" value={fileName} />
           <Separator className="my-3" />
-          <InfoLine label="Formato" value={`CSV UTF-8 con separador ${CSV_EXPORT_SEPARATOR} y fechas ISO`} />
+          <InfoLine label="Formato" value={`CSV con separador ${CSV_EXPORT_SEPARATOR}`} />
         </div>
 
         <ExportState status={status} />
@@ -223,7 +228,7 @@ function DateField({
     <Field>
       <FieldLabel>{label}</FieldLabel>
       <Input disabled={disabled} type="date" value={value} onChange={(event) => onChange(event.currentTarget.value)} />
-      <FieldDescription>Opcional. Sin fecha se exporta todo el rango disponible.</FieldDescription>
+      <FieldDescription>Opcional.</FieldDescription>
     </Field>
   );
 }
@@ -233,7 +238,7 @@ function ExportState({ status }: { status: CsvExportRequestStatus }) {
     return (
       <StateBox>
         <Spinner />
-        Preparando extraccion CSV auditada...
+        Preparando archivo...
       </StateBox>
     );
   }
@@ -243,7 +248,7 @@ function ExportState({ status }: { status: CsvExportRequestStatus }) {
       <Alert>
         <BadgeCheck aria-hidden="true" />
         <AlertTitle>Descarga generada</AlertTitle>
-        <AlertDescription>El archivo fue preparado y descargado con los filtros actuales.</AlertDescription>
+        <AlertDescription>El archivo se descargó con los filtros actuales.</AlertDescription>
       </Alert>
     );
   }
@@ -253,7 +258,7 @@ function ExportState({ status }: { status: CsvExportRequestStatus }) {
       <Alert>
         <FileDown aria-hidden="true" />
         <AlertTitle>Archivo sin registros</AlertTitle>
-        <AlertDescription>La descarga se genero, pero el rango actual no contiene filas operativas.</AlertDescription>
+        <AlertDescription>No hay registros en el período elegido.</AlertDescription>
       </Alert>
     );
   }
@@ -262,8 +267,8 @@ function ExportState({ status }: { status: CsvExportRequestStatus }) {
     return (
       <Alert variant="destructive">
         <ShieldAlert aria-hidden="true" />
-        <AlertTitle>Permiso insuficiente o sesion vencida</AlertTitle>
-        <AlertDescription>La descarga fue rechazada sin romper la pantalla. Revisa tu sesion o permisos.</AlertDescription>
+        <AlertTitle>No se pudo descargar</AlertTitle>
+        <AlertDescription>Revisa tu sesión o tus permisos.</AlertDescription>
       </Alert>
     );
   }

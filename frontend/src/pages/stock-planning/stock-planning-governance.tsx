@@ -58,8 +58,8 @@ export function StockPlanningGovernance(props: Props) {
           <AlertTitle>El resultado vigente está pendiente de actualización</AlertTitle>
           <AlertDescription>
             {props.engineState.staleReasons.includes("configuration_changed")
-              ? "La configuración cambió después del último cálculo. La siguiente ejecución aplicará los nuevos criterios."
-              : "La ejecución programada todavía no produjo un resultado actualizado."}
+              ? "La configuración cambió después del último cálculo. La próxima actualización aplicará los nuevos criterios."
+              : "La actualización programada todavía no produjo un resultado nuevo."}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -69,19 +69,19 @@ export function StockPlanningGovernance(props: Props) {
       <div className="grid gap-4 xl:grid-cols-3">
         <StatusCard
           icon={props.engineState?.executionInProgress ? CircleDashed : CheckCircle2}
-          label="Estado del motor"
+          label="Estado del cálculo"
           value={getEngineLabel(props.engineState)}
-          detail={props.configuration?.engineEnabled === false ? "Los snapshots diarios continúan activos." : "Motor predictivo habilitado."}
+          detail={props.configuration?.engineEnabled === false ? "El historial diario continúa registrándose." : "Cálculo automático activado."}
         />
         <StatusCard
           icon={History}
           label="Último cálculo"
           value={formatDate(props.engineState?.latestExecution?.completedAt ?? props.engineState?.latestExecution?.startedAt)}
-          detail={props.engineState?.latestExecution ? getStatusLabel(props.engineState.latestExecution.status) : "Aún no existen ejecuciones."}
+          detail={props.engineState?.latestExecution ? getStatusLabel(props.engineState.latestExecution.status) : "Aún no hay cálculos."}
         />
         <StatusCard
           icon={CalendarClock}
-          label="Próxima ejecución"
+          label="Próxima actualización"
           value={formatDate(props.engineState?.nextExpectedAt)}
           detail={getScheduleLabel(props.configuration)}
         />
@@ -99,9 +99,9 @@ export function StockPlanningGovernance(props: Props) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
-                <CardTitle>Política de cálculo</CardTitle>
+                <CardTitle>Configuración del cálculo</CardTitle>
               </div>
-              <CardDescription>Consulta administrativa sin facultades de gobierno global.</CardDescription>
+              <CardDescription>Puedes consultar estos valores, pero no modificarlos.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm">
               <ReadOnlyRow label="Estado" value={props.configuration?.engineEnabled ? "Activo" : "Desactivado"} />
@@ -118,8 +118,8 @@ export function StockPlanningGovernance(props: Props) {
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <CardTitle>Seguimiento de ejecuciones</CardTitle>
-                <CardDescription>Resultados versionados y trazables del cálculo farmacéutico.</CardDescription>
+                <CardTitle>Historial de cálculos</CardTitle>
+                <CardDescription>Consulta cuándo se calculó cada resultado y si terminó correctamente.</CardDescription>
               </div>
               {props.canGovern ? (
                 <Button disabled={executionRunning || props.operation === "saving"} type="button" onClick={() => void props.onRun()}>
@@ -163,9 +163,9 @@ function ConfigurationForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gobierno del cálculo</CardTitle>
+        <CardTitle>Configuración del cálculo</CardTitle>
         <CardDescription>
-          Define la programación, cobertura y criterios operativos. Horario local de Bolivia.
+          Define cuándo se actualiza y cuántos días debe cubrir. Horario de Bolivia.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -193,7 +193,7 @@ function ConfigurationForm({
                 <NativeSelectOption value="weekly">Semanal</NativeSelectOption>
               </NativeSelect>
             </Field>
-            <Field label="Día de ejecución">
+            <Field label="Día de actualización">
               <NativeSelect disabled={form.frequency === "daily"} value={String(form.weekday)} onChange={(event) => setForm({ ...form, weekday: Number(event.target.value) })}>
                 {weekdayLabels.map((label, index) => <NativeSelectOption key={label} value={String(index)}>{label}</NativeSelectOption>)}
               </NativeSelect>
@@ -227,7 +227,7 @@ function ConfigurationForm({
               <Field label="Días con demanda para iniciar">
                 <Input min={1} max={3650} type="number" value={form.minimumDemandDays} onChange={(event) => setForm({ ...form, minimumDemandDays: event.target.value })} />
               </Field>
-              <Field label="Días con demanda para nivel operativo">
+              <Field label="Días con ventas para considerar suficientes">
                 <Input min={2} max={3650} type="number" value={form.operationalDemandDays} onChange={(event) => setForm({ ...form, operationalDemandDays: event.target.value })} />
               </Field>
             </div>
@@ -285,12 +285,12 @@ function validate(input: UpdateStockPlanningGlobalConfiguration) {
   if (!Number.isInteger(input.coverageDays) || input.coverageDays < 1 || input.coverageDays > 365) return "La cobertura general debe estar entre 1 y 365 días.";
   if (!(input.serviceLevels.normal < input.serviceLevels.high && input.serviceLevels.high < input.serviceLevels.critical)) return "Los niveles de protección deben aumentar de Normal a Alta y Crítica.";
   if (Object.values(input.serviceLevels).some((level) => level < 0.5 || level > 0.999)) return "Cada nivel de protección debe estar entre 50% y 99,9%.";
-  if (input.maturityThresholds.operationalDemandDays <= input.maturityThresholds.minimumDemandDays) return "El nivel operativo requiere más días con demanda que el inicio analítico.";
+  if (input.maturityThresholds.operationalDemandDays <= input.maturityThresholds.minimumDemandDays) return "El nivel suficiente debe requerir más días con ventas que el nivel inicial.";
   return null;
 }
 
 function ExecutionHistory({ executions }: { executions: StockPlanningExecution[] }) {
-  if (executions.length === 0) return <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">Aún no existen ejecuciones registradas.</p>;
+  if (executions.length === 0) return <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">Aún no hay cálculos registrados.</p>;
   return (
     <ol className="grid gap-3">
       {executions.map((execution) => {
@@ -301,8 +301,8 @@ function ExecutionHistory({ executions }: { executions: StockPlanningExecution[]
             <div>
               <p className="text-sm font-medium">{getStatusLabel(execution.status)}</p>
               <p className="mt-1 text-xs text-muted-foreground">{formatDate(execution.startedAt)} · {getTriggerLabel(execution.trigger)}</p>
-              {execution.globalError ? <p className="mt-2 text-xs text-destructive">La ejecución informó un error general.</p> : null}
-              {execution.warnings.length > 0 ? <p className="mt-2 text-xs text-muted-foreground">{execution.warnings.length} advertencia(s) registrada(s).</p> : null}
+              {execution.globalError ? <p className="mt-2 text-xs text-destructive">El cálculo terminó con un error.</p> : null}
+              {execution.warnings.length > 0 ? <p className="mt-2 text-xs text-muted-foreground">Advertencias: {execution.warnings.length}.</p> : null}
             </div>
             <Badge variant={execution.status === "failed" ? "destructive" : execution.status === "succeeded_with_warnings" ? "outline" : "secondary"}>v{execution.configurationVersion}</Badge>
           </li>
@@ -353,7 +353,7 @@ function formatDate(value?: string | null) {
 function getEngineLabel(state: StockPlanningEngineState | null) {
   if (!state) return "Consultando";
   if (state.executionInProgress) return "Calculando";
-  return state.configuration.engineEnabled ? "Operativo" : "Desactivado";
+  return state.configuration.engineEnabled ? "Activo" : "Desactivado";
 }
 
 function getScheduleLabel(configuration: StockPlanningGlobalConfiguration | null) {

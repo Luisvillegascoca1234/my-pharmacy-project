@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { ContextNavigation, productsNavigation } from "@/components/context-navigation";
 import type { LucideIcon } from "lucide-react";
 import { Boxes, FolderPlus, Ruler, Save, ShieldAlert } from "lucide-react";
 import type { CreateProductCategory, CreateUnit } from "@pharmacy-pos/shared";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUnitsCatalog } from "@/modules/units";
 
 const emptyUnitForm: CreateUnit = {
@@ -53,15 +55,13 @@ export function UnitsPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Catálogo de productos" items={productsNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Catálogos base
-          </Badge>
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Unidades y categorías</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Define las presentaciones mínimas que sostienen productos, compras y conversiones de inventario.
+              Crea las unidades y categorías que usarás al registrar productos.
             </p>
           </div>
         </div>
@@ -78,11 +78,16 @@ export function UnitsPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <Tabs defaultValue="units">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="units">Unidades</TabsTrigger>
+          <TabsTrigger value="categories">Categorías</TabsTrigger>
+        </TabsList>
+        <TabsContent className="mt-5" value="units">
         <Card>
           <CardHeader>
             <CardTitle>Unidades de medida</CardTitle>
-            <CardDescription>Unidad, blister, caja, frasco u otra presentación controlada.</CardDescription>
+            <CardDescription>Unidad, blíster, caja, frasco u otra presentación de compra o venta.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5">
             <Table>
@@ -145,7 +150,8 @@ export function UnitsPage() {
             </form>
           </CardContent>
         </Card>
-
+        </TabsContent>
+        <TabsContent className="mt-5" value="categories">
         <Card>
           <CardHeader>
             <CardTitle>Categorías de producto</CardTitle>
@@ -209,19 +215,20 @@ export function UnitsPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
 
 function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <div className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">
         <Icon aria-hidden="true" className="size-3.5" />
         {label}
       </div>
-      <p className="text-xl font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground">{value}</p>
     </div>
   );
 }

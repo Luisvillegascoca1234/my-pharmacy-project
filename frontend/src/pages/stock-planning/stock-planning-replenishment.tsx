@@ -1,30 +1,27 @@
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
-  AlertOctagon,
   Calculator,
-  CircleDollarSign,
+  ChevronDown,
   ClockAlert,
   Filter,
-  PackageOpen,
   RefreshCcw,
   RotateCcw,
   ShieldCheck,
-  TriangleAlert,
-  Warehouse
+  ShoppingCart,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   StockCriticalitySchema,
-  StockPlanningConfidenceSchema,
-  StockPlanningMaturitySchema,
   StockPlanningProductsQuerySchema,
   StockPlanningRiskSchema
 } from "@pharmacy-pos/shared";
@@ -48,10 +45,10 @@ const moneyFormatter = new Intl.NumberFormat("es-BO", {
 });
 
 const riskLabels: Record<StockPlanningRisk, string> = {
-  critical_stockout: "Agotamiento crítico",
-  expiry: "Riesgo de vencimiento",
-  replenishment: "Requiere reabastecimiento",
-  stale: "Cálculo desactualizado"
+  critical_stockout: "Sin stock o próximo a agotarse",
+  expiry: "Parte del stock podría vencer",
+  replenishment: "Stock insuficiente para los próximos días",
+  stale: "Recomendación pendiente de actualización"
 };
 
 const alertPriorityLabels: Record<StockPlanningAlertPriority, string> = {
@@ -73,89 +70,48 @@ export function ReplenishmentDashboard({
   summary: StockPlanningSummary;
 }) {
   const calculationState = getCalculationState(engineState);
+  const decisionTitle = summary.replenishmentCount === 0
+    ? "No necesitas preparar compras urgentes"
+    : summary.replenishmentCount === 1
+      ? "Hay 1 medicamento que conviene comprar"
+      : `Hay ${summary.replenishmentCount} medicamentos que conviene comprar`;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <DashboardMetric
-        detail="Catálogo visible según los filtros aplicados"
-        icon={Warehouse}
-        label="Productos evaluados"
-        loading={loading}
-        value={summary.productCount}
-      />
-      <DashboardMetric
-        detail="Productos, no unidades incompatibles"
-        icon={PackageOpen}
-        label="Requieren reabastecimiento"
-        loading={loading}
-        value={summary.replenishmentCount}
-      />
-      <DashboardMetric
-        detail="Criticidad clínica y riesgo de quiebre"
-        icon={AlertOctagon}
-        label="Críticos con riesgo"
-        loading={loading}
-        tone="danger"
-        value={summary.criticalRiskCount}
-      />
-      <DashboardMetric
-        detail="Stock que podría vencer antes del consumo"
-        icon={TriangleAlert}
-        label="Riesgo de vencimiento"
-        loading={loading}
-        value={summary.expiryRiskCount}
-      />
-      <Card>
-        <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
-          <div>
-            <CardDescription>Estado del último cálculo</CardDescription>
-            <CardTitle className="mt-2 text-xl">{loading ? "Consultando…" : calculationState.label}</CardTitle>
+    <Card className="overflow-hidden border-primary/20">
+      <CardContent className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.8fr)] lg:items-center">
+        <div className="flex items-start gap-4">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <ShoppingCart aria-hidden="true" className="size-5" />
+          </span>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">{loading ? "Revisando el inventario…" : decisionTitle}</h2>
+            {summary.criticalRiskCount > 0 ? (
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                Empieza por los {summary.criticalRiskCount} urgentes y revisa si ya están incluidos en una compra en borrador.
+              </p>
+            ) : null}
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Calculator aria-hidden="true" className="size-3.5" />
+              {calculationState.detail}
+            </p>
           </div>
-          <Calculator aria-hidden="true" className="size-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs leading-5 text-muted-foreground">{calculationState.detail}</p>
-          {summary.staleCount > 0 ? (
-            <Badge className="mt-2" variant="destructive">
-              {summary.staleCount} resultado(s) desactualizado(s)
-            </Badge>
-          ) : null}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        <div className="grid grid-cols-3 overflow-hidden rounded-xl border bg-muted/20">
+          <DecisionMetric label="Recomendaciones" value={loading ? "—" : summary.replenishmentCount} />
+          <DecisionMetric label="Urgentes" value={loading ? "—" : summary.criticalRiskCount} />
+          <DecisionMetric label="Con riesgo de vencer" value={loading ? "—" : summary.expiryRiskCount} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-function DashboardMetric({
-  detail,
-  icon: Icon,
-  label,
-  loading,
-  tone = "default",
-  value
-}: {
-  detail: string;
-  icon: typeof PackageOpen;
-  label: string;
-  loading: boolean;
-  tone?: "danger" | "default" | "warning";
-  value: number;
-}) {
-  const iconClass = tone === "danger" ? "text-destructive" : "text-primary";
-
+function DecisionMetric({ label, value }: { label: string; value: number | string }) {
   return (
-    <Card>
-      <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
-        <div>
-          <CardDescription>{label}</CardDescription>
-          <CardTitle className="mt-2 text-2xl">{loading ? "—" : quantityFormatter.format(value)}</CardTitle>
-        </div>
-        <Icon aria-hidden="true" className={`size-4 ${iconClass}`} />
-      </CardHeader>
-      <CardContent>
-        <p className="text-xs leading-5 text-muted-foreground">{detail}</p>
-      </CardContent>
-    </Card>
+    <div className="border-r px-3 py-4 text-center last:border-r-0 sm:px-4">
+      <p className="text-xl font-semibold tabular-nums sm:text-2xl">{typeof value === "number" ? quantityFormatter.format(value) : value}</p>
+      <p className="mt-1 text-[0.6875rem] font-medium leading-4 text-muted-foreground">{label}</p>
+    </div>
   );
 }
 
@@ -201,28 +157,21 @@ export function ReplenishmentFilters({
             <Filter aria-hidden="true" className="size-4 text-primary" />
           </div>
           <div>
-            <CardTitle>Priorizar el abastecimiento</CardTitle>
+            <CardTitle>Encontrar medicamentos</CardTitle>
             <CardDescription className="mt-1">
-              Filtra señales farmacéuticas. La agrupación por proveedor organiza la lectura y no modifica el pronóstico.
+              Busca por nombre o proveedor y muestra únicamente la decisión que necesitas revisar.
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-5">
         <form className="grid gap-4" onSubmit={handleSubmit}>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-3">
             <FilterField label="Producto">
               <Input
                 placeholder="Nombre o código interno"
                 value={filters.search ?? ""}
                 onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
-              />
-            </FilterField>
-            <FilterField label="Categoría">
-              <FilterSelect
-                options={categories}
-                value={filters.categoryId}
-                onChange={(value) => setFilters((current) => ({ ...current, categoryId: value }))}
               />
             </FilterField>
             <FilterField label="Proveedor">
@@ -232,63 +181,7 @@ export function ReplenishmentFilters({
                 onChange={(value) => setFilters((current) => ({ ...current, supplierId: value }))}
               />
             </FilterField>
-            <FilterField label="Criticidad">
-              <NativeSelect
-                className="w-full"
-                value={filters.criticality ?? ""}
-                onChange={(event) => {
-                  const result = StockCriticalitySchema.safeParse(event.target.value);
-                  setFilters((current) => ({
-                    ...current,
-                    criticality: result.success ? result.data : undefined
-                  }));
-                }}
-              >
-                <NativeSelectOption value="">Todas</NativeSelectOption>
-                <NativeSelectOption value="critical">Crítica</NativeSelectOption>
-                <NativeSelectOption value="high">Alta</NativeSelectOption>
-                <NativeSelectOption value="normal">Normal</NativeSelectOption>
-              </NativeSelect>
-            </FilterField>
-            <FilterField label="Madurez">
-              <NativeSelect
-                className="w-full"
-                value={filters.maturity ?? ""}
-                onChange={(event) => {
-                  const result = StockPlanningMaturitySchema.safeParse(event.target.value);
-                  setFilters((current) => ({
-                    ...current,
-                    maturity: result.success ? result.data : undefined
-                  }));
-                }}
-              >
-                <NativeSelectOption value="">Todas</NativeSelectOption>
-                <NativeSelectOption value="no_history">Sin historial</NativeSelectOption>
-                <NativeSelectOption value="low_confidence">Baja confianza</NativeSelectOption>
-                <NativeSelectOption value="operational">Predicción operativa</NativeSelectOption>
-                <NativeSelectOption value="no_observed_demand">Sin demanda observada</NativeSelectOption>
-              </NativeSelect>
-            </FilterField>
-            <FilterField label="Confianza">
-              <NativeSelect
-                className="w-full"
-                value={filters.confidence ?? ""}
-                onChange={(event) => {
-                  const result = StockPlanningConfidenceSchema.safeParse(event.target.value);
-                  setFilters((current) => ({
-                    ...current,
-                    confidence: result.success ? result.data : undefined
-                  }));
-                }}
-              >
-                <NativeSelectOption value="">Todas</NativeSelectOption>
-                <NativeSelectOption value="high">Alta</NativeSelectOption>
-                <NativeSelectOption value="medium">Media</NativeSelectOption>
-                <NativeSelectOption value="low">Baja</NativeSelectOption>
-                <NativeSelectOption value="none">Sin calificar</NativeSelectOption>
-              </NativeSelect>
-            </FilterField>
-            <FilterField label="Riesgo">
+            <FilterField label="Qué necesitas decidir">
               <NativeSelect
                 className="w-full"
                 value={filters.risk ?? ""}
@@ -300,35 +193,76 @@ export function ReplenishmentFilters({
                   }));
                 }}
               >
-                <NativeSelectOption value="">Todos</NativeSelectOption>
-                <NativeSelectOption value="critical_stockout">Agotamiento crítico</NativeSelectOption>
-                <NativeSelectOption value="replenishment">Reabastecimiento</NativeSelectOption>
-                <NativeSelectOption value="expiry">Vencimiento</NativeSelectOption>
-                <NativeSelectOption value="stale">Cálculo desactualizado</NativeSelectOption>
-              </NativeSelect>
-            </FilterField>
-            <FilterField label="Presentación">
-              <NativeSelect
-                className="w-full"
-                value={filters.groupBy ?? ""}
-                onChange={(event) => setFilters((current) => ({
-                  ...current,
-                  groupBy: event.target.value === "supplier" ? "supplier" : undefined
-                }))}
-              >
-                <NativeSelectOption value="">Lista priorizada</NativeSelectOption>
-                <NativeSelectOption value="supplier">Agrupar por proveedor</NativeSelectOption>
+                <NativeSelectOption value="">Todas las decisiones</NativeSelectOption>
+                <NativeSelectOption value="critical_stockout">Comprar hoy</NativeSelectOption>
+                <NativeSelectOption value="replenishment">Comprar pronto</NativeSelectOption>
+                <NativeSelectOption value="expiry">Vigilar vencimiento</NativeSelectOption>
+                <NativeSelectOption value="stale">Actualizar recomendación</NativeSelectOption>
               </NativeSelect>
             </FilterField>
           </div>
+          <Collapsible className="group/filters">
+            <CollapsibleTrigger asChild>
+              <Button className="w-fit" type="button" variant="ghost">
+                <SlidersHorizontal aria-hidden="true" />
+                Más filtros
+                <ChevronDown
+                  aria-hidden="true"
+                  className="transition-transform group-data-[state=open]/filters:rotate-180"
+                />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid gap-3 rounded-lg border bg-muted/15 p-4 md:grid-cols-3">
+                <FilterField label="Categoría">
+                  <FilterSelect
+                    options={categories}
+                    value={filters.categoryId}
+                    onChange={(value) => setFilters((current) => ({ ...current, categoryId: value }))}
+                  />
+                </FilterField>
+                <FilterField label="Criticidad">
+                  <NativeSelect
+                    className="w-full"
+                    value={filters.criticality ?? ""}
+                    onChange={(event) => {
+                      const result = StockCriticalitySchema.safeParse(event.target.value);
+                      setFilters((current) => ({
+                        ...current,
+                        criticality: result.success ? result.data : undefined
+                      }));
+                    }}
+                  >
+                    <NativeSelectOption value="">Todas</NativeSelectOption>
+                    <NativeSelectOption value="critical">Crítica</NativeSelectOption>
+                    <NativeSelectOption value="high">Alta</NativeSelectOption>
+                    <NativeSelectOption value="normal">Normal</NativeSelectOption>
+                  </NativeSelect>
+                </FilterField>
+                <FilterField label="Orden">
+                  <NativeSelect
+                    className="w-full"
+                    value={filters.groupBy ?? ""}
+                    onChange={(event) => setFilters((current) => ({
+                      ...current,
+                      groupBy: event.target.value === "supplier" ? "supplier" : undefined
+                    }))}
+                  >
+                    <NativeSelectOption value="">Por prioridad</NativeSelectOption>
+                    <NativeSelectOption value="supplier">Por proveedor</NativeSelectOption>
+                  </NativeSelect>
+                </FilterField>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
           <div className="flex flex-wrap justify-end gap-2">
             <Button disabled={disabled} type="button" variant="ghost" onClick={reset}>
               <RotateCcw aria-hidden="true" />
-              Limpiar
+              Restablecer
             </Button>
             <Button disabled={disabled} type="submit">
               <RefreshCcw aria-hidden="true" />
-              Aplicar filtros
+              Aplicar
             </Button>
           </div>
         </form>
@@ -342,8 +276,8 @@ export function PredictiveAlerts({ alerts }: { alerts: StockPlanningAlert[] }) {
     return (
       <Alert>
         <ShieldCheck aria-hidden="true" />
-        <AlertTitle>Sin alertas predictivas vigentes</AlertTitle>
-        <AlertDescription>El último resultado no generó señales administrativas para los productos visibles.</AlertDescription>
+        <AlertTitle>Sin señales adicionales</AlertTitle>
+        <AlertDescription>No existen advertencias adicionales para las recomendaciones visibles.</AlertDescription>
       </Alert>
     );
   }
@@ -356,9 +290,9 @@ export function PredictiveAlerts({ alerts }: { alerts: StockPlanningAlert[] }) {
   return (
     <Card>
       <CardHeader className="border-b">
-        <CardTitle>Alertas predictivas administrativas</CardTitle>
+        <CardTitle>Señales adicionales del cálculo</CardTitle>
         <CardDescription>
-          Derivadas del último resultado; no crean compras, no reservan stock y no se muestran al rol Vendedor.
+          Información complementaria para revisar casos excepcionales. No crea compras ni reserva stock.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-2 pt-5 lg:grid-cols-2">
@@ -382,12 +316,16 @@ export function ReplenishmentTable({
   groups,
   products,
   onAnalyze,
-  onEdit
+  onCreatePurchase,
+  onEdit,
+  onReviewDraft
 }: {
   groups: StockPlanningSupplierGroup[];
   products: StockPlanningProduct[];
   onAnalyze: (product: StockPlanningProduct) => void;
+  onCreatePurchase?: (product: StockPlanningProduct) => void;
   onEdit: (product: StockPlanningProduct) => void;
+  onReviewDraft?: (product: StockPlanningProduct) => void;
 }) {
   const sortedProducts = useMemo(() => [...products].sort(comparePriority), [products]);
   const groupedRows = useMemo(() => {
@@ -409,16 +347,10 @@ export function ReplenishmentTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="pl-5">Prioridad y producto</TableHead>
-            <TableHead>Demanda</TableHead>
-            <TableHead>Seguridad y meta</TableHead>
-            <TableHead>Sugerencia</TableHead>
-            <TableHead>Presentación</TableHead>
+            <TableHead className="pl-5">Medicamento</TableHead>
+            <TableHead>Qué conviene hacer</TableHead>
+            <TableHead>Por qué</TableHead>
             <TableHead>Costo estimado</TableHead>
-            <TableHead>Cobertura</TableHead>
-            <TableHead>Confianza</TableHead>
-            <TableHead>Riesgos y estado</TableHead>
-            <TableHead>Compras en borrador</TableHead>
             <TableHead className="pr-5 text-right">Acción</TableHead>
           </TableRow>
         </TableHeader>
@@ -426,21 +358,21 @@ export function ReplenishmentTable({
           {groupedRows
             ? groupedRows.flatMap(({ group, products: supplierProducts }) => [
                 <TableRow className="bg-muted/35 hover:bg-muted/35" key={`group-${group.supplierId}`}>
-                  <TableCell className="pl-5" colSpan={11}>
+                  <TableCell className="pl-5" colSpan={5}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold">{group.supplierName}</p>
                       <p className="text-xs text-muted-foreground">
-                        Agrupación operativa · no interviene en demanda, confianza ni cantidad sugerida
+                        Productos agrupados para facilitar la preparación de la compra
                       </p>
                     </div>
                   </TableCell>
                 </TableRow>,
                 ...supplierProducts.map((product) => (
-                  <ReplenishmentRow key={product.productId} product={product} onAnalyze={onAnalyze} onEdit={onEdit} />
+                  <ReplenishmentRow key={product.productId} product={product} onAnalyze={onAnalyze} onCreatePurchase={onCreatePurchase} onEdit={onEdit} onReviewDraft={onReviewDraft} />
                 ))
               ])
             : sortedProducts.map((product) => (
-                <ReplenishmentRow key={product.productId} product={product} onAnalyze={onAnalyze} onEdit={onEdit} />
+                <ReplenishmentRow key={product.productId} product={product} onAnalyze={onAnalyze} onCreatePurchase={onCreatePurchase} onEdit={onEdit} onReviewDraft={onReviewDraft} />
               ))}
         </TableBody>
       </Table>
@@ -450,11 +382,15 @@ export function ReplenishmentTable({
 
 function ReplenishmentRow({
   onAnalyze,
+  onCreatePurchase,
   onEdit,
+  onReviewDraft,
   product
 }: {
   onAnalyze: (product: StockPlanningProduct) => void;
+  onCreatePurchase?: (product: StockPlanningProduct) => void;
   onEdit: (product: StockPlanningProduct) => void;
+  onReviewDraft?: (product: StockPlanningProduct) => void;
   product: StockPlanningProduct;
 }) {
   const recommendation = product.result.kind === "demand_forecast" ? product.result : null;
@@ -468,66 +404,33 @@ function ReplenishmentRow({
       <TableCell className="min-w-64 pl-5">
         <Badge variant={priority.variant}>{priority.label}</Badge>
         <p className="mt-2 font-medium">{product.commercialName}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {product.internalCode} · {product.categoryName} · {product.supplierName}
+        <p className="mt-1 text-xs text-muted-foreground">Proveedor: {product.supplierName}</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Stock actual: {quantityFormatter.format(product.usableStock)} {product.baseUnitAbbreviation}
         </p>
       </TableCell>
-      <TableCell className="min-w-40">
-        <Quantity value={recommendation?.centralDemand ?? product.forecast?.centralDemand} unit={product.baseUnitAbbreviation} />
-        <p className="mt-1 text-xs text-muted-foreground">
-          {recommendation ? `Cuantil ${(recommendation.serviceLevel * 100).toFixed(0)}%: ${quantityFormatter.format(recommendation.demandQuantile)}` : "Referencia configurada · no es pronóstico"}
+      <TableCell className="min-w-56">
+        <p className="text-lg font-semibold">
+          {product.result.quantityBase > 0
+            ? `Comprar ${quantityFormatter.format(product.result.quantityBase)} ${product.baseUnitAbbreviation}`
+            : "No comprar por ahora"}
         </p>
-      </TableCell>
-      <TableCell className="min-w-40">
-        {recommendation ? (
-          <>
-            <p>Seguridad: <strong>{quantityFormatter.format(recommendation.safetyStock)}</strong></p>
-            <p className="mt-1">Meta: <strong>{quantityFormatter.format(recommendation.targetStock)}</strong> {product.baseUnitAbbreviation}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Piso mínimo: {quantityFormatter.format(product.minimumStock)}</p>
-          </>
-        ) : (
-          <span className="text-sm text-muted-foreground">Disponible al habilitarse el pronóstico</span>
-        )}
-      </TableCell>
-      <TableCell className="min-w-36">
-        <p className="text-lg font-semibold">{quantityFormatter.format(product.result.quantityBase)} {product.baseUnitAbbreviation}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{product.result.wasRounded ? "Redondeada hacia presentación completa" : "En unidad base"}</p>
-      </TableCell>
-      <TableCell className="min-w-44">
         {product.result.preferredPresentation ? (
-          <>
-            <p className="font-medium">{product.result.preferredPresentation.name}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              1 {product.result.preferredPresentation.abbreviation} = {quantityFormatter.format(product.result.preferredPresentation.conversionFactor)} {product.baseUnitAbbreviation}
-            </p>
-          </>
-        ) : (
-          <StatusNote icon={Warehouse} text="Sin presentación preferida; sugerencia en unidad base" />
-        )}
+          <p className="mt-1 text-xs text-muted-foreground">
+            Pedir en {product.result.preferredPresentation.name.toLowerCase()} completa
+            {product.result.wasRounded ? " · cantidad ajustada" : ""}
+          </p>
+        ) : product.result.quantityBase > 0 ? (
+          <p className="mt-1 text-xs text-muted-foreground">Cantidad en unidades mínimas</p>
+        ) : null}
+        <p className="mt-2 text-xs text-muted-foreground">Cubre aproximadamente {product.coverage.days} días</p>
+        {draftCount > 0 ? (
+          <div className="mt-3 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-2 text-xs leading-5">
+            Ya hay {draftCount} {draftCount === 1 ? "borrador" : "borradores"} con {quantityFormatter.format(draftQuantity)} {product.baseUnitAbbreviation}. Revísalo antes de duplicar la compra.
+          </div>
+        ) : null}
       </TableCell>
-      <TableCell className="min-w-36">
-        {recommendation?.estimatedCost !== undefined ? (
-          <>
-            <p className="font-medium">{moneyFormatter.format(recommendation.estimatedCost)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Estimación secundaria con último costo confiable</p>
-          </>
-        ) : (
-          <StatusNote icon={CircleDollarSign} text="Sin costo confiable; estimación omitida" />
-        )}
-      </TableCell>
-      <TableCell className="min-w-36">
-        <p className="font-medium">{product.coverage.days} días</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Stock utilizable: {quantityFormatter.format(product.usableStock)} {product.baseUnitAbbreviation}
-        </p>
-      </TableCell>
-      <TableCell className="min-w-36">
-        <Badge variant={product.confidence === "high" ? "default" : "secondary"}>
-          {getConfidenceLabel(product)}
-        </Badge>
-        <p className="mt-1 text-xs text-muted-foreground">Calidad de evidencia, no garantía</p>
-      </TableCell>
-      <TableCell className="min-w-52">
+      <TableCell className="min-w-56">
         <div className="flex flex-wrap gap-1.5">
           {risks.length > 0
             ? risks.map((risk) => (
@@ -535,50 +438,43 @@ function ReplenishmentRow({
                   {riskLabels[risk]}
                 </Badge>
               ))
-            : <Badge variant="secondary">Sin riesgos predictivos</Badge>}
+            : <Badge variant="secondary">Stock suficiente</Badge>}
         </div>
         {(product.expiryRiskStock ?? 0) > 0 ? (
           <p className="mt-2 text-xs text-muted-foreground">
-            En riesgo: {quantityFormatter.format(product.expiryRiskStock ?? 0)} {product.baseUnitAbbreviation}
+            Podrían vencer {quantityFormatter.format(product.expiryRiskStock ?? 0)} {product.baseUnitAbbreviation}
           </p>
         ) : null}
       </TableCell>
-      <TableCell className="min-w-48">
-        {draftCount > 0 ? (
-          <>
-            <p className="font-medium">{draftCount} borrador(es) · {quantityFormatter.format(draftQuantity)} {product.baseUnitAbbreviation}</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">Contexto informativo: no se descuenta de la sugerencia.</p>
-          </>
+      <TableCell className="min-w-40">
+        {recommendation?.estimatedCost !== undefined ? (
+          <p className="font-medium">{moneyFormatter.format(recommendation.estimatedCost)}</p>
         ) : (
-          <span className="text-sm text-muted-foreground">Sin compras en borrador</span>
+          <span className="text-sm text-muted-foreground">Por confirmar con proveedor</span>
         )}
       </TableCell>
       <TableCell className="pr-5 text-right">
-        <div className="flex justify-end gap-2">
-          <Button size="sm" type="button" onClick={() => onAnalyze(product)}>
-            Analizar
+        <div className="flex min-w-40 flex-col items-stretch gap-2">
+          {draftCount > 0 && onReviewDraft ? (
+            <Button size="sm" type="button" onClick={() => onReviewDraft(product)}>
+              <ShoppingCart aria-hidden="true" />
+              Revisar borrador
+            </Button>
+          ) : onCreatePurchase && product.result.quantityBase > 0 ? (
+            <Button size="sm" type="button" onClick={() => onCreatePurchase(product)}>
+              <ShoppingCart aria-hidden="true" />
+              Crear compra
+            </Button>
+          ) : null}
+          <Button size="sm" type="button" variant="outline" onClick={() => onAnalyze(product)}>
+            Ver detalles
           </Button>
-          <Button size="sm" type="button" variant="outline" onClick={() => onEdit(product)}>
-            Configurar
+          <Button size="sm" type="button" variant="ghost" onClick={() => onEdit(product)}>
+            Ajustar
           </Button>
         </div>
       </TableCell>
     </TableRow>
-  );
-}
-
-function Quantity({ unit, value }: { unit: string; value: number | undefined }) {
-  return value === undefined
-    ? <span className="text-sm text-muted-foreground">Sin demanda prevista</span>
-    : <p className="font-medium">{quantityFormatter.format(value)} {unit}</p>;
-}
-
-function StatusNote({ icon: Icon, text }: { icon: typeof Warehouse; text: string }) {
-  return (
-    <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-      <Icon aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
-      {text}
-    </p>
   );
 }
 
@@ -627,15 +523,15 @@ function cleanFilters(filters: StockPlanningFilters): StockPlanningFilters {
 function getProductPriority(product: StockPlanningProduct) {
   const risks = product.risks ?? [];
   if (risks.includes("critical_stockout")) {
-    return { label: "1 · Agotamiento crítico", rank: 4, variant: "destructive" as const };
+    return { label: "Comprar hoy", rank: 4, variant: "destructive" as const };
   }
   if (risks.includes("replenishment")) {
-    return { label: "2 · Reposición urgente", rank: 3, variant: "default" as const };
+    return { label: "Comprar pronto", rank: 3, variant: "default" as const };
   }
   if (risks.includes("expiry")) {
-    return { label: "3 · Vigilar vencimiento", rank: 2, variant: "outline" as const };
+    return { label: "Vigilar vencimiento", rank: 2, variant: "outline" as const };
   }
-  return { label: "4 · Seguimiento", rank: 1, variant: "secondary" as const };
+  return { label: "Sin compra urgente", rank: 1, variant: "secondary" as const };
 }
 
 function comparePriority(first: StockPlanningProduct, second: StockPlanningProduct) {
@@ -643,21 +539,14 @@ function comparePriority(first: StockPlanningProduct, second: StockPlanningProdu
     first.commercialName.localeCompare(second.commercialName, "es");
 }
 
-function getConfidenceLabel(product: StockPlanningProduct) {
-  if (product.confidence === "high") return "Confianza alta";
-  if (product.confidence === "medium") return "Confianza media";
-  if (product.confidence === "low") return "Confianza baja";
-  return product.maturity === "no_history" ? "Sin historial" : "Sin calificar";
-}
-
 function getCalculationState(engineState: StockPlanningEngineState | null) {
-  if (!engineState) return { detail: "Aún no existe una ejecución registrada.", label: "Sin cálculo" };
-  if (engineState.executionInProgress) return { detail: "El motor está procesando una nueva ejecución.", label: "En curso" };
-  if (engineState.stale) return { detail: "Se conserva el último resultado disponible y requiere actualización.", label: "Desactualizado" };
-  if (!engineState.latestExecution) return { detail: "El motor todavía no completó su primera ejecución.", label: "Pendiente" };
-  if (engineState.latestExecution.status === "failed") return { detail: "La última ejecución falló; revisa la evidencia conservada.", label: "Fallido" };
-  if (engineState.latestExecution.status === "succeeded_with_warnings") return { detail: "La ejecución terminó con advertencias por revisar.", label: "Con advertencias" };
-  return { detail: "La última ejecución terminó correctamente.", label: "Vigente" };
+  if (!engineState) return { detail: "Todavía no hay recomendaciones disponibles.", label: "pendientes" };
+  if (engineState.executionInProgress) return { detail: "Se están actualizando las cantidades sugeridas.", label: "actualizándose" };
+  if (engineState.stale) return { detail: "Conviene actualizar antes de preparar una compra.", label: "por actualizar" };
+  if (!engineState.latestExecution) return { detail: "Actualiza la pantalla para generar las primeras recomendaciones.", label: "pendientes" };
+  if (engineState.latestExecution.status === "failed") return { detail: "No se pudieron actualizar; conserva la última lista disponible.", label: "con error" };
+  if (engineState.latestExecution.status === "succeeded_with_warnings") return { detail: "La lista puede usarse, pero contiene casos que requieren revisión.", label: "con advertencias" };
+  return { detail: "La lista está lista para preparar compras.", label: "vigentes" };
 }
 
 function getAlertPriorityRank(priority: StockPlanningAlertPriority) {

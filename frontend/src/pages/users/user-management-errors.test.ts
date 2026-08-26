@@ -22,6 +22,6 @@ describe("user management error messages", () => {
   });
 
   it("communicates catalog loading failures in Spanish", () => {
-    expect(getUsersLoadErrorMessage("load_failed")).toBe("No se pudieron cargar los usuarios y roles institucionales.");
+    expect(getUsersLoadErrorMessage("load_failed")).toBe("No se pudieron cargar los usuarios y roles.");
   });
 });

@@ -1,4 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
+import { ContextNavigation, salesNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
   BadgeCheck,
@@ -44,7 +45,11 @@ import { Textarea } from "@/components/ui/textarea";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
-const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/La_Paz"
+});
 
 const saleStatusLabels = {
   cancelled: "Anulada",
@@ -70,27 +75,27 @@ const returnBlockLabels: Record<ReturnableSaleBlockReason, string> = {
 };
 
 const returnBlockDescriptions: Record<ReturnableSaleBlockReason, string> = {
-  "active-invoice-exists": "Cancela primero el comprobante interno preparado desde Comprobantes internos antes de registrar la devolución administrativa.",
-  "already-returned": "La venta ya tiene devolución total registrada en el historial administrativo.",
-  "cash-session-open": "Con caja abierta corresponde anulación POS, no devolución administrativa posterior al cierre.",
-  "payment-not-refundable": "El pago no está en estado reembolsable para una devolución total V1.",
-  "sale-cancelled": "Una venta anulada por POS no requiere devolución administrativa.",
+  "active-invoice-exists": "Cancela primero el comprobante interno de esta venta.",
+  "already-returned": "La venta ya fue devuelta.",
+  "cash-session-open": "La caja sigue abierta. Anula la venta desde el historial.",
+  "payment-not-refundable": "El pago no permite registrar una devolución.",
+  "sale-cancelled": "La venta ya fue anulada.",
   "sale-not-found": "No se encontró la venta solicitada para evaluar devolución.",
-  unknown: "La venta no cumple las reglas vigentes para devolución total."
+  unknown: "Esta venta no se puede devolver."
 };
 
 const errorMessages: Record<ReturnsDataErrorCode, string> = {
   "active-invoice-exists": "La venta tiene un comprobante interno preparado activo. Cancélalo primero desde Comprobantes internos.",
   "already-returned": "La venta ya cuenta con devolución total registrada.",
-  "cash-session-open": "La caja de la venta sigue abierta. Usa anulación POS mientras la caja no esté cerrada.",
-  forbidden: "Tu usuario no tiene permiso para operar devoluciones administrativas.",
+  "cash-session-open": "La caja de la venta sigue abierta. Anula la venta en el historial.",
+  forbidden: "No tienes permiso para registrar devoluciones.",
   "not-found": "No se encontró la devolución solicitada.",
   "payment-not-refundable": "El pago asociado no permite devolución total.",
-  "sale-cancelled": "La venta fue anulada. No corresponde registrar devolución administrativa.",
+  "sale-cancelled": "La venta ya fue anulada.",
   "sale-not-found": "No se encontró la venta seleccionada.",
   "sale-not-returnable": "La venta no cumple las reglas para devolución total.",
-  "session-invalid": "Tu sesión no permite operar devoluciones. Vuelve a iniciar sesión.",
-  unknown: "No se pudo completar la operación. Intenta nuevamente.",
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
+  unknown: "No se pudo registrar la devolución. Intenta nuevamente.",
   validation: "El motivo debe tener entre 5 y 500 caracteres."
 };
 
@@ -105,6 +110,7 @@ export function ReturnsPage() {
   const [reasonInput, setReasonInput] = useState("");
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [isReasonDialogOpen, setReasonDialogOpen] = useState(false);
+  const [activeView, setActiveView] = useState<"register" | "history">("register");
   const isLoadingReturnableSales = returns.returnableSalesStatus === "loading";
   const isLoadingHistory = returns.saleReturnsStatus === "loading";
   const isLoadingDetail = returns.detailStatus === "loading";
@@ -168,7 +174,7 @@ export function ReturnsPage() {
     setReasonError(null);
 
     if (!selectedSale) {
-      setReasonError("Selecciona una venta devolvible.");
+      setReasonError("Selecciona una venta que pueda devolverse.");
       return;
     }
 
@@ -210,6 +216,7 @@ export function ReturnsPage() {
       setReasonDialogOpen(false);
       await returns.reloadReturnableSales();
       await returns.reloadSaleReturns();
+      setActiveView("history");
     }
   }
 
@@ -220,22 +227,20 @@ export function ReturnsPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Consultas de ventas" items={salesNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Posterior al cierre de caja
-          </Badge>
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Devoluciones administrativas totales</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Devoluciones</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Registro administrativo de devolución total sobre ventas POS ya cerradas. Si la caja sigue abierta, corresponde anulación POS y no devolución posterior.
+              Si la caja sigue abierta, anula la venta. Si ya está cerrada, registra una devolución.
             </p>
           </div>
         </div>
         <div className="grid gap-2 sm:grid-cols-3 xl:w-[640px]">
-          <Metric label="Bloqueadas" value={returnsSummary.blocked} />
-          <Metric label="Devolvible visible" value={formatMoney(returnsSummary.refundableAmount)} />
-          <Metric label="Devuelto historial" value={formatMoney(returnsSummary.returnedAmount)} />
+          <Metric label="No disponibles" value={returnsSummary.blocked} />
+          <Metric label="Disponible para devolver" value={formatMoney(returnsSummary.refundableAmount)} />
+          <Metric label="Total devuelto" value={formatMoney(returnsSummary.returnedAmount)} />
         </div>
       </div>
 
@@ -243,7 +248,7 @@ export function ReturnsPage() {
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Permiso insuficiente</AlertTitle>
-          <AlertDescription>Solo administración y superadministración pueden registrar devoluciones administrativas totales.</AlertDescription>
+          <AlertDescription>No tienes permiso para registrar devoluciones.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -260,18 +265,23 @@ export function ReturnsPage() {
       {visibleError ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo completar la operación</AlertTitle>
+          <AlertTitle>No se pudo registrar la devolución</AlertTitle>
           <AlertDescription>{visibleError}</AlertDescription>
         </Alert>
       ) : null}
 
-      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card>
+      <div className="flex w-fit rounded-lg border bg-muted/25 p-1" aria-label="Vista de devoluciones">
+        <Button size="sm" type="button" variant={activeView === "register" ? "default" : "ghost"} onClick={() => setActiveView("register")}>Registrar devolución</Button>
+        <Button size="sm" type="button" variant={activeView === "history" ? "default" : "ghost"} onClick={() => setActiveView("history")}>Historial</Button>
+      </div>
+
+      <div className="grid gap-5">
+        <Card className={activeView !== "register" ? "hidden" : undefined}>
           <CardHeader className="gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle>Ventas devolvibles</CardTitle>
-                <CardDescription>Ventas POS evaluadas para devolución total, con bloqueo operativo cuando corresponde anulación o cancelación previa.</CardDescription>
+                <CardTitle>Ventas que se pueden devolver</CardTitle>
+                <CardDescription>Selecciona una venta cerrada para devolver su importe completo.</CardDescription>
               </div>
               <Button disabled={!canOperate || isLoadingReturnableSales} size="sm" type="button" variant="outline" onClick={() => void returns.reloadReturnableSales()}>
                 {isLoadingReturnableSales ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -290,8 +300,8 @@ export function ReturnsPage() {
                   onChange={(event) => setReturnableSearchInput(event.currentTarget.value)}
                 />
               </div>
-              <Input disabled={!canOperate} type="date" value={returns.returnableFromDate} onChange={(event) => returns.setReturnableFromDate(event.currentTarget.value)} />
-              <Input disabled={!canOperate} type="date" value={returns.returnableToDate} onChange={(event) => returns.setReturnableToDate(event.currentTarget.value)} />
+              <Input aria-label="Desde" disabled={!canOperate} type="date" value={returns.returnableFromDate} onChange={(event) => returns.setReturnableFromDate(event.currentTarget.value)} />
+              <Input aria-label="Hasta" disabled={!canOperate} type="date" value={returns.returnableToDate} onChange={(event) => returns.setReturnableToDate(event.currentTarget.value)} />
               <Button disabled={!canOperate || isLoadingReturnableSales} type="submit">
                 <Search aria-hidden="true" />
                 Filtrar
@@ -299,7 +309,7 @@ export function ReturnsPage() {
             </form>
 
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-              <Input disabled={!canOperate} placeholder="ID de vendedor" value={returnableSellerInput} onChange={(event) => setReturnableSellerInput(event.currentTarget.value)} />
+              <Input aria-label="Identificador interno del vendedor" disabled={!canOperate} placeholder="Filtro avanzado: ID de vendedor" value={returnableSellerInput} onChange={(event) => setReturnableSellerInput(event.currentTarget.value)} />
               <Button disabled={!canOperate || isLoadingReturnableSales} type="button" variant="outline" onClick={clearReturnableFilters}>
                 Limpiar filtros
               </Button>
@@ -309,7 +319,7 @@ export function ReturnsPage() {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[132px]">Venta POS</TableHead>
+                  <TableHead className="w-[132px]">Venta</TableHead>
                   <TableHead>Vendedor</TableHead>
                   <TableHead className="w-[128px]">Caja</TableHead>
                   <TableHead className="w-[132px]">Fecha</TableHead>
@@ -328,11 +338,11 @@ export function ReturnsPage() {
                       <Empty>
                         <EmptyHeader>
                           <EmptyMedia variant="icon">{isLoadingReturnableSales ? <Spinner /> : <FileSearch aria-hidden="true" />}</EmptyMedia>
-                          <EmptyTitle>{isLoadingReturnableSales ? "Cargando ventas" : "Sin ventas devolvibles"}</EmptyTitle>
+                          <EmptyTitle>{isLoadingReturnableSales ? "Cargando ventas" : "No hay ventas para devolver"}</EmptyTitle>
                           <EmptyDescription>
                             {isLoadingReturnableSales
-                              ? "Consultando ventas POS según filtros administrativos."
-                              : "Ajusta filtros o revisa si la venta fue anulada, ya devuelta, tiene caja abierta, comprobante interno activo o pago no reembolsable."}
+                              ? "Buscando ventas con los filtros actuales."
+                              : "Ajusta los filtros o revisa si la venta ya fue anulada o devuelta."}
                           </EmptyDescription>
                         </EmptyHeader>
                       </Empty>
@@ -353,12 +363,12 @@ export function ReturnsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={activeView !== "history" ? "hidden" : undefined}>
           <CardHeader className="gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <CardTitle>Historial de devoluciones</CardTitle>
-                <CardDescription>Devoluciones administrativas totales registradas por venta, actor administrativo, texto y rango de fechas.</CardDescription>
+                <CardDescription>Consulta las devoluciones registradas.</CardDescription>
               </div>
               <Button disabled={!canOperate || isLoadingHistory} size="sm" type="button" variant="outline" onClick={() => void returns.reloadSaleReturns()}>
                 {isLoadingHistory ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -369,10 +379,10 @@ export function ReturnsPage() {
             <form className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_150px_150px_auto]" onSubmit={applyHistoryFilters}>
               <div className="relative">
                 <Search aria-hidden="true" className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input className="pl-8" disabled={!canOperate} placeholder="Venta, actor o motivo" value={historySearchInput} onChange={(event) => setHistorySearchInput(event.currentTarget.value)} />
+                <Input className="pl-8" disabled={!canOperate} placeholder="Venta, usuario o motivo" value={historySearchInput} onChange={(event) => setHistorySearchInput(event.currentTarget.value)} />
               </div>
-              <Input disabled={!canOperate} type="date" value={returns.saleReturnFromDate} onChange={(event) => returns.setSaleReturnFromDate(event.currentTarget.value)} />
-              <Input disabled={!canOperate} type="date" value={returns.saleReturnToDate} onChange={(event) => returns.setSaleReturnToDate(event.currentTarget.value)} />
+              <Input aria-label="Desde" disabled={!canOperate} type="date" value={returns.saleReturnFromDate} onChange={(event) => returns.setSaleReturnFromDate(event.currentTarget.value)} />
+              <Input aria-label="Hasta" disabled={!canOperate} type="date" value={returns.saleReturnToDate} onChange={(event) => returns.setSaleReturnToDate(event.currentTarget.value)} />
               <Button disabled={!canOperate || isLoadingHistory} type="submit">
                 <Search aria-hidden="true" />
                 Filtrar
@@ -380,8 +390,8 @@ export function ReturnsPage() {
             </form>
 
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-              <Input disabled={!canOperate} placeholder="ID de venta" value={historySaleIdInput} onChange={(event) => setHistorySaleIdInput(event.currentTarget.value)} />
-              <Input disabled={!canOperate} placeholder="ID de actor" value={historyActorInput} onChange={(event) => setHistoryActorInput(event.currentTarget.value)} />
+              <Input aria-label="Identificador interno de la venta" disabled={!canOperate} placeholder="Filtro avanzado: ID de venta" value={historySaleIdInput} onChange={(event) => setHistorySaleIdInput(event.currentTarget.value)} />
+              <Input aria-label="Identificador interno del usuario" disabled={!canOperate} placeholder="Filtro avanzado: ID de usuario" value={historyActorInput} onChange={(event) => setHistoryActorInput(event.currentTarget.value)} />
               <Button disabled={!canOperate || isLoadingHistory} type="button" variant="outline" onClick={clearHistoryFilters}>
                 Limpiar filtros
               </Button>
@@ -391,8 +401,8 @@ export function ReturnsPage() {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[132px]">Venta POS</TableHead>
-                  <TableHead>Actor</TableHead>
+                  <TableHead className="w-[132px]">Venta</TableHead>
+                  <TableHead>Registrada por</TableHead>
                   <TableHead className="w-[132px]">Fecha</TableHead>
                   <TableHead className="w-[120px] text-right">Devuelto</TableHead>
                   <TableHead>Motivo</TableHead>
@@ -461,7 +471,7 @@ export function ReturnsPage() {
             </AlertDialogMedia>
             <AlertDialogTitle>Confirmar devolución total</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción marca la venta {selectedSale?.correlativeCode ?? "seleccionada"} como devuelta, registra historial administrativo y restaura lotes según el detalle entregado por backend.
+              Se devolverá el total de la venta {selectedSale?.correlativeCode ?? "seleccionada"} y las unidades regresarán al inventario.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <form className="grid gap-4" onSubmit={requestTotalReturn}>
@@ -474,7 +484,7 @@ export function ReturnsPage() {
                 value={reasonInput}
                 onChange={(event) => setReasonInput(event.currentTarget.value)}
               />
-              <FieldDescription>Entre 5 y 500 caracteres. No se captura importe manual de reembolso en V1.</FieldDescription>
+              <FieldDescription>Obligatorio. Explica brevemente el motivo.</FieldDescription>
               <FieldError>{reasonError}</FieldError>
             </Field>
           </form>
@@ -504,9 +514,6 @@ function ReturnableSaleRow({ disabled, onSelect, onStartReturn, sale }: Returnab
       <TableCell className="min-w-0">
         <p className="truncate font-medium text-foreground" title={sale.correlativeCode}>
           {sale.correlativeCode}
-        </p>
-        <p className="truncate text-xs text-muted-foreground" title={sale.id}>
-          {sale.id}
         </p>
       </TableCell>
       <TableCell className="min-w-0">
@@ -544,7 +551,7 @@ function ReturnableSaleRow({ disabled, onSelect, onStartReturn, sale }: Returnab
 
 function ReturnableSaleBadge({ sale }: { sale: ReturnableSaleSummary }) {
   if (sale.canReturn) {
-    return <Badge variant="default">Devolvible</Badge>;
+    return <Badge variant="default">Se puede devolver</Badge>;
   }
 
   return <Badge variant={sale.returnBlockedReason === "active-invoice-exists" ? "secondary" : "destructive"}>{getReturnBlockLabel(sale)}</Badge>;
@@ -562,9 +569,6 @@ function SaleReturnRow({ isSelected, onOpen, saleReturn }: SaleReturnRowProps) {
       <TableCell className="min-w-0">
         <p className="truncate font-medium text-foreground" title={saleReturn.saleCorrelativeCode}>
           {saleReturn.saleCorrelativeCode}
-        </p>
-        <p className="truncate text-xs text-muted-foreground" title={saleReturn.saleId}>
-          {saleReturn.saleId}
         </p>
       </TableCell>
       <TableCell className="min-w-0">
@@ -614,7 +618,7 @@ function ReturnRequestPanel({ canOperate, error, isCreating, onCancel, onReasonC
                 <PackageCheck aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>Selecciona una venta</EmptyTitle>
-              <EmptyDescription>El detalle mostrará si corresponde devolución posterior al cierre o anulación POS.</EmptyDescription>
+              <EmptyDescription>El detalle indicará si corresponde anular o devolver la venta.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -625,7 +629,7 @@ function ReturnRequestPanel({ canOperate, error, isCreating, onCancel, onReasonC
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Detalle de venta devolvible</CardTitle>
+        <CardTitle>Detalle de la venta</CardTitle>
         <CardDescription>
           Venta {sale.correlativeCode} · Caja {sale.cashSessionCorrelativeCode} · Total neto {formatMoney(sale.totalAmount)}
         </CardDescription>
@@ -638,7 +642,6 @@ function ReturnRequestPanel({ canOperate, error, isCreating, onCancel, onReasonC
             <InfoLine label="Estado de pago" value={paymentStatusLabels[sale.paymentStatus]} />
             <InfoLine label="Fecha de venta" value={formatDateTime(sale.confirmedAt)} />
             <InfoLine label="Importe a devolver" value={formatMoney(sale.totalAmount)} />
-            <InfoLine label="ID de venta" value={sale.id} />
           </div>
 
           {!sale.canReturn ? (
@@ -659,7 +662,7 @@ function ReturnRequestPanel({ canOperate, error, isCreating, onCancel, onReasonC
                 value={reason}
                 onChange={(event) => onReasonChange(event.currentTarget.value)}
               />
-              <FieldDescription>Obligatorio. Entre 5 y 500 caracteres. El importe devuelto será el total neto de venta.</FieldDescription>
+              <FieldDescription>Obligatorio. Se devolverá el total de la venta.</FieldDescription>
               <FieldError>{error}</FieldError>
             </Field>
           ) : null}
@@ -701,7 +704,7 @@ function SaleReturnDetailPanel({ isLoading, saleReturn }: { isLoading: boolean; 
                 <ClipboardList aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>Selecciona una devolución</EmptyTitle>
-              <EmptyDescription>El detalle mostrará venta, pago, actor, importe devuelto, motivo e ítems restaurados por lote.</EmptyDescription>
+              <EmptyDescription>El detalle mostrará la venta, el importe, el motivo y los productos devueltos.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -716,7 +719,7 @@ function SaleReturnDetailPanel({ isLoading, saleReturn }: { isLoading: boolean; 
           <div>
             <CardTitle>{saleReturn.saleCorrelativeCode}</CardTitle>
             <CardDescription>
-              Devolución total · Pago {saleReturn.paymentId} · {formatDateTime(saleReturn.returnedAt)}
+              Devolución total · {formatDateTime(saleReturn.returnedAt)}
             </CardDescription>
           </div>
           <Badge variant="default">Devuelta</Badge>
@@ -724,16 +727,13 @@ function SaleReturnDetailPanel({ isLoading, saleReturn }: { isLoading: boolean; 
       </CardHeader>
       <CardContent className="grid gap-5">
         <div className="grid gap-3 rounded-md border bg-muted/30 p-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          <InfoLine label="Actor" value={`${saleReturn.actorUser.fullName} · ${saleReturn.actorUser.email}`} />
+          <InfoLine label="Registrada por" value={`${saleReturn.actorUser.fullName} · ${saleReturn.actorUser.email}`} />
           <InfoLine label="Importe devuelto" value={formatMoney(saleReturn.refundAmount)} />
-          <InfoLine label="ID venta" value={saleReturn.saleId} />
-          <InfoLine label="ID pago" value={saleReturn.paymentId} />
-          <InfoLine label="ID devolución" value={saleReturn.id} />
-          <InfoLine label="Fecha registro" value={formatDateTime(saleReturn.createdAt)} />
+          <InfoLine label="Fecha de registro" value={formatDateTime(saleReturn.createdAt)} />
         </div>
 
         <div className="rounded-md border bg-muted/30 p-3 text-sm">
-          <p className="font-medium text-foreground">Motivo administrativo</p>
+          <p className="font-medium text-foreground">Motivo</p>
           <p className="mt-1 text-muted-foreground">{saleReturn.reason}</p>
         </div>
 
@@ -742,10 +742,9 @@ function SaleReturnDetailPanel({ isLoading, saleReturn }: { isLoading: boolean; 
             <TableHeader>
               <TableRow>
                 <TableHead>Producto y lote</TableHead>
-                <TableHead className="w-[88px] text-right">Cant.</TableHead>
+                <TableHead className="w-[88px] text-right">Cantidad</TableHead>
                 <TableHead className="w-[118px] text-right">Unitario</TableHead>
                 <TableHead className="w-[118px] text-right">Subtotal</TableHead>
-                <TableHead className="w-[180px]">Movimiento</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -762,11 +761,6 @@ function SaleReturnDetailPanel({ isLoading, saleReturn }: { isLoading: boolean; 
                   <TableCell className="text-right">{quantityFormatter.format(item.quantity)}</TableCell>
                   <TableCell className="text-right">{formatMoney(item.refundUnitPrice)}</TableCell>
                   <TableCell className="text-right font-medium">{formatMoney(item.refundSubtotal)}</TableCell>
-                  <TableCell className="min-w-0">
-                    <p className="truncate text-sm" title={item.inventoryMovementId ?? "Movimiento pendiente de backend"}>
-                      {item.inventoryMovementId ?? "Sin movimiento expuesto"}
-                    </p>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -822,9 +816,9 @@ function InfoLine({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-xl font-semibold text-foreground" title={String(value)}>
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground" title={String(value)}>
         {value}
       </p>
     </div>

@@ -122,7 +122,7 @@ async function render(content: ReactNode) {
 }
 
 describe("stock planning replenishment presentation", () => {
-  it("shows four product-count metrics and the calculation state", async () => {
+  it("summarizes the purchase decision without exposing the statistical model", async () => {
     const container = await render(
       <ReplenishmentDashboard
         engineState={engineState}
@@ -131,12 +131,11 @@ describe("stock planning replenishment presentation", () => {
       />
     );
 
-    expect(container.textContent).toContain("Productos evaluados2");
-    expect(container.textContent).toContain("Requieren reabastecimiento1");
-    expect(container.textContent).toContain("Críticos con riesgo1");
-    expect(container.textContent).toContain("Riesgo de vencimiento1");
-    expect(container.textContent).toContain("Estado del último cálculoDesactualizado");
-    expect(container.textContent).toContain("Productos, no unidades incompatibles");
+    expect(container.textContent).toContain("Hay 1 medicamento que conviene comprar");
+    expect(container.textContent).toContain("1Recomendaciones");
+    expect(container.textContent).toContain("1Urgentes");
+    expect(container.textContent).toContain("1Con riesgo de vencer");
+    expect(container.textContent).toContain("Conviene actualizar antes de preparar una compra");
   });
 
   it("prioritizes critical stockout and communicates recommendation, draft, cost and warning states", async () => {
@@ -152,22 +151,19 @@ describe("stock planning replenishment presentation", () => {
     const text = container.textContent ?? "";
 
     expect(text.indexOf("Paracetamol 500 mg")).toBeLessThan(text.indexOf("Ibuprofeno 400 mg"));
-    expect(text).toContain("1 · Agotamiento crítico");
-    expect(text).toContain("Seguridad: 4");
-    expect(text).toContain("Meta: 14 tab");
-    expect(text).toContain("12 tab");
-    expect(text).toContain("Caja");
+    expect(text).toContain("Comprar hoy");
+    expect(text).toContain("Stock actual: 2 tab");
+    expect(text).toContain("Comprar 12 tab");
+    expect(text).toContain("Pedir en caja completa");
     expect(text).toContain("Bs");
     expect(text).toContain("30 días");
-    expect(text).toContain("Confianza alta");
-    expect(text).toContain("Cálculo desactualizado");
-    expect(text).toContain("2 borrador(es) · 50 tab");
-    expect(text).toContain("no se descuenta de la sugerencia");
-    expect(text).toContain("Sin presentación preferida");
-    expect(text).toContain("Sin costo confiable");
+    expect(text).toContain("Recomendación pendiente de actualización");
+    expect(text).toContain("Ya hay 2 borradores con 50 tab");
+    expect(text).toContain("Cantidad en unidades mínimas");
+    expect(text).toContain("Por confirmar con proveedor");
 
     const analyzeButtons = [...container.querySelectorAll("button")]
-      .filter((button) => button.textContent === "Analizar");
+      .filter((button) => button.textContent === "Ver detalles");
     await act(async () => analyzeButtons[0]!.click());
     expect(onAnalyze).toHaveBeenCalledWith(recommendationProduct);
   });
@@ -183,10 +179,10 @@ describe("stock planning replenishment presentation", () => {
     );
 
     expect(container.textContent).toContain("Distribuidora Andina");
-    expect(container.textContent).toContain("no interviene en demanda, confianza ni cantidad sugerida");
+    expect(container.textContent).toContain("Productos agrupados para facilitar la preparación de la compra");
   });
 
-  it("submits every administrative filter and supplier grouping", async () => {
+  it("submits the decision-oriented filters and supplier grouping", async () => {
     const onApply = vi.fn<(filters: StockPlanningFilters) => void>();
     const container = await render(
       <ReplenishmentFilters
@@ -196,17 +192,19 @@ describe("stock planning replenishment presentation", () => {
       />
     );
     const input = container.querySelector("input")!;
+    const moreFiltersButton = [...container.querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Más filtros"));
+
+    await act(async () => moreFiltersButton!.click());
     const selects = [...container.querySelectorAll("select")];
 
     await act(async () => {
       change(input, "Paracetamol");
-      change(selects[0]!, "category-1");
-      change(selects[1]!, "supplier-1");
-      change(selects[2]!, "critical");
-      change(selects[3]!, "operational");
-      change(selects[4]!, "high");
-      change(selects[5]!, "expiry");
-      change(selects[6]!, "supplier");
+      change(selects[0]!, "supplier-1");
+      change(selects[1]!, "expiry");
+      change(selects[2]!, "category-1");
+      change(selects[3]!, "critical");
+      change(selects[4]!, "supplier");
     });
     await act(async () => {
       (container.querySelector("form") as HTMLFormElement).requestSubmit();
@@ -214,10 +212,8 @@ describe("stock planning replenishment presentation", () => {
 
     expect(onApply).toHaveBeenCalledWith({
       categoryId: "category-1",
-      confidence: "high",
       criticality: "critical",
       groupBy: "supplier",
-      maturity: "operational",
       risk: "expiry",
       search: "Paracetamol",
       supplierId: "supplier-1"
@@ -235,9 +231,9 @@ describe("stock planning replenishment presentation", () => {
     }];
     const container = await render(<PredictiveAlerts alerts={alerts} />);
 
-    expect(container.textContent).toContain("Alertas predictivas administrativas");
+    expect(container.textContent).toContain("Señales adicionales del cálculo");
     expect(container.textContent).toContain("Prioridad crítica");
-    expect(container.textContent).toContain("no se muestran al rol Vendedor");
+    expect(container.textContent).toContain("No crea compras ni reserva stock");
   });
 });
 

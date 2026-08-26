@@ -35,7 +35,7 @@ const demandConfig = {
   demand: { color: "var(--chart-1)", label: "Demanda real" },
   forecast: { color: "var(--chart-3)", label: "Pronóstico" },
   band80: { color: "var(--chart-4)", label: "Banda central 80%" },
-  censoredMarker: { color: "var(--muted-foreground)", label: "Día censurado" }
+  censoredMarker: { color: "var(--muted-foreground)", label: "Día sin stock" }
 } satisfies ChartConfig;
 
 const stockConfig = {
@@ -58,10 +58,10 @@ export function StockPlanningCharts({
   return (
     <>
       <ChartCard
-        description="La zona sombreada representa el intervalo predictivo central del 80%."
-        title="Demanda real frente a pronóstico"
+        description="La zona sombreada muestra el rango esperado alrededor de la predicción."
+        title="Ventas reales y demanda prevista"
       >
-        {analytics.demand.length === 0 ? <EmptyChart message="No hay observaciones ni trayectoria para esta ejecución." /> : (
+        {analytics.demand.length === 0 ? <EmptyChart message="No hay datos de demanda para este cálculo." /> : (
           <ChartContainer className="h-72 w-full aspect-auto" config={demandConfig}>
             <ComposedChart accessibilityLayer data={analytics.demand}>
               <CartesianGrid vertical={false} />
@@ -79,10 +79,10 @@ export function StockPlanningCharts({
       </ChartCard>
 
       <ChartCard
-        description="Stock físico registrado en cada snapshot diario contra la meta de la ejecución seleccionada."
-        title="Stock frente a meta"
+        description="Compara el inventario registrado cada día con la cantidad recomendada."
+        title="Inventario y cantidad recomendada"
       >
-        {analytics.stock.length === 0 ? <EmptyChart message="No hay snapshots de inventario en el periodo histórico." /> : (
+        {analytics.stock.length === 0 ? <EmptyChart message="No hay registros de inventario en el período elegido." /> : (
           <ChartContainer className="h-72 w-full aspect-auto" config={stockConfig}>
             <ComposedChart accessibilityLayer data={analytics.stock}>
               <CartesianGrid vertical={false} />
@@ -98,8 +98,8 @@ export function StockPlanningCharts({
       </ChartCard>
 
       <ChartCard
-        description="El error usa una escala relativa; el sesgo se expresa en la unidad base y conserva su signo."
-        title="Error y sesgo históricos"
+        description="Muestra cuánto se acercaron las predicciones anteriores a la demanda real."
+        title="Precisión de cálculos anteriores"
       >
         {analytics.performance.length === 0 ? <EmptyChart message="No hay métricas históricas comparables." /> : (
           <ChartContainer className="h-72 w-full aspect-auto" config={performanceConfig}>

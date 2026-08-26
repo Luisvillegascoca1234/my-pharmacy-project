@@ -147,7 +147,7 @@ export function StockPlanningParquetExports({
 
         <div className="grid gap-4 xl:grid-cols-2">
           <ParquetDatasetCard
-            description="Demanda bruta, devoluciones, demanda neta, censura y snapshots de stock por fecha. Son observaciones operativas, no pronósticos."
+            description="Ventas, devoluciones, demanda neta y registros de inventario por fecha. Son datos observados, no predicciones."
             error={exportsState.stockPlanningObservationsError}
             icon={TableProperties}
             status={exportsState.stockPlanningObservationsStatus}
@@ -158,7 +158,7 @@ export function StockPlanningParquetExports({
           />
 
           <ParquetDatasetCard
-            description="Trayectoria, banda del 80%, modelo, confianza, métricas y recomendación de una ejecución inmutable. Son resultados calculados."
+            description="Predicción, rango esperado, confianza y recomendación de un cálculo seleccionado."
             error={exportsState.stockPlanningResultsError}
             icon={BadgeCheck}
             status={exportsState.stockPlanningResultsStatus}
@@ -167,13 +167,13 @@ export function StockPlanningParquetExports({
             onDownload={() => void downloadResults()}
             onReduceRange={reduceRange}
           >
-            <FilterField label="Ejecución predictiva · obligatoria">
+            <FilterField label="Cálculo · obligatorio">
               <NativeSelect
                 className="w-full"
                 value={filters.executionId}
                 onChange={(event) => exportsState.setStockPlanningFilters({ executionId: event.target.value })}
               >
-                <NativeSelectOption value="">Seleccionar ejecución</NativeSelectOption>
+                <NativeSelectOption value="">Seleccionar cálculo</NativeSelectOption>
                 {successfulExecutions.map((execution) => (
                   <NativeSelectOption key={execution.id} value={execution.id}>
                     {formatExecution(execution)}
@@ -317,15 +317,19 @@ function compareOptions(first: FilterOption, second: FilterOption) {
 }
 
 function formatExecution(execution: StockPlanningExecution) {
-  const date = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(execution.startedAt));
+  const date = new Intl.DateTimeFormat("es-BO", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "America/La_Paz"
+  }).format(new Date(execution.startedAt));
   return `${date} · v${execution.configurationVersion}`;
 }
 
 function getErrorMessage(error: StockPlanningParquetExportError) {
   if (error.code === "row-limit") return "La selección excede 1.000.000 de filas. Acorta el rango o elige producto, categoría o proveedor.";
   if (error.code === "range-too-large") return "El intervalo supera cinco años. Reduce las fechas antes de volver a intentar.";
-  if (error.code === "execution-not-found") return "La ejecución seleccionada ya no está disponible como resultado exitoso.";
-  if (error.code === "validation") return "Revisa el rango, los filtros y la ejecución seleccionada.";
+  if (error.code === "execution-not-found") return "El cálculo seleccionado ya no está disponible.";
+  if (error.code === "validation") return "Revisa el rango, los filtros y el cálculo seleccionado.";
   if (error.code === "forbidden") return "Tu rol no tiene permiso para descargar este conjunto.";
   if (error.code === "session-invalid") return "La sesión venció. Vuelve a iniciar sesión antes de descargar.";
   return "Ocurrió un problema inesperado. Puedes reintentar sin afectar la otra descarga.";

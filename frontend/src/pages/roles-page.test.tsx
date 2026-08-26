@@ -41,12 +41,13 @@ describe("RolesPageView", () => {
     expect(container.textContent).toContain("Superadministrador");
     expect(container.textContent).toContain("Administrador");
     expect(container.textContent).toContain("Vendedor");
-    areas.forEach(({ areaLabel }) => expect(container.textContent).toContain(areaLabel));
+    ["Ventas y caja", "Productos", "Inventario", "Compras y proveedores", "Cierres y reportes", "Usuarios y auditoría"]
+      .forEach((areaLabel) => expect(container.textContent).toContain(areaLabel));
     expect(container.textContent).toContain("Acceso total");
-    expect(container.textContent).toContain("Acceso operativo");
+    expect(container.textContent).toContain("Puede trabajar");
     expect(container.textContent).toContain("Solo registros propios");
     expect(container.textContent).toContain("Sin acceso");
-    expect(container.textContent).toContain("El Vendedor opera su propia caja, ventas y pendientes.");
+    expect(container.textContent).toContain("El Vendedor trabaja con su propia caja y sus ventas.");
   });
 
   it("offers a working retry action after a recoverable request error", () => {
@@ -63,9 +64,9 @@ describe("RolesPageView", () => {
   it("distinguishes an invalid institutional configuration from a request error", () => {
     renderView("invalid-configuration");
 
-    expect(container.textContent).toContain("Inconsistencia de configuración");
-    expect(container.textContent).toContain("no contiene exactamente los tres roles institucionales");
-    expect(container.textContent).not.toContain("Tres perfiles, una política de acceso");
+    expect(container.textContent).toContain("No se pueden mostrar los permisos");
+    expect(container.textContent).toContain("La información de roles está incompleta");
+    expect(container.textContent).not.toContain("Tipos de usuario");
   });
 
   it("does not render search, filters, forms or editing controls", () => {

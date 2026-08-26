@@ -25,12 +25,12 @@ const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits
 const decimalFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 3 });
 
 const warningLabels: Record<string, string> = {
-  backtest_unavailable: "Backtesting insuficiente",
-  baseline_retained: "Baseline retenido",
+  backtest_unavailable: "Sin validación histórica",
+  baseline_retained: "Se conservó la referencia anterior",
   censored_days_excluded: "Días sin stock excluidos",
-  high_censorship: "Censura elevada",
+  high_censorship: "Muchos días sin stock",
   insufficient_history: "Historia insuficiente",
-  limited_evidence: "Evidencia limitada",
+  limited_evidence: "Datos limitados",
   missing_preferred_presentation: "Falta presentación preferida",
   no_observed_demand: "Sin salidas observadas"
 };
@@ -55,17 +55,17 @@ export function ForecastConfidenceGuide() {
       <CardContent className="grid gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-4">
         <ConfidenceFactor
           icon={History}
-          title="Evidencia"
+          title="Datos disponibles"
           description="Historia completa y cantidad de días con demanda observada."
         />
         <ConfidenceFactor
           icon={BarChart3}
           title="Desempeño"
-          description="Error y sesgo medidos en backtesting cronológico."
+          description="Compara las predicciones anteriores con las ventas reales."
         />
         <ConfidenceFactor
           icon={DatabaseZap}
-          title="Censura"
+          title="Días sin stock"
           description="Días completos sin stock, que no se interpretan como demanda cero."
         />
         <ConfidenceFactor
@@ -125,7 +125,7 @@ export function ForecastMaturityCell({
         <p className="text-xs leading-5 text-muted-foreground">
           {product.maturity === "no_observed_demand"
             ? "La historia suficiente no contiene salidas netas observadas."
-            : "La evidencia todavía limita el uso operativo del resultado."}
+            : "Todavía no hay suficientes datos para confiar plenamente en el resultado."}
         </p>
       ) : null}
     </div>
@@ -185,7 +185,7 @@ export function ForecastQualityCell({
   const forecast = product.forecast;
 
   if (!forecast) {
-    return <span className="text-sm text-muted-foreground">Sin modelo ni backtesting disponibles</span>;
+    return <span className="text-sm text-muted-foreground">Sin cálculo ni historial comparable</span>;
   }
 
   return (
@@ -210,21 +210,21 @@ export function ForecastQualityCell({
         </span>
       </p>
       <p>
-        Censura: <span className="font-medium">{forecast.censoredDays} días completos sin stock</span>
+        Días sin stock: <span className="font-medium">{forecast.censoredDays}</span>
       </p>
       <p className="text-muted-foreground">
-        Evidencia: {forecast.historyDays} días de historia · {forecast.demandDays} días con demanda
+        Historial: {forecast.historyDays} días analizados · {forecast.demandDays} días con ventas
       </p>
       {analytics.baselineRetained ? (
         <p className="flex items-start gap-1.5 rounded-md border bg-muted/30 p-2 leading-4">
           <Activity className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          Se retuvo el baseline porque ningún candidato demostró una mejora suficiente.
+          Se conservó el método anterior porque las alternativas no mejoraron el resultado.
         </p>
       ) : null}
       {analytics.degraded ? (
         <p className="flex items-start gap-1.5 rounded-md border bg-muted/30 p-2 leading-4">
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          La madurez se redujo por calidad de evidencia; el cálculo sigue siendo consultivo.
+          Hay pocos datos confiables; usa este resultado solo como referencia.
         </p>
       ) : null}
     </div>
@@ -241,7 +241,7 @@ export function ForecastWarnings({
   const visibleWarnings = product.warnings.filter((warning) => warning !== "baseline_retained");
 
   if (visibleWarnings.length === 0 && analytics.freshness !== "stale") {
-    return <Badge variant="secondary">Sin advertencias analíticas</Badge>;
+    return <Badge variant="secondary">Sin advertencias</Badge>;
   }
 
   return (
@@ -272,10 +272,10 @@ export function StaleForecastNotice({ products }: { products: Array<{
   return (
     <Alert>
       <ClockAlert aria-hidden="true" />
-      <AlertTitle>Hay resultados conservados de una ejecución anterior</AlertTitle>
+      <AlertTitle>Se muestra el último resultado disponible</AlertTitle>
       <AlertDescription>
-        {staleCount} producto(s) no recibió un resultado nuevo en la última ejecución completada. Se muestra su último
-        pronóstico disponible como desactualizado, sin ocultar los resultados vigentes de los demás productos.
+        {staleCount === 1 ? "1 producto no recibió" : `${staleCount} productos no recibieron`} un resultado nuevo en la última actualización.
+        Se mantiene el último cálculo disponible y se marca como desactualizado.
       </AlertDescription>
     </Alert>
   );

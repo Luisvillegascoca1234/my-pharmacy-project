@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Clock3, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type ModulePageProps = {
@@ -8,20 +9,18 @@ type ModulePageProps = {
   icon: LucideIcon;
 };
 
-const nextSteps = ["Conectar datos del módulo", "Definir filtros principales", "Agregar acciones permitidas por rol"];
-
 export function ModulePage({ title, description, icon: Icon }: ModulePageProps) {
   return (
     <section className="grid gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-3xl space-y-3">
-          <Badge variant="secondary">Módulo inicial</Badge>
+          <Badge variant="secondary">Próxima capacidad</Badge>
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">{title}</h1>
             <p className="text-sm leading-6 text-muted-foreground sm:text-base">{description}</p>
           </div>
         </div>
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-md border bg-card text-muted-foreground">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
           <Icon aria-hidden="true" className="size-5" />
         </div>
       </div>
@@ -29,16 +28,16 @@ export function ModulePage({ title, description, icon: Icon }: ModulePageProps) 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <Card>
           <CardHeader>
-            <CardTitle>Área de trabajo</CardTitle>
-            <CardDescription>Esta pantalla queda lista para recibir tablas, formularios y acciones del módulo.</CardDescription>
+            <CardTitle>Capacidad en preparación</CardTitle>
+            <CardDescription>Esta pantalla todavía no está disponible.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid min-h-72 place-items-center rounded-md border border-dashed bg-muted/30 px-6 text-center">
+            <div className="grid min-h-72 place-items-center rounded-xl border border-dashed bg-muted/25 px-6 text-center">
               <div className="max-w-md space-y-2">
-                <p className="text-sm font-medium text-foreground">Contenido operativo pendiente</p>
+                <span className="mx-auto flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Clock3 aria-hidden="true" className="size-5" /></span>
+                <p className="pt-2 text-sm font-semibold text-foreground">Disponible próximamente</p>
                 <p className="text-sm leading-6 text-muted-foreground">
-                  La navegación ya está separada por módulos para implementar este flujo sin mezclar responsabilidades en
-                  el layout.
+                  Mientras se habilita esta capacidad, utiliza los módulos operativos disponibles en la navegación principal.
                 </p>
               </div>
             </div>
@@ -47,18 +46,11 @@ export function ModulePage({ title, description, icon: Icon }: ModulePageProps) 
 
         <Card>
           <CardHeader>
-            <CardTitle>Próximos pasos</CardTitle>
-            <CardDescription>Guía breve para completar el módulo.</CardDescription>
+            <CardTitle>Acceso controlado</CardTitle>
+            <CardDescription>La pantalla se mostrará únicamente a quienes tengan permiso.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3">
-              {nextSteps.map((step) => (
-                <li key={step} className="flex gap-3 text-sm text-muted-foreground">
-                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex gap-3 rounded-lg border border-info/20 bg-info/6 p-3 text-sm text-muted-foreground"><ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info" /><p>Cuando esté disponible, solo podrán entrar las personas autorizadas.</p></div>
           </CardContent>
         </Card>
       </div>

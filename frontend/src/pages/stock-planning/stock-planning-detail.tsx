@@ -64,13 +64,13 @@ export function StockPlanningDetail({
         <DialogHeader className="border-b bg-muted/25 px-5 py-4 pr-14">
           <DialogTitle className="flex flex-wrap items-center gap-2 text-lg">
             <Activity aria-hidden="true" className="size-5 text-primary" />
-            Análisis temporal del producto
+            Historial del medicamento
             {data?.detail.product.status === "inactive" ? <Badge variant="secondary">Inactivo</Badge> : null}
           </DialogTitle>
           <DialogDescription>
             {data
-              ? `${data.detail.product.commercialName} · ${data.detail.product.internalCode} · lectura histórica en ${data.detail.product.baseUnitAbbreviation}`
-              : "Demanda, inventario, desempeño y trazabilidad por ejecución."}
+              ? `${data.detail.product.commercialName} · ${data.detail.product.internalCode} · cantidades en ${data.detail.product.baseUnitAbbreviation}`
+              : "Revisa cómo cambiaron la demanda, el inventario y la recomendación de compra."}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="min-h-0 flex-1">
@@ -79,9 +79,9 @@ export function StockPlanningDetail({
             {status === "error" ? (
               <Alert variant="destructive">
                 <AlertTriangle aria-hidden="true" />
-                <AlertTitle>No se pudo abrir el análisis</AlertTitle>
+                <AlertTitle>No se pudo cargar el historial</AlertTitle>
                 <AlertDescription className="flex items-center justify-between gap-3">
-                  La evidencia histórica no está disponible en este momento.
+                  Los datos históricos no están disponibles en este momento.
                   <Button size="sm" type="button" variant="outline" onClick={onRetry}>Reintentar</Button>
                 </AlertDescription>
               </Alert>
@@ -111,15 +111,15 @@ function DetailContent({
     <>
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Modelo" value={stockPlanningModelLabels[result.model ?? "none"]} detail={`Motor ${detail.execution.engineVersion}`} />
-          <Metric label="Madurez" value={stockPlanningMaturityLabels[result.maturity]} detail={`${result.historyDays} días de historia`} />
-          <Metric label="Confianza" value={stockPlanningConfidenceLabels[result.confidence]} detail="Calidad de evidencia, no probabilidad" />
-          <Metric label="Censura" value={`${result.censoredDays} días`} detail={`${result.demandDays} días con demanda`} />
+          <Metric label="Método" value={stockPlanningModelLabels[result.model ?? "none"]} detail="Método usado para calcular la recomendación" />
+          <Metric label="Historial" value={stockPlanningMaturityLabels[result.maturity]} detail={`${result.historyDays} días analizados`} />
+          <Metric label="Confianza" value={stockPlanningConfidenceLabels[result.confidence]} detail="Qué tan confiables son los datos disponibles" />
+          <Metric label="Días sin stock" value={`${result.censoredDays} días`} detail={`${result.demandDays} días con ventas`} />
         </div>
         <Card className="border-primary/20 bg-primary/[0.03]">
           <CardContent className="grid gap-2 p-4">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="planning-execution">
-              Ejecución analizada
+              Fecha del cálculo
             </label>
             <NativeSelect
               id="planning-execution"
@@ -133,7 +133,7 @@ function DetailContent({
               ))}
             </NativeSelect>
             <p className="text-xs leading-5 text-muted-foreground">
-              Abre por defecto la última ejecución exitosa. La comparación usa su anterior inmediata.
+              Se muestra el último cálculo completado. Puedes elegir uno anterior para comparar.
             </p>
           </CardContent>
         </Card>
@@ -142,10 +142,9 @@ function DetailContent({
       {detail.laterFailedExecutions.length > 0 ? (
         <Alert variant="destructive">
           <AlertTriangle aria-hidden="true" />
-          <AlertTitle>Se conserva la última ejecución exitosa</AlertTitle>
+          <AlertTitle>No se pudo completar un cálculo reciente</AlertTitle>
           <AlertDescription>
-            Hubo {detail.laterFailedExecutions.length} fallo(s) posterior(es). El análisis visible sigue siendo la última evidencia válida;
-            el más reciente ocurrió el {formatDateTime(detail.laterFailedExecutions.at(-1)!.startedAt)}.
+            Se mantiene el último resultado disponible. El intento más reciente falló el {formatDateTime(detail.laterFailedExecutions.at(-1)!.startedAt)}.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -153,10 +152,9 @@ function DetailContent({
       {!detail.recommendationAvailable ? (
         <Alert>
           <Ban aria-hidden="true" />
-          <AlertTitle>Historia conservada sin recomendación vigente</AlertTitle>
+          <AlertTitle>Medicamento inactivo</AlertTitle>
           <AlertDescription>
-            Este producto está inactivo. Sus resultados permanecen disponibles para auditoría, pero no se presenta una cantidad sugerida
-            como recomendación operativa.
+            Puedes consultar sus datos anteriores, pero no se mostrará una cantidad sugerida para comprar.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -174,7 +172,7 @@ function DetailContent({
         <Card>
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2"><Boxes className="size-4" /> Lotes y vencimientos</CardTitle>
-            <CardDescription>Composición del snapshot más reciente, con estado y disponibilidad por lote.</CardDescription>
+            <CardDescription>Cantidades disponibles en el último registro de inventario.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-2 pt-4">
             {latestSnapshot?.lots.length ? latestSnapshot.lots.map((lot) => (
@@ -190,20 +188,20 @@ function DetailContent({
                   {quantityFormatter.format(lot.availableQuantity)} {detail.product.baseUnitAbbreviation}
                 </p>
               </div>
-            )) : <p className="text-sm text-muted-foreground">El snapshot seleccionado no contiene lotes disponibles.</p>}
+            )) : <p className="text-sm text-muted-foreground">No hay lotes disponibles en el registro seleccionado.</p>}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2"><Sigma className="size-4" /> Fórmula y evidencia</CardTitle>
-            <CardDescription>Regla reproducible, parámetros y huella de la ejecución seleccionada.</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Sigma className="size-4" /> Detalle técnico del cálculo</CardTitle>
+            <CardDescription>Fórmula y parámetros usados para obtener el resultado.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 pt-4">
             <code className="block overflow-x-auto rounded-lg border bg-muted/35 p-3 text-xs leading-5">{result.formula}</code>
             <div className="grid gap-2 sm:grid-cols-2">
               {Object.entries(result.parameters).length === 0 ? (
-                <p className="text-sm text-muted-foreground sm:col-span-2">Esta ejecución no utilizó parámetros de modelo.</p>
+                <p className="text-sm text-muted-foreground sm:col-span-2">Este cálculo no utilizó parámetros adicionales.</p>
               ) : Object.entries(result.parameters).map(([key, value]) => (
                 <div className="rounded-md border px-3 py-2" key={key}>
                   <p className="text-xs text-muted-foreground">{parameterLabels[key] ?? "Parámetro técnico"}</p>
@@ -214,7 +212,7 @@ function DetailContent({
             <div className="grid gap-1 text-xs text-muted-foreground">
               <p>Versión de configuración: {detail.execution.configurationVersion}</p>
               <p className="break-all">Huella: {detail.execution.fingerprint}</p>
-              <p>Zona operativa: {detail.timezone}</p>
+              <p>Zona horaria: {detail.timezone}</p>
             </div>
           </CardContent>
         </Card>
@@ -229,11 +227,11 @@ function ComparisonCard({ detail }: { detail: StockPlanningProductDetailResponse
     <Card>
       <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2"><GitCompareArrows className="size-4" /> Comparación inmediata</CardTitle>
-        <CardDescription>Cambios contra la ejecución exitosa anterior, sin reescribir resultados.</CardDescription>
+        <CardDescription>Cambios frente al cálculo anterior.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 pt-4">
         {!comparison ? (
-          <p className="text-sm text-muted-foreground">No existe una ejecución anterior comparable.</p>
+          <p className="text-sm text-muted-foreground">No hay un cálculo anterior para comparar.</p>
         ) : (
           <>
             <Delta change={comparison.demand} label="Demanda prevista" unit={detail.product.baseUnitAbbreviation} />
@@ -321,7 +319,7 @@ const parameterLabels: Record<string, string> = {
   damped: "Tendencia amortiguada",
   damping: "Factor de amortiguación",
   lookbackDays: "Días retrospectivos",
-  periodDays: "Periodo estacional en días",
+  periodDays: "Período estacional en días",
   probabilityAlpha: "Suavizado de probabilidad",
   quantityAlpha: "Suavizado de cantidad",
   windowDays: "Ventana móvil en días"
