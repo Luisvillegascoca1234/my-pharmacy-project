@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ContextNavigation, salesNavigation } from "@/components/context-navigation";
 import {
@@ -89,6 +89,7 @@ const statusOptions: SalesStatusFilter[] = ["all", "confirmed", "cancelled", "re
 
 export function SalesCancellationPage() {
   const sales = useSales();
+  const detailPanelRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const saleIdFromQuery = searchParams.get("saleId")?.trim() ?? "";
   const [searchInput, setSearchInput] = useState(sales.search);
@@ -161,6 +162,14 @@ export function SalesCancellationPage() {
     setDirectSaleIdInput(saleIdFromQuery);
     void openSaleDetail(saleIdFromQuery);
   }, [saleIdFromQuery, sales.canUse, sales.selectedSaleId]);
+
+  useEffect(() => {
+    if (!sales.selectedSaleId) {
+      return;
+    }
+
+    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+  }, [sales.selectedSaleId]);
 
   function requestCancellation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -323,13 +332,13 @@ export function SalesCancellationPage() {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[128px]">Venta</TableHead>
+                  <TableHead className="w-[132px]">Venta</TableHead>
                   <TableHead>Vendedor</TableHead>
-                  <TableHead className="w-[136px]">Caja</TableHead>
-                  <TableHead className="w-[148px]">Fecha</TableHead>
-                  <TableHead className="w-[118px] text-right">Total</TableHead>
-                  <TableHead className="w-[116px]">Estado</TableHead>
-                  <TableHead className="w-[92px] text-right">Detalle</TableHead>
+                  <TableHead className="w-[128px]">Caja</TableHead>
+                  <TableHead className="w-[166px]">Fecha</TableHead>
+                  <TableHead className="w-[104px] text-right">Total</TableHead>
+                  <TableHead className="w-[104px]">Estado</TableHead>
+                  <TableHead className="sticky right-0 z-20 w-[84px] border-l bg-muted text-right">Detalle</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -411,16 +420,18 @@ export function SalesCancellationPage() {
             </Card>
           </Collapsible>
 
-          <SaleDetailPanel
-            canCancel={canCancelSelectedSale}
-            cancelReason={cancelReasonInput}
-            cancelReasonError={cancelReasonError}
-            isCancelling={isCancelling}
-            isLoading={isLoadingDetail}
-            sale={selectedSale}
-            onCancelReasonChange={setCancelReasonInput}
-            onRequestCancellation={requestCancellation}
-          />
+          <div ref={detailPanelRef} className="scroll-mt-5">
+            <SaleDetailPanel
+              canCancel={canCancelSelectedSale}
+              cancelReason={cancelReasonInput}
+              cancelReasonError={cancelReasonError}
+              isCancelling={isCancelling}
+              isLoading={isLoadingDetail}
+              sale={selectedSale}
+              onCancelReasonChange={setCancelReasonInput}
+              onRequestCancellation={requestCancellation}
+            />
+          </div>
         </div>
       </div>
 
@@ -456,8 +467,8 @@ type SaleRowProps = {
 
 function SaleRow({ isSelected, onOpen, sale }: SaleRowProps) {
   return (
-    <TableRow data-state={isSelected ? "selected" : undefined}>
-      <TableCell className="min-w-0">
+    <TableRow className="group" data-state={isSelected ? "selected" : undefined}>
+      <TableCell className="min-w-0 overflow-hidden">
         <p className="truncate font-medium text-foreground" title={sale.correlativeCode}>
           {sale.correlativeCode}
         </p>
@@ -465,7 +476,7 @@ function SaleRow({ isSelected, onOpen, sale }: SaleRowProps) {
           {sale.id}
         </p>
       </TableCell>
-      <TableCell className="min-w-0">
+      <TableCell className="min-w-0 overflow-hidden">
         <p className="truncate" title={sale.sellerUser.fullName}>
           {sale.sellerUser.fullName}
         </p>
@@ -473,17 +484,17 @@ function SaleRow({ isSelected, onOpen, sale }: SaleRowProps) {
           {sale.sellerUser.email}
         </p>
       </TableCell>
-      <TableCell className="min-w-0">
+      <TableCell className="min-w-0 overflow-hidden">
         <p className="truncate" title={sale.cashSessionCorrelativeCode}>
           {sale.cashSessionCorrelativeCode}
         </p>
       </TableCell>
-      <TableCell>{formatDateTime(sale.confirmedAt)}</TableCell>
-      <TableCell className="text-right font-medium">{formatMoney(sale.totalAmount)}</TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">{formatDateTime(sale.confirmedAt)}</TableCell>
+      <TableCell className="overflow-hidden text-right font-medium">{formatMoney(sale.totalAmount)}</TableCell>
+      <TableCell className="overflow-hidden">
         <SaleStatusBadge sale={sale} />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="sticky right-0 z-10 border-l bg-card text-right transition-colors group-hover:bg-accent/45">
         <Button aria-label={`Abrir ${sale.correlativeCode}`} size="icon" type="button" variant="ghost" onClick={onOpen}>
           <Eye aria-hidden="true" />
         </Button>

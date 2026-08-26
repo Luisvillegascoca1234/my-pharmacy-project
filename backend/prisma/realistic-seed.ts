@@ -355,7 +355,7 @@ async function main() {
         ? product.index < 5 ? 0 : product.index < 17 ? Math.max(1, Math.floor(product.minimumStock * 0.45)) : product.minimumStock + randomInt(random, 12, 65)
         : product.index < 17 ? 0 : randomInt(random, 2, 8);
       const originalQuantity = demandByProductAndWave[product.index]![waveIndex]! + targetStock + 8;
-      const baseUnitCost = product.baseUnitCost * (1 + waveIndex * 0.035);
+      const baseUnitCost = money(product.baseUnitCost * (1 + waveIndex * 0.035));
       const expirationDays = isLastWave && product.index >= 17 && product.index < 27
         ? randomInt(random, 10, 55)
         : 150 + waveIndex * 240 + randomInt(random, 60, 240);

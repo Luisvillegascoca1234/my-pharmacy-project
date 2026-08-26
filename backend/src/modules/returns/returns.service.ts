@@ -374,7 +374,7 @@ function toSaleReturnItem(item: ReturnsSaleReturnWithRelations["items"][number])
     saleItemBatchId: item.saleItemBatchId,
     saleItemId: item.saleItemId,
     saleReturnId: item.saleReturnId,
-    unitCostBase: Number(item.unitCostBase),
+    unitCostBase: Number(toMoney(item.unitCostBase)),
     updatedAt: item.updatedAt.toISOString()
   };
 }
@@ -426,7 +426,7 @@ function buildSaleReturnAuditMetadata(
       refundUnitPrice: Number(item.refundUnitPrice),
       saleItemBatchId: item.saleItemBatchId,
       saleItemId: item.saleItemId,
-      unitCostBase: Number(item.unitCostBase)
+      unitCostBase: Number(toMoney(item.unitCostBase))
     })),
     saleCorrelativeCode: sale.correlativeCode,
     saleId: sale.id,

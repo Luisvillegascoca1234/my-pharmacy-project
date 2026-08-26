@@ -241,7 +241,7 @@ function finalizeInventoryValuationProduct(product: InventoryValuationProduct): 
     lots: product.lots.map((lot) => ({
       ...lot,
       availableQuantity: toQuantity(lot.availableQuantity),
-      unitCostBase: toQuantity(lot.unitCostBase),
+      unitCostBase: toMoney(lot.unitCostBase),
       totalValue: toMoney(lot.totalValue)
     }))
   };
@@ -255,7 +255,7 @@ function toInventoryValuationLot(batch: ReportInventoryBatchRecord) {
     batchNumber: batch.batchNumber ?? undefined,
     expirationDate: batch.expirationDate ? toDateOnly(batch.expirationDate) : undefined,
     availableQuantity: Number(batch.availableQuantity),
-    unitCostBase: Number(batch.baseUnitCost),
+    unitCostBase: toMoney(batch.baseUnitCost),
     totalValue
   };
 }
@@ -274,7 +274,7 @@ function toExpiringProduct(batch: ReportInventoryBatchRecord, today: string): Ex
     expirationDate,
     daysUntilExpiration: getDateOnlyDiffDays(today, expirationDate),
     availableQuantity: toQuantity(batch.availableQuantity),
-    unitCostBase: toQuantity(batch.baseUnitCost),
+    unitCostBase: toMoney(batch.baseUnitCost),
     totalValue
   };
 }

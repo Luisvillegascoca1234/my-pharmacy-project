@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SupplierSummarySchema } from "./supplier.schema.js";
+import { nonNegativeMoneyInputSchema, nonNegativeMoneySchema } from "./shared-schema.helpers.js";
 
 export const ProductStatusSchema = z.enum(["active", "inactive"]);
 export type ProductStatus = z.infer<typeof ProductStatusSchema>;
@@ -12,7 +13,6 @@ const optionalInternalCode = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
   z.string().trim().min(2).max(40).optional()
 );
-const money = z.coerce.number().min(0);
 const quantity = z.coerce.number().min(0);
 
 export const ProductCategorySchema = z.object({
@@ -88,7 +88,7 @@ export const ProductSchema = z.object({
   requiresBatch: z.boolean(),
   requiresExpiration: z.boolean(),
   minimumStock: z.number().min(0),
-  salePrice: z.number().min(0),
+  salePrice: nonNegativeMoneySchema,
   status: ProductStatusSchema,
   units: z.array(ProductUnitSchema),
   createdAt: z.string(),
@@ -116,7 +116,7 @@ export const CreateProductSchema = z.object({
   requiresBatch: z.boolean().default(true),
   requiresExpiration: z.boolean().default(true),
   minimumStock: quantity.default(0),
-  salePrice: money
+  salePrice: nonNegativeMoneyInputSchema
 });
 
 export type CreateProduct = z.infer<typeof CreateProductSchema>;

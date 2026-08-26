@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ContextNavigation, salesNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
@@ -68,6 +68,14 @@ const invoiceBlockLabels: Record<PreparedInvoiceEligibilityBlockReason, string> 
   unknown: "Esta venta no puede usarse para preparar un comprobante interno."
 };
 
+const invoiceBlockBadgeLabels: Record<PreparedInvoiceEligibilityBlockReason, string> = {
+  "active-invoice-exists": "Comprobante existente",
+  "sale-cancelled": "Venta anulada",
+  "sale-not-found": "Venta no encontrada",
+  "sale-returned": "Devolución total",
+  unknown: "No disponible"
+};
+
 const errorMessages: Record<BillingDataErrorCode, string> = {
   "active-invoice-exists": "La venta ya cuenta con un comprobante interno preparado activo. Abre el detalle existente antes de crear otro.",
   "already-cancelled": "El comprobante interno preparado ya fue cancelado previamente.",
@@ -86,6 +94,7 @@ const statusOptions: PreparedInvoiceStatusFilter[] = ["all", "prepared", "cancel
 
 export function InvoicesPage() {
   const billing = useBilling({ autoLoadInvoiceableSales: true, autoLoadPreparedInvoices: true });
+  const documentPanelRef = useRef<HTMLDivElement>(null);
   const [invoiceableSearchInput, setInvoiceableSearchInput] = useState(billing.invoiceableSearch);
   const [invoiceableSellerInput, setInvoiceableSellerInput] = useState(billing.invoiceableSellerUserId);
   const [preparedSearchInput, setPreparedSearchInput] = useState(billing.preparedInvoiceSearch);
@@ -117,6 +126,22 @@ export function InvoicesPage() {
     }),
     [billing.preparedInvoices]
   );
+
+  useEffect(() => {
+    if (!preparationSale) {
+      return;
+    }
+
+    documentPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [preparationSale]);
+
+  useEffect(() => {
+    if (!billing.selectedPreparedInvoiceId) {
+      return;
+    }
+
+    documentPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [billing.selectedPreparedInvoiceId]);
 
   function applyInvoiceableFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -151,7 +176,11 @@ export function InvoicesPage() {
 
   function openPreparation(sale: InvoiceableSaleSummary) {
     billing.clearPreparation();
+    billing.clearCancellation();
+    billing.selectPreparedInvoice(null);
     setPreparationError(null);
+    setCancelReasonInput("");
+    setCancelReasonError(null);
     setPreparationSale(sale);
     setCustomerNitInput("0");
     setCustomerBusinessNameInput("Consumidor final");
@@ -192,7 +221,10 @@ export function InvoicesPage() {
   }
 
   async function openPreparedInvoiceDetail(preparedInvoiceId: string) {
+    billing.clearPreparation();
     billing.clearCancellation();
+    setPreparationSale(null);
+    setPreparationError(null);
     setCancelReasonInput("");
     setCancelReasonError(null);
     billing.selectPreparedInvoice(preparedInvoiceId);
@@ -349,15 +381,15 @@ export function InvoicesPage() {
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <Table className="table-fixed">
+            <Table className="min-w-[1180px] table-fixed">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[132px]">Venta</TableHead>
                   <TableHead>Vendedor</TableHead>
-                  <TableHead className="w-[130px]">Caja</TableHead>
-                  <TableHead className="w-[138px]">Fecha</TableHead>
+                  <TableHead className="w-[140px]">Caja</TableHead>
+                  <TableHead className="w-[190px]">Fecha</TableHead>
                   <TableHead className="w-[112px] text-right">Total</TableHead>
-                  <TableHead className="w-[122px]">Estado</TableHead>
+                  <TableHead className="w-[240px]">Estado</TableHead>
                   <TableHead className="w-[112px] text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
@@ -527,7 +559,7 @@ export function InvoicesPage() {
         </Card>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+      <div ref={documentPanelRef} className="grid scroll-mt-5 gap-5 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <PreparationPanel
           canOperate={canOperate}
           customerBusinessName={customerBusinessNameInput}
@@ -612,7 +644,7 @@ function InvoiceableSaleRow({ disabled, onOpenInvoice, onPrepare, sale }: Invoic
       </TableCell>
       <TableCell>{formatDateTime(sale.confirmedAt)}</TableCell>
       <TableCell className="text-right font-medium">{formatMoney(sale.totalAmount)}</TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">
         <InvoiceableSaleBadge sale={sale} />
       </TableCell>
       <TableCell className="text-right">
@@ -635,7 +667,17 @@ function InvoiceableSaleBadge({ sale }: { sale: InvoiceableSaleSummary }) {
     return <Badge variant="default">Listo para preparar</Badge>;
   }
 
-  return <Badge variant={sale.invoiceBlockedReason === "active-invoice-exists" ? "secondary" : "destructive"}>{getInvoiceBlockMessage(sale)}</Badge>;
+  const blockReason = sale.invoiceBlockedReason ?? "unknown";
+
+  return (
+    <Badge
+      className="max-w-full"
+      title={getInvoiceBlockMessage(sale)}
+      variant={blockReason === "active-invoice-exists" ? "secondary" : "destructive"}
+    >
+      {invoiceBlockBadgeLabels[blockReason]}
+    </Badge>
+  );
 }
 
 type PreparedInvoiceRowProps = {
