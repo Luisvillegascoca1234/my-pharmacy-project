@@ -100,6 +100,33 @@ Para regenerar Prisma, migrar y ejecutar ese seed en una sola operación:
 pnpm dev:prepare
 ```
 
+### Seed realista para demostraciones
+
+Cuando necesites presentar el sistema con una farmacia que ya tiene historia operativa, ejecuta:
+
+```powershell
+pnpm --filter @pharmacy-pos/backend seed:demo -- --as-of=2026-08-19 --seed=20260819
+```
+
+> **Advertencia:** este comando reconstruye primero los datos operativos. Úsalo solamente en desarrollo o sobre una base aislada de demostración.
+
+La carga es determinista y crea un escenario proporcional de una farmacia de una sola sucursal:
+
+- 50 usuarios: 20 activos, 27 inactivos y 3 bloqueados;
+- 15 categorías, 14 proveedores y 250 productos farmacéuticos;
+- dos años de turnos de caja y actividad comercial;
+- compras recibidas, en borrador y canceladas;
+- tres ciclos de reposición con lotes, vencimientos y costos variables;
+- más de cinco mil ventas en efectivo con consumos FEFO;
+- anulaciones operativas, devoluciones totales y reversas al lote original;
+- facturas preparadas internas, separadas de la facturación fiscal SIAT;
+- productos agotados, con stock bajo y lotes próximos a vencer;
+- carritos activos, vencidos, descartados y convertidos;
+- cierres de caja conformes y diferencias menores de arqueo;
+- evidencia de auditoría para operaciones representativas.
+
+La fecha `--as-of` permite mover todo el escenario a la fecha de la presentación. La opción `--seed` conserva exactamente la misma distribución de ventas, importes, productos y turnos entre ejecuciones.
+
 ### Seed persistente para predicción y análisis
 
 Este seed agrega historia comercial sintética sobre una base que ya fue preparada con el seed operativo:
