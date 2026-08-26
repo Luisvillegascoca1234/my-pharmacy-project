@@ -149,7 +149,7 @@ services:
     healthcheck:
       test:
         - CMD-SHELL
-        - wget --quiet --spider --header='Host: farmacia-demo.gordex.dev' http://127.0.0.1/
+        - "wget --quiet --spider --header='Host: farmacia-demo.gordex.dev' http://127.0.0.1/"
       interval: 10s
       timeout: 5s
       retries: 12
