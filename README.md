@@ -2,7 +2,7 @@
 
 Aplicación para la operación de una farmacia de una sola sucursal: catálogo farmacéutico, compras, inventario por lote, dispensación FEFO, ventas POS, caja, comprobantes internos, devoluciones, auditoría, reportes y planificación de stock.
 
-> Los datos incluidos para desarrollo y demostración son ficticios. No son válidos para uso sanitario, clínico ni regulatorio.
+> Los datos incluidos para desarrollo son simulados. No son válidos para uso sanitario, clínico ni regulatorio.
 
 ## Requisitos
 
@@ -72,7 +72,7 @@ Para detener las aplicaciones, presiona `Ctrl+C`. PostgreSQL seguirá activo en 
 docker compose stop postgres
 ```
 
-## Seeds y datos de demostración
+## Seeds y datos simulados
 
 ### Seed operativo de desarrollo
 
@@ -100,15 +100,15 @@ Para regenerar Prisma, migrar y ejecutar ese seed en una sola operación:
 pnpm dev:prepare
 ```
 
-### Seed realista para demostraciones
+### Seed operativo realista
 
 Cuando necesites presentar el sistema con una farmacia que ya tiene historia operativa, ejecuta:
 
 ```powershell
-pnpm --filter @pharmacy-pos/backend seed:demo -- --as-of=2026-08-19 --seed=20260819
+pnpm --filter @pharmacy-pos/backend seed:realistic -- --as-of=2026-08-26 --seed=20260826
 ```
 
-> **Advertencia:** este comando reconstruye primero los datos operativos. Úsalo solamente en desarrollo o sobre una base aislada de demostración.
+> **Advertencia:** este comando reconstruye primero los datos operativos. Úsalo solamente en desarrollo o sobre una base aislada de pruebas.
 
 La carga es determinista y crea un escenario proporcional de una farmacia de una sola sucursal:
 
@@ -156,7 +156,7 @@ También persiste aproximadamente seis meses de compras recibidas, lotes, ventas
 
 El seed no crea pronósticos ni ejecuciones precalculadas. Deja el motor automático desactivado para que la predicción sea generada por el motor real mediante **Recalcular ahora**. Si ya existen productos con prefijo `PRED-`, el comando se detiene para evitar duplicar la historia.
 
-> Usa este seed únicamente en desarrollo o en una base aislada de demostración. Aunque no borra los datos generales, agrega una cantidad importante de historia sintética y no está destinado a información productiva.
+> Usa este seed únicamente en desarrollo o en una base aislada de pruebas. Aunque no borra los datos generales, agrega una cantidad importante de historia sintética y no está destinado a información productiva.
 
 ### Reconstrucción completa para probar predicción
 
