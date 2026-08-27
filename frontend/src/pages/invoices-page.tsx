@@ -48,7 +48,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   dateStyle: "medium",
   timeStyle: "short",

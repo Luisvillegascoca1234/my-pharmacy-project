@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/chart";
 import type { StockPlanningDetailAnalytics } from "@/modules/stock-planning";
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 3 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat("es-BO", {
   day: "2-digit",
   month: "short",
@@ -32,20 +32,20 @@ const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
 });
 
 const demandConfig = {
-  demand: { color: "var(--chart-1)", label: "Demanda real" },
-  forecast: { color: "var(--chart-3)", label: "Pronóstico" },
-  band80: { color: "var(--chart-4)", label: "Banda central 80%" },
-  censoredMarker: { color: "var(--muted-foreground)", label: "Día sin stock" }
+  demand: { color: "var(--chart-1)", label: "Unidades vendidas" },
+  forecast: { color: "var(--chart-3)", label: "Venta estimada" },
+  band80: { color: "var(--chart-4)", label: "Rango probable de ventas" },
+  censoredMarker: { color: "var(--muted-foreground)", label: "Día sin existencias" }
 } satisfies ChartConfig;
 
 const stockConfig = {
-  stock: { color: "var(--chart-2)", label: "Stock" },
-  target: { color: "var(--chart-5)", label: "Meta" }
+  stock: { color: "var(--chart-2)", label: "Existencias registradas" },
+  target: { color: "var(--chart-5)", label: "Cantidad recomendada para tener" }
 } satisfies ChartConfig;
 
 const performanceConfig = {
-  scaledError: { color: "var(--chart-3)", label: "Error escalado" },
-  bias: { color: "var(--chart-5)", label: "Sesgo" }
+  scaledError: { color: "var(--chart-3)", label: "Diferencia frente a la venta real" },
+  bias: { color: "var(--chart-5)", label: "Cálculo de más o de menos" }
 } satisfies ChartConfig;
 
 export function StockPlanningCharts({
@@ -58,10 +58,10 @@ export function StockPlanningCharts({
   return (
     <>
       <ChartCard
-        description="La zona sombreada muestra el rango esperado alrededor de la predicción."
-        title="Ventas reales y demanda prevista"
+        description="Compara lo que se vendió con lo que se espera vender. La zona sombreada muestra el rango probable."
+        title="Ventas anteriores y ventas estimadas"
       >
-        {analytics.demand.length === 0 ? <EmptyChart message="No hay datos de demanda para este cálculo." /> : (
+        {analytics.demand.length === 0 ? <EmptyChart message="No hay ventas registradas para este cálculo." /> : (
           <ChartContainer className="h-72 w-full aspect-auto" config={demandConfig}>
             <ComposedChart accessibilityLayer data={analytics.demand}>
               <CartesianGrid vertical={false} />
@@ -79,8 +79,8 @@ export function StockPlanningCharts({
       </ChartCard>
 
       <ChartCard
-        description="Compara el inventario registrado cada día con la cantidad recomendada."
-        title="Inventario y cantidad recomendada"
+        description="Compara las existencias registradas con la cantidad que conviene mantener disponible."
+        title="Existencias y cantidad recomendada"
       >
         {analytics.stock.length === 0 ? <EmptyChart message="No hay registros de inventario en el período elegido." /> : (
           <ChartContainer className="h-72 w-full aspect-auto" config={stockConfig}>
@@ -98,8 +98,8 @@ export function StockPlanningCharts({
       </ChartCard>
 
       <ChartCard
-        description="Muestra cuánto se acercaron las predicciones anteriores a la demanda real."
-        title="Precisión de cálculos anteriores"
+        description="Muestra si los cálculos anteriores se acercaron a las ventas que realmente ocurrieron."
+        title="Qué tan acertados fueron los cálculos anteriores"
       >
         {analytics.performance.length === 0 ? <EmptyChart message="No hay métricas históricas comparables." /> : (
           <ChartContainer className="h-72 w-full aspect-auto" config={performanceConfig}>

@@ -52,7 +52,7 @@ import { OperationalScopeNotice, SupervisionOnly } from "@/components/operationa
 import { getSaleCancellationBlockMessage, getSupervisedSellerFilter, isSaleCancellationAllowed } from "./sales-cancellation-policy";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium" });
 const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   dateStyle: "medium",

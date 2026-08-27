@@ -5,9 +5,9 @@ import { prisma } from "../src/infrastructure/prisma/prisma.client.js";
 
 const PRODUCT_COUNT = 250;
 const HISTORY_DAYS = 730;
-const USER_COUNT = 50;
-const INACTIVE_USER_COUNT = 5;
-const BLOCKED_USER_COUNT = 3;
+const USER_COUNT = 5;
+const CUSTOMER_COUNT = 100;
+const TARGET_SALE_COUNT = 10_000;
 const SEED_PASSWORD = "admin";
 
 const categories = [
@@ -45,16 +45,9 @@ const suppliers = [
   ["Distribuciones Médicas Potosí", "5567891234", "Potosí"]
 ] as const;
 
-const invoiceCustomers = [
-  ["María Fernanda López Quispe", "4827312"],
-  ["Consultorio Médico Los Pinos S.R.L.", "1029456781"],
-  ["Centro Integral Vida Plena S.R.L.", "2038567492"],
-  ["José Antonio Vargas Mamani", "6172845"],
-  ["Servicios de Salud Kantuta S.R.L.", "3049675813"],
-  ["Carla Andrea Rojas Fernández", "7351926"],
-  ["Clínica Familiar San Gabriel S.R.L.", "4059786124"],
-  ["Comercial Médica Altiplano S.R.L.", "5061897235"]
-] as const;
+type InvoiceCustomer = readonly [businessName: string, nit: string];
+
+const invoiceCustomers = buildInvoiceCustomers(CUSTOMER_COUNT);
 
 type ProductFamily = {
   genericName: string;
@@ -246,6 +239,30 @@ async function main() {
     }
   }
 
+  const shiftPlans: Array<{
+    day: Date;
+    dayIndex: number;
+    isSunday: boolean;
+    shift: number;
+    weight: number;
+  }> = [];
+  for (let dayIndex = 0; dayIndex < HISTORY_DAYS; dayIndex += 1) {
+    const day = addDays(historyStart, dayIndex);
+    const isSunday = day.getUTCDay() === 0;
+    const shiftCount = isSunday ? 1 : 2;
+    for (let shift = 0; shift < shiftCount; shift += 1) {
+      const baseSales = isSunday ? 3 : shift === 0 ? 5 : 7;
+      shiftPlans.push({
+        day,
+        dayIndex,
+        isSunday,
+        shift,
+        weight: baseSales + randomInt(random, 0, 3)
+      });
+    }
+  }
+  const salesByShift = distributeTotalByWeight(shiftPlans.map((plan) => plan.weight), TARGET_SALE_COUNT);
+
   const sessionPlans: Array<{
     id: string;
     index: number;
@@ -258,17 +275,14 @@ async function main() {
   const salePlans: PlannedSale[] = [];
   let sessionIndex = 0;
   let saleIndex = 0;
-  for (let dayIndex = 0; dayIndex < HISTORY_DAYS; dayIndex += 1) {
-    const day = addDays(historyStart, dayIndex);
-    const isSunday = day.getUTCDay() === 0;
-    const shiftCount = isSunday ? 1 : 2;
-    for (let shift = 0; shift < shiftCount; shift += 1) {
+  for (const [shiftPlanIndex, shiftPlan] of shiftPlans.entries()) {
+      const { day, dayIndex, shift } = shiftPlan;
       sessionIndex += 1;
       const historical = dayIndex < 500 && historicalSellerIds.length > 0;
       const sellerPool = historical ? allSellerIds : activeSellerIds;
       const sellerId = sellerPool[(dayIndex * 2 + shift * 7) % sellerPool.length]!;
       const openedAt = atHour(day, shift === 0 ? 7 : 14, randomInt(random, 0, 20));
-      const isCurrentOpenSession = dayIndex === HISTORY_DAYS - 1 && shift === shiftCount - 1;
+      const isCurrentOpenSession = shiftPlanIndex === shiftPlans.length - 1;
       const closedAt = isCurrentOpenSession ? null : atHour(day, shift === 0 ? 14 : 21, randomInt(random, 0, 35));
       const currentSessionIndex = sessionIndex;
       sessionPlans.push({
@@ -280,8 +294,7 @@ async function main() {
         initialAmount: [150, 200, 250][currentSessionIndex % 3]!,
         expectedAmount: 0
       });
-      const baseSales = isSunday ? 3 : shift === 0 ? 5 : 7;
-      const salesInShift = baseSales + randomInt(random, 0, 3);
+      const salesInShift = salesByShift[shiftPlanIndex]!;
       for (let position = 0; position < salesInShift; position += 1) {
         saleIndex += 1;
         const statusRoll = random();
@@ -308,7 +321,10 @@ async function main() {
           lines
         });
       }
-    }
+  }
+
+  if (salePlans.length !== TARGET_SALE_COUNT) {
+    throw new Error(`Expected ${TARGET_SALE_COUNT} planned sales, received ${salePlans.length}.`);
   }
 
   const waveStarts = [addDays(historyStart, -30), addDays(historyStart, 240), addDays(historyStart, 480)];
@@ -603,8 +619,8 @@ async function main() {
       preparedInvoiceNumber += 1;
       const invoiceId = `prepared-invoice-${preparedInvoiceNumber}`;
       const cancelled = preparedInvoiceNumber % 19 === 0;
-      const invoiceCustomer = preparedInvoiceNumber % 4 === 0
-        ? invoiceCustomers[Math.floor(preparedInvoiceNumber / 4) % invoiceCustomers.length]!
+      const invoiceCustomer = preparedInvoiceNumber % 2 === 0
+        ? invoiceCustomers[(Math.floor(preparedInvoiceNumber / 2) - 1) % invoiceCustomers.length]!
         : null;
       preparedInvoiceRows.push({
         id: invoiceId,
@@ -820,6 +836,19 @@ async function main() {
     });
   }
 
+  assertWholeSeedQuantities([
+    { label: "minimum stock", values: productRows.map((row) => row.minimumStock) },
+    { label: "purchase item quantities", values: purchaseItemRows.flatMap((row) => [row.quantity, row.baseQuantity]) },
+    { label: "inventory batch quantities", values: inventoryBatchRows.flatMap((row) => [row.originalQuantity, row.availableQuantity]) },
+    { label: "inventory movements", values: inventoryMovementRows.map((row) => row.quantityBase) },
+    { label: "inventory adjustments", values: inventoryAdjustmentRows.flatMap((row) => [row.previousQuantity, row.countedQuantity, row.differenceQuantity]) },
+    { label: "sale item quantities", values: saleItemRows.map((row) => row.quantity) },
+    { label: "sale batch consumptions", values: saleItemBatchRows.map((row) => row.quantity) },
+    { label: "returned quantities", values: returnItemRows.map((row) => row.quantity) },
+    { label: "prepared invoice quantities", values: preparedInvoiceItemRows.map((row) => row.quantity) },
+    { label: "saved sale quantities", values: pendingCartItemRows.map((row) => row.quantity) }
+  ]);
+
   await prisma.$transaction(async (tx) => {
     const existing = await tx.product.count({ where: { internalCode: { startsWith: "PRD-" } } });
     if (existing > 0) throw new Error("Operational seed data already exists. Run seed:realistic to rebuild the database from scratch.");
@@ -903,6 +932,7 @@ async function main() {
   console.log(`- Reference date: ${options.asOf}`);
   console.log(`- Deterministic seed: ${options.seed}`);
   console.log(`- Users: ${staff.length} (${staff.filter((user) => user.status === "active").length} active, ${staff.filter((user) => user.status === "inactive").length} inactive, ${staff.filter((user) => user.status === "blocked").length} blocked)`);
+  console.log(`- Identified customer profiles: ${invoiceCustomers.length}`);
   console.log(`- Products: ${products.length}`);
   console.log(`- Suppliers: ${supplierRows.length}`);
   console.log(`- Received purchases: ${purchaseRows.filter((purchase) => purchase.status === "received").length}`);
@@ -954,6 +984,50 @@ function buildProduct(index: number, random: () => number) {
   };
 }
 
+function buildInvoiceCustomers(count: number): InvoiceCustomer[] {
+  const firstNames = ["Alejandra", "Bruno", "Carla", "Diego", "Elena", "Fernando", "Gabriela", "Hugo", "Isabel", "Javier", "Karen", "Luis", "Mariela", "Nicolás", "Paola"];
+  const paternalLastNames = ["Rojas", "Mamani", "Flores", "Vargas", "Quispe", "Salvatierra", "Gutiérrez", "Choque", "Rivera", "Fernández", "Arce", "Paredes", "Morales", "Cabrera", "Suárez"];
+  const maternalLastNames = ["López", "Rodríguez", "Martínez", "Gómez", "Sánchez", "Romero", "Torrez", "Castillo", "Mendoza", "Aguilar", "Medina", "Ortiz", "Vega", "Castro", "Núñez"];
+  const businessTypes = ["Consultorio Médico", "Clínica Familiar", "Centro Integral", "Servicios de Salud", "Comercial Médica"];
+  const businessNames = ["Los Pinos", "Vida Plena", "Kantuta", "San Gabriel", "Altiplano"];
+  const individualCount = Math.min(count, Math.round(count * 0.75));
+
+  return Array.from({ length: count }, (_, index) => {
+    if (index < individualCount) {
+      const firstName = firstNames[index % firstNames.length]!;
+      const paternalLastName = paternalLastNames[Math.floor(index / firstNames.length) % paternalLastNames.length]!;
+      const maternalLastName = maternalLastNames[(index * 7 + Math.floor(index / firstNames.length)) % maternalLastNames.length]!;
+      const identificationNumber = String(4_000_000 + index * 7_919);
+      return [`${firstName} ${paternalLastName} ${maternalLastName}`, identificationNumber] as const;
+    }
+
+    const businessIndex = index - individualCount;
+    const businessType = businessTypes[businessIndex % businessTypes.length]!;
+    const businessName = businessNames[Math.floor(businessIndex / businessTypes.length) % businessNames.length]!;
+    const nit = String(1_000_000_000 + businessIndex * 10_007);
+    return [`${businessType} ${businessName} S.R.L.`, nit] as const;
+  });
+}
+
+function distributeTotalByWeight(weights: number[], total: number) {
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  if (weights.length === 0 || totalWeight <= 0 || total < 0) {
+    throw new Error("Cannot distribute sales without positive shift weights.");
+  }
+
+  let cumulativeWeight = 0;
+  let allocatedTotal = 0;
+  return weights.map((weight, index) => {
+    cumulativeWeight += weight;
+    const cumulativeTarget = index === weights.length - 1
+      ? total
+      : Math.round(total * cumulativeWeight / totalWeight);
+    const allocation = cumulativeTarget - allocatedTotal;
+    allocatedTotal = cumulativeTarget;
+    return allocation;
+  });
+}
+
 async function buildStaff(passwordHash: string, roleByName: Map<string, string>, asOf: Date): Promise<StaffUser[]> {
   const base = [
     { id: "", email: "admin@admin.com", fullName: "Gabriela Rojas", roleName: "superadmin" as const },
@@ -973,13 +1047,8 @@ async function buildStaff(passwordHash: string, roleByName: Map<string, string>,
     createdAt: addDays(asOf, -800)
   }));
   for (let index = 3; index < USER_COUNT; index += 1) {
-    const isAdmin = index < 7;
-    const status = index >= USER_COUNT - BLOCKED_USER_COUNT
-      ? "blocked" as const
-      : index >= USER_COUNT - BLOCKED_USER_COUNT - INACTIVE_USER_COUNT
-        ? "inactive" as const
-        : "active" as const;
-    const roleName = isAdmin ? "admin" as const : "seller" as const;
+    const status = "active" as const;
+    const roleName = "seller" as const;
     const fullName = staffName(index);
     staff.push({
       id: `user-${String(index + 1).padStart(3, "0")}`,
@@ -1082,6 +1151,17 @@ function atHour(value: Date, hour: number, minute: number) {
 
 function money(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+function assertWholeSeedQuantities(groups: Array<{ label: string; values: unknown[] }>) {
+  for (const group of groups) {
+    for (const value of group.values) {
+      const quantity = Number(value);
+      if (!Number.isSafeInteger(quantity)) {
+        throw new Error(`Seed ${group.label} must use whole units. Received ${String(value)}.`);
+      }
+    }
+  }
 }
 
 function roundToHalf(value: number) {

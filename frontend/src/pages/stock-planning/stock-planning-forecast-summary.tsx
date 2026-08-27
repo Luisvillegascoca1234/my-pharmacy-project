@@ -21,7 +21,7 @@ import {
   stockPlanningModelLabels
 } from "./stock-planning-labels";
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const decimalFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 3 });
 
 const warningLabels: Record<string, string> = {

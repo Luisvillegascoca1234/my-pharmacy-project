@@ -32,7 +32,7 @@ const movementTypes: Array<InventoryMovementType | "all"> = [
   "sale_cancelled",
   "sale_returned"
 ];
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 4, style: "currency" });
 
 export function MovementsPage() {

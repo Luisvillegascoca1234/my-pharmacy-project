@@ -35,6 +35,8 @@ const executionInclude = {
 
 const EXECUTION_LOCK_ID = 7_301_202_607_23n;
 const CONFIGURATION_LOCK_ID = 7_302_202_607_23n;
+const EXECUTION_TRANSACTION_MAX_WAIT_MS = 10_000;
+const EXECUTION_TRANSACTION_TIMEOUT_MS = 120_000;
 
 export class StockPlanningExecutionRepository {
   getCurrentConfiguration(): Promise<StockPlanningConfigurationRecord | null> {
@@ -122,15 +124,21 @@ export class StockPlanningExecutionRepository {
   async runWithExecutionLock<T>(
     work: (tx: Prisma.TransactionClient) => Promise<T>
   ): Promise<{ acquired: true; value: T } | { acquired: false }> {
-    return prisma.$transaction(async (tx) => {
-      const rows = await tx.$queryRaw<Array<{ acquired: boolean }>>`
-        SELECT pg_try_advisory_xact_lock(${EXECUTION_LOCK_ID}) AS acquired
-      `;
-      if (!rows[0]?.acquired) {
-        return { acquired: false } as const;
+    return prisma.$transaction(
+      async (tx) => {
+        const rows = await tx.$queryRaw<Array<{ acquired: boolean }>>`
+          SELECT pg_try_advisory_xact_lock(${EXECUTION_LOCK_ID}) AS acquired
+        `;
+        if (!rows[0]?.acquired) {
+          return { acquired: false } as const;
+        }
+        return { acquired: true, value: await work(tx) } as const;
+      },
+      {
+        maxWait: EXECUTION_TRANSACTION_MAX_WAIT_MS,
+        timeout: EXECUTION_TRANSACTION_TIMEOUT_MS
       }
-      return { acquired: true, value: await work(tx) } as const;
-    });
+    );
   }
 
   findSnapshot(localDate: Date, tx: Prisma.TransactionClient = prisma) {

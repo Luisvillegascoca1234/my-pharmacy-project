@@ -61,7 +61,7 @@ import { OperationalScopeNotice } from "@/components/operational-scope-notice";
 import { getSaleCancellationBlockMessage, isSaleCancellationAllowed } from "./sales-cancellation-policy";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   dateStyle: "medium",
   timeStyle: "short",

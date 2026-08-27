@@ -25,7 +25,7 @@ const severityLabels: Record<InventoryAlert["severity"], string> = {
   warning: "Preventiva"
 };
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 
 export function AlertsPage() {
   const navigate = useNavigate();

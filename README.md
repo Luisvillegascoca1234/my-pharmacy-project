@@ -112,12 +112,13 @@ pnpm --filter @pharmacy-pos/backend seed:realistic -- --as-of=2026-08-26 --seed=
 
 La carga es determinista y crea un escenario proporcional de una farmacia de una sola sucursal:
 
-- 50 usuarios: 42 activos, 5 inactivos y 3 bloqueados; los activos participan en ventas, caja, compras y recepciones según su rol;
+- 5 usuarios activos: 1 superadministrador, 1 administrador y 3 vendedores;
+- 100 perfiles de compradores identificados, además de operaciones para consumidor final;
 - 15 categorías, 14 proveedores y 250 productos farmacéuticos;
 - dos años de turnos de caja y actividad comercial;
 - compras recibidas, en borrador y canceladas;
 - tres ciclos de reposición con lotes, vencimientos y costos variables;
-- más de cinco mil ventas en efectivo con consumos FEFO;
+- 10.000 ventas en efectivo distribuidas durante dos años, con consumos FEFO;
 - anulaciones operativas, devoluciones totales y reversas al lote original;
 - facturas preparadas internas, separadas de la facturación fiscal SIAT;
 - productos agotados, con stock bajo y lotes próximos a vencer;

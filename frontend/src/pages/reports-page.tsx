@@ -52,7 +52,7 @@ const moneyFormatter = new Intl.NumberFormat("es-BO", {
 });
 
 const quantityFormatter = new Intl.NumberFormat("es-BO", {
-  maximumFractionDigits: 4
+  maximumFractionDigits: 0
 });
 
 export function ReportsPage() {

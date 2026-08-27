@@ -51,7 +51,7 @@ import {
 import { StockPlanningParquetExports } from "@/pages/stock-planning/stock-planning-parquet-exports";
 
 const quantityFormatter = new Intl.NumberFormat("es-BO", {
-  maximumFractionDigits: 4
+  maximumFractionDigits: 0
 });
 
 export function StockPlanningPage() {

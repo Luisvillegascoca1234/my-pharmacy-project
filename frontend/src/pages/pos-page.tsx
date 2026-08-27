@@ -73,7 +73,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   timeStyle: "short",
   timeZone: "America/La_Paz"
 });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 
 const errorMessages: Record<PosDataErrorCode, string> = {
   "cart-empty": "Agrega al menos un producto antes de cobrar.",
