@@ -105,7 +105,7 @@ pnpm dev:prepare
 Cuando necesites presentar el sistema con una farmacia que ya tiene historia operativa, ejecuta:
 
 ```powershell
-pnpm --filter @pharmacy-pos/backend seed:realistic -- --as-of=2026-08-26 --seed=20260826
+pnpm --filter @pharmacy-pos/backend seed:realistic -- --as-of=2026-08-27 --seed=20260826
 ```
 
 > **Advertencia:** este comando reconstruye primero los datos operativos. Úsalo solamente en desarrollo o sobre una base aislada de pruebas.
