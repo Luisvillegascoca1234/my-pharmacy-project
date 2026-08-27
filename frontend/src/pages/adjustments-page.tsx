@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useInventoryAdjustment, useInventoryBatches, useInventoryStock } from "@/modules/inventory";
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 
 export function AdjustmentsPage() {
   const stock = useInventoryStock();

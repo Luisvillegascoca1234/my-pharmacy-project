@@ -4,6 +4,7 @@ import {
   Ban,
   Boxes,
   GitCompareArrows,
+  ShoppingCart,
   Sigma
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,7 +33,7 @@ import {
   stockPlanningModelLabels
 } from "./stock-planning-labels";
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 3 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat("es-BO", { day: "2-digit", month: "short", year: "numeric" });
 const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   dateStyle: "medium",
@@ -64,13 +65,13 @@ export function StockPlanningDetail({
         <DialogHeader className="border-b bg-muted/25 px-5 py-4 pr-14">
           <DialogTitle className="flex flex-wrap items-center gap-2 text-lg">
             <Activity aria-hidden="true" className="size-5 text-primary" />
-            Historial del medicamento
+            Detalle de compra del medicamento
             {data?.detail.product.status === "inactive" ? <Badge variant="secondary">Inactivo</Badge> : null}
           </DialogTitle>
           <DialogDescription>
             {data
               ? `${data.detail.product.commercialName} · ${data.detail.product.internalCode} · cantidades en ${data.detail.product.baseUnitAbbreviation}`
-              : "Revisa cómo cambiaron la demanda, el inventario y la recomendación de compra."}
+              : "Revisa cuánto conviene comprar, las ventas anteriores y las existencias disponibles."}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="min-h-0 flex-1">
@@ -109,17 +110,19 @@ function DetailContent({
 
   return (
     <>
+      <PurchaseRecommendation detail={detail} />
+
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Método" value={stockPlanningModelLabels[result.model ?? "none"]} detail="Método usado para calcular la recomendación" />
-          <Metric label="Historial" value={stockPlanningMaturityLabels[result.maturity]} detail={`${result.historyDays} días analizados`} />
-          <Metric label="Confianza" value={stockPlanningConfidenceLabels[result.confidence]} detail="Qué tan confiables son los datos disponibles" />
-          <Metric label="Días sin stock" value={`${result.censoredDays} días`} detail={`${result.demandDays} días con ventas`} />
+          <Metric label="Cómo se calculó" value={stockPlanningModelLabels[result.model ?? "none"]} detail="Comportamiento de ventas reconocido por el sistema" />
+          <Metric label="Datos usados" value={stockPlanningMaturityLabels[result.maturity]} detail={`${result.historyDays} días revisados`} />
+          <Metric label="Confiabilidad" value={stockPlanningConfidenceLabels[result.confidence]} detail="Qué tan segura es esta recomendación" />
+          <Metric label="Faltantes anteriores" value={`${result.censoredDays} días`} detail={`${result.demandDays} días tuvieron ventas`} />
         </div>
         <Card className="border-primary/20 bg-primary/[0.03]">
           <CardContent className="grid gap-2 p-4">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground" htmlFor="planning-execution">
-              Fecha del cálculo
+              Recomendación calculada el
             </label>
             <NativeSelect
               id="planning-execution"
@@ -133,7 +136,7 @@ function DetailContent({
               ))}
             </NativeSelect>
             <p className="text-xs leading-5 text-muted-foreground">
-              Se muestra el último cálculo completado. Puedes elegir uno anterior para comparar.
+              Puedes elegir una fecha anterior para revisar cómo cambió la recomendación.
             </p>
           </CardContent>
         </Card>
@@ -194,8 +197,8 @@ function DetailContent({
 
         <Card>
           <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2"><Sigma className="size-4" /> Detalle técnico del cálculo</CardTitle>
-            <CardDescription>Fórmula y parámetros usados para obtener el resultado.</CardDescription>
+            <CardTitle className="flex items-center gap-2"><Sigma className="size-4" /> Información avanzada (opcional)</CardTitle>
+            <CardDescription>Datos internos del cálculo. No son necesarios para realizar la compra.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 pt-4">
             <code className="block overflow-x-auto rounded-lg border bg-muted/35 p-3 text-xs leading-5">{result.formula}</code>
@@ -210,9 +213,9 @@ function DetailContent({
               ))}
             </div>
             <div className="grid gap-1 text-xs text-muted-foreground">
-              <p>Versión de configuración: {detail.execution.configurationVersion}</p>
-              <p className="break-all">Huella: {detail.execution.fingerprint}</p>
-              <p>Zona horaria: {detail.timezone}</p>
+              <p>Versión de reglas utilizadas: {detail.execution.configurationVersion}</p>
+              <p className="break-all">Identificador del cálculo: {detail.execution.fingerprint}</p>
+              <p>Hora de referencia: {detail.timezone}</p>
             </div>
           </CardContent>
         </Card>
@@ -221,29 +224,86 @@ function DetailContent({
   );
 }
 
+function PurchaseRecommendation({ detail }: { detail: StockPlanningProductDetailResponse }) {
+  const recommendation = detail.result.recommendation;
+  const unit = detail.product.baseUnitAbbreviation;
+  const coverageDays = detail.execution.configuration.coverageDays;
+
+  return (
+    <Card className="border-primary/30 bg-primary/[0.04]">
+      <CardHeader className="border-b border-primary/15">
+        <CardTitle className="flex items-center gap-2">
+          <ShoppingCart className="size-5 text-primary" />
+          Qué conviene comprar
+        </CardTitle>
+        <CardDescription>Recomendación principal para tomar una decisión de abastecimiento.</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-4">
+        {recommendation ? (
+          <div className="grid gap-4 lg:grid-cols-[auto_1fr] lg:items-center">
+            <div className="rounded-xl bg-primary px-5 py-4 text-primary-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider opacity-80">Comprar ahora</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums">
+                {quantityFormatter.format(recommendation.suggestedQuantity)} {unit}
+              </p>
+            </div>
+            <div className="grid gap-2 text-sm sm:grid-cols-3">
+              <RecommendationValue
+                label={`Venta estimada para ${coverageDays} días`}
+                value={`${quantityFormatter.format(recommendation.centralDemand)} ${unit}`}
+              />
+              <RecommendationValue
+                label="Existencias útiles disponibles"
+                value={`${quantityFormatter.format(recommendation.usableStock)} ${unit}`}
+              />
+              <RecommendationValue
+                label="Cantidad recomendada para tener"
+                value={`${quantityFormatter.format(recommendation.targetStock)} ${unit}`}
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Todavía no hay información suficiente para recomendar una compra de este medicamento.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecommendationValue({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-background/80 px-3 py-3">
+      <p className="text-xs leading-5 text-muted-foreground">{label}</p>
+      <p className="mt-1 font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
 function ComparisonCard({ detail }: { detail: StockPlanningProductDetailResponse }) {
   const comparison = detail.comparison;
   return (
     <Card>
       <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2"><GitCompareArrows className="size-4" /> Comparación inmediata</CardTitle>
-        <CardDescription>Cambios frente al cálculo anterior.</CardDescription>
+        <CardTitle className="flex items-center gap-2"><GitCompareArrows className="size-4" /> Comparación con la recomendación anterior</CardTitle>
+        <CardDescription>Muestra por qué la cantidad sugerida pudo subir o bajar.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3 pt-4">
         {!comparison ? (
           <p className="text-sm text-muted-foreground">No hay un cálculo anterior para comparar.</p>
         ) : (
           <>
-            <Delta change={comparison.demand} label="Demanda prevista" unit={detail.product.baseUnitAbbreviation} />
-            <Delta change={comparison.targetStock} label="Meta de inventario" unit={detail.product.baseUnitAbbreviation} />
-            <Delta change={comparison.suggestedQuantity} label="Cantidad sugerida" unit={detail.product.baseUnitAbbreviation} />
+            <Delta change={comparison.demand} label="Venta estimada" unit={detail.product.baseUnitAbbreviation} />
+            <Delta change={comparison.targetStock} label="Cantidad recomendada para tener" unit={detail.product.baseUnitAbbreviation} />
+            <Delta change={comparison.suggestedQuantity} label="Compra recomendada" unit={detail.product.baseUnitAbbreviation} />
             <div className="grid grid-cols-2 gap-3 rounded-lg border p-3 text-sm">
               <div>
-                <p className="text-xs text-muted-foreground">Modelo anterior → actual</p>
+                <p className="text-xs text-muted-foreground">Forma de cálculo anterior → actual</p>
                 <p className="mt-1 font-medium">{stockPlanningModelLabels[comparison.model.previous ?? "none"]} → {stockPlanningModelLabels[comparison.model.current ?? "none"]}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Confianza anterior → actual</p>
+                <p className="text-xs text-muted-foreground">Confiabilidad anterior → actual</p>
                 <p className="mt-1 font-medium">{stockPlanningConfidenceLabels[comparison.confidence.previous]} → {stockPlanningConfidenceLabels[comparison.confidence.current]}</p>
               </div>
             </div>
@@ -313,16 +373,16 @@ function formatParameterValue(value: string | number | boolean) {
 }
 
 const parameterLabels: Record<string, string> = {
-  alpha: "Suavizado de nivel (alfa)",
-  beta: "Suavizado de tendencia (beta)",
-  biasCorrection: "Corrección de sesgo",
-  damped: "Tendencia amortiguada",
-  damping: "Factor de amortiguación",
-  lookbackDays: "Días retrospectivos",
-  periodDays: "Período estacional en días",
-  probabilityAlpha: "Suavizado de probabilidad",
-  quantityAlpha: "Suavizado de cantidad",
-  windowDays: "Ventana móvil en días"
+  alpha: "Peso dado a las ventas más recientes",
+  beta: "Peso dado al cambio de las ventas",
+  biasCorrection: "Ajuste cuando el cálculo estima de más o de menos",
+  damped: "Limitar el crecimiento de la tendencia",
+  damping: "Intensidad del límite de tendencia",
+  lookbackDays: "Días anteriores revisados",
+  periodDays: "Días usados para encontrar un patrón",
+  probabilityAlpha: "Peso de la frecuencia de venta",
+  quantityAlpha: "Peso de la cantidad vendida",
+  windowDays: "Cantidad de días incluidos en el promedio"
 };
 
 const batchStatusLabels = { active: "Activo", depleted: "Agotado", blocked: "Bloqueado", cancelled: "Cancelado" } as const;

@@ -344,7 +344,7 @@ model PurchaseItem {
   unitCost           Decimal         @db.Decimal(12, 2)
   conversionFactor   Decimal         @db.Decimal(12, 4)
   baseQuantity       Decimal         @db.Decimal(12, 4)
-  baseUnitCost       Decimal         @db.Decimal(12, 4)
+  baseUnitCost       Decimal         @db.Decimal(12, 2)
   lineTotal          Decimal         @db.Decimal(12, 2)
   isInventoryTracked Boolean         @default(true)
   batchNumber        String?
@@ -370,7 +370,7 @@ model InventoryBatch {
   product           Product               @relation(fields: [productId], references: [id])
   originalQuantity  Decimal               @db.Decimal(12, 4)
   availableQuantity Decimal               @db.Decimal(12, 4)
-  baseUnitCost      Decimal               @db.Decimal(12, 4)
+  baseUnitCost      Decimal               @db.Decimal(12, 2)
   batchNumber       String?
   expirationDate    DateTime?             @db.Date
   status            InventoryBatchStatus  @default(active)
@@ -420,7 +420,7 @@ model InventoryMovement {
   product         Product               @relation(fields: [productId], references: [id])
   type            InventoryMovementType
   quantityBase    Decimal               @db.Decimal(12, 4)
-  unitCostBase    Decimal               @db.Decimal(12, 4)
+  unitCostBase    Decimal               @db.Decimal(12, 2)
   referenceType   String
   referenceId     String
   referenceItemId String?
@@ -545,7 +545,7 @@ model SaleItemBatch {
   batchId             String
   batch               InventoryBatch     @relation(fields: [batchId], references: [id])
   quantity            Decimal            @db.Decimal(12, 4)
-  unitCostBase        Decimal            @db.Decimal(12, 4)
+  unitCostBase        Decimal            @db.Decimal(12, 2)
   totalCost           Decimal            @db.Decimal(12, 2)
   inventoryMovementId String?            @unique
   inventoryMovement   InventoryMovement? @relation(fields: [inventoryMovementId], references: [id])
@@ -680,7 +680,7 @@ model SaleReturnItem {
   inventoryMovementId String?            @unique
   inventoryMovement   InventoryMovement? @relation(fields: [inventoryMovementId], references: [id])
   quantity            Decimal            @db.Decimal(12, 4)
-  unitCostBase        Decimal            @db.Decimal(12, 4)
+  unitCostBase        Decimal            @db.Decimal(12, 2)
   refundUnitPrice     Decimal            @db.Decimal(12, 2)
   refundSubtotal      Decimal            @db.Decimal(12, 2)
   batchNumber         String?

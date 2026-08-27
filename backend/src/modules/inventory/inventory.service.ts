@@ -281,7 +281,7 @@ export class InventoryService {
         expirationDate: batch.expirationDate ? toDateOnly(batch.expirationDate) : undefined,
         availableQuantity: Number(batch.availableQuantity),
         allocatedQuantity: Number(allocatedQuantity),
-        ...(includeCosts ? { unitCostBase: Number(batch.baseUnitCost) } : {})
+        ...(includeCosts ? { unitCostBase: toMoney(batch.baseUnitCost) } : {})
       };
     });
 
@@ -355,10 +355,10 @@ function groupStockItems(batches: InventoryBatchRecord[]) {
   for (const batch of batches) {
     const key = [batch.productId, batch.batchNumber ?? "", batch.expirationDate ? toDateOnly(batch.expirationDate) : ""].join("|");
     const current = items.get(key);
-    const totalValue = Number(batch.availableQuantity.mul(batch.baseUnitCost));
+    const totalValue = toMoney(batch.availableQuantity.mul(batch.baseUnitCost));
     const nextAvailable = (current?.totalAvailableQuantity ?? 0) + Number(batch.availableQuantity);
     const nextOriginal = (current?.totalOriginalQuantity ?? 0) + Number(batch.originalQuantity);
-    const nextValue = (current?.totalValue ?? 0) + totalValue;
+    const nextValue = toMoney((current?.totalValue ?? 0) + totalValue);
 
     items.set(key, {
       productId: batch.productId,
@@ -368,7 +368,7 @@ function groupStockItems(batches: InventoryBatchRecord[]) {
       totalOriginalQuantity: nextOriginal,
       totalAvailableQuantity: nextAvailable,
       totalValue: nextValue,
-      averageUnitCost: nextAvailable > 0 ? nextValue / nextAvailable : 0,
+      averageUnitCost: nextAvailable > 0 ? toMoney(nextValue / nextAvailable) : 0,
       layerCount: (current?.layerCount ?? 0) + 1,
       status: getStockStatus(nextAvailable, Number(batch.product.minimumStock), batch.expirationDate),
       oldestLayerCreatedAt: current?.oldestLayerCreatedAt ?? batch.createdAt.toISOString()
@@ -408,7 +408,7 @@ function toInventoryBatch(batch: InventoryBatchRecord, includeCosts: boolean): I
     supplierName: batch.purchaseItem.purchase.supplier.businessName,
     originalQuantity: Number(batch.originalQuantity),
     availableQuantity: Number(batch.availableQuantity),
-    ...(includeCosts ? { baseUnitCost: Number(batch.baseUnitCost) } : {}),
+    ...(includeCosts ? { baseUnitCost: toMoney(batch.baseUnitCost) } : {}),
     batchNumber: batch.batchNumber ?? undefined,
     expirationDate: batch.expirationDate ? toDateOnly(batch.expirationDate) : undefined,
     status: batch.status,
@@ -431,7 +431,7 @@ function toInventoryMovement(movement: InventoryMovementRecord): InventoryMoveme
     product: toInventoryProductSummary(movement.product),
     type: movement.type,
     quantityBase: Number(movement.quantityBase),
-    unitCostBase: Number(movement.unitCostBase),
+    unitCostBase: toMoney(movement.unitCostBase),
     referenceType: movement.referenceType,
     referenceId: movement.referenceId,
     referenceItemId: movement.referenceItemId ?? undefined,
@@ -478,4 +478,8 @@ function addDays(value: Date, days: number) {
   const nextDate = new Date(value);
   nextDate.setDate(nextDate.getDate() + days);
   return nextDate;
+}
+
+function toMoney(value: Prisma.Decimal.Value) {
+  return Number(new Prisma.Decimal(value).toDecimalPlaces(2));
 }

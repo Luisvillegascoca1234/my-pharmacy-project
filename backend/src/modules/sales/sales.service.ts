@@ -699,7 +699,7 @@ function buildCancelledSaleAuditMetadata(sale: SaleWithRelations, cancelReason: 
         productId: item.productId,
         batchId: consumption.batchId,
         quantity: Number(consumption.quantity),
-        unitCostBase: Number(consumption.unitCostBase)
+        unitCostBase: Number(toMoney(consumption.unitCostBase))
       }))
     ),
     cancelledAt: sale.cancelledAt?.toISOString()
@@ -880,7 +880,7 @@ function toSaleItem(item: SaleWithRelations["items"][number]) {
       batchNumber: consumption.batch.batchNumber ?? undefined,
       expirationDate: consumption.batch.expirationDate ? toDateOnly(consumption.batch.expirationDate) : undefined,
       quantity: Number(consumption.quantity),
-      unitCost: Number(consumption.unitCostBase),
+      unitCost: Number(toMoney(consumption.unitCostBase)),
       totalCost: Number(consumption.totalCost),
       inventoryMovementId: consumption.inventoryMovementId ?? undefined
     })),

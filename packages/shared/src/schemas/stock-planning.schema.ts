@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nonNegativeMoneySchema } from "./shared-schema.helpers.js";
 
 const optionalFilterText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
@@ -266,7 +267,7 @@ export const StockPlanningRecommendationSchema = StockPlanningResultBaseSchema.e
   demandQuantile: z.number().min(0),
   safetyStock: z.number().min(0),
   targetStock: z.number().min(0),
-  estimatedCost: z.number().min(0).optional()
+  estimatedCost: nonNegativeMoneySchema.optional()
 });
 export type StockPlanningRecommendation = z.infer<typeof StockPlanningRecommendationSchema>;
 

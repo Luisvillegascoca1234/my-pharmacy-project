@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PageQuerySchema, createPaginatedResponseSchema } from "./pagination.schema.js";
-import { optionalTextSchema } from "./shared-schema.helpers.js";
+import { nonNegativeMoneySchema, optionalTextSchema } from "./shared-schema.helpers.js";
 import { SupplierSummarySchema } from "./supplier.schema.js";
 
 const pureDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -41,11 +41,11 @@ export const PurchaseItemSchema = z.object({
   unitId: z.string(),
   unitName: z.string(),
   quantity: z.number().min(0),
-  unitCost: z.number().min(0),
+  unitCost: nonNegativeMoneySchema,
   conversionFactor: z.number().positive(),
   baseQuantity: z.number().min(0),
-  baseUnitCost: z.number().min(0),
-  lineTotal: z.number().min(0),
+  baseUnitCost: nonNegativeMoneySchema,
+  lineTotal: nonNegativeMoneySchema,
   isInventoryTracked: z.boolean(),
   batchNumber: z.string().optional(),
   expirationDate: pureDate.optional(),
@@ -61,7 +61,7 @@ export const PurchaseSummarySchema = z.object({
   supplier: SupplierSummarySchema,
   purchaseDate: pureDate,
   status: PurchaseStatusSchema,
-  totalAmount: z.number().min(0),
+  totalAmount: nonNegativeMoneySchema,
   createdByUserId: z.string(),
   receivedByUserId: z.string().optional(),
   receivedAt: z.string().optional(),

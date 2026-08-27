@@ -33,7 +33,7 @@ const stockStatusOptions: Array<InventoryStockStatus | "all"> = [
   "expired"
 ];
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 
 export function BatchesPage() {

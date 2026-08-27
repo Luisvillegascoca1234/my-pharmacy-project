@@ -36,7 +36,7 @@ import type {
   StockPlanningSupplierGroup
 } from "@/modules/stock-planning";
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const moneyFormatter = new Intl.NumberFormat("es-BO", {
   currency: "BOB",
   maximumFractionDigits: 2,
@@ -343,15 +343,14 @@ export function ReplenishmentTable({
   if (products.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
+      <Table className="min-w-[1080px] table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="pl-5">Medicamento</TableHead>
-            <TableHead>Qué conviene hacer</TableHead>
-            <TableHead>Por qué</TableHead>
-            <TableHead>Costo estimado</TableHead>
-            <TableHead className="pr-5 text-right">Acción</TableHead>
+            <TableHead className="w-[31%] pl-5">Medicamento</TableHead>
+            <TableHead className="w-[21%]">Qué conviene hacer</TableHead>
+            <TableHead className="w-[21%]">Por qué</TableHead>
+            <TableHead className="w-[15%]">Costo estimado</TableHead>
+            <TableHead className="sticky right-0 z-20 w-[12%] min-w-44 border-l bg-muted pr-5 text-right">Acción</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -376,7 +375,6 @@ export function ReplenishmentTable({
               ))}
         </TableBody>
       </Table>
-    </div>
   );
 }
 
@@ -400,8 +398,8 @@ function ReplenishmentRow({
   const draftCount = product.draftPurchaseCount ?? 0;
 
   return (
-    <TableRow>
-      <TableCell className="min-w-64 pl-5">
+    <TableRow className="group">
+      <TableCell className="whitespace-normal pl-5 align-top">
         <Badge variant={priority.variant}>{priority.label}</Badge>
         <p className="mt-2 font-medium">{product.commercialName}</p>
         <p className="mt-1 text-xs text-muted-foreground">Proveedor: {product.supplierName}</p>
@@ -409,7 +407,7 @@ function ReplenishmentRow({
           Stock actual: {quantityFormatter.format(product.usableStock)} {product.baseUnitAbbreviation}
         </p>
       </TableCell>
-      <TableCell className="min-w-56">
+      <TableCell className="whitespace-normal align-top">
         <p className="text-lg font-semibold">
           {product.result.quantityBase > 0
             ? `Comprar ${quantityFormatter.format(product.result.quantityBase)} ${product.baseUnitAbbreviation}`
@@ -430,7 +428,7 @@ function ReplenishmentRow({
           </div>
         ) : null}
       </TableCell>
-      <TableCell className="min-w-56">
+      <TableCell className="whitespace-normal align-top">
         <div className="flex flex-wrap gap-1.5">
           {risks.length > 0
             ? risks.map((risk) => (
@@ -446,14 +444,14 @@ function ReplenishmentRow({
           </p>
         ) : null}
       </TableCell>
-      <TableCell className="min-w-40">
+      <TableCell className="whitespace-normal align-top">
         {recommendation?.estimatedCost !== undefined ? (
           <p className="font-medium">{moneyFormatter.format(recommendation.estimatedCost)}</p>
         ) : (
           <span className="text-sm text-muted-foreground">Por confirmar con proveedor</span>
         )}
       </TableCell>
-      <TableCell className="pr-5 text-right">
+      <TableCell className="sticky right-0 z-10 border-l bg-card pr-5 text-right align-top transition-colors group-hover:bg-accent/45">
         <div className="flex min-w-40 flex-col items-stretch gap-2">
           {draftCount > 0 && onReviewDraft ? (
             <Button size="sm" type="button" onClick={() => onReviewDraft(product)}>

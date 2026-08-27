@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { PosProduct, Sale, SaleReceipt } from "@pharmacy-pos/shared";
 import { useNavigate } from "react-router-dom";
 import { ContextNavigation, pointOfSaleNavigation } from "@/components/context-navigation";
@@ -64,6 +64,7 @@ import { SALES_CANCELLATIONS_PATH } from "@/routes/navigation";
 
 const POS_SEARCH_DEBOUNCE_MS = 300;
 const NEAR_EXPIRATION_DAYS = 30;
+const POST_SALE_SCROLL_SETTLE_MS = 100;
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const dateFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium" });
@@ -72,7 +73,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   timeStyle: "short",
   timeZone: "America/La_Paz"
 });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 
 const errorMessages: Record<PosDataErrorCode, string> = {
   "cart-empty": "Agrega al menos un producto antes de cobrar.",
@@ -119,6 +120,46 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
   const [discardTarget, setDiscardTarget] = useState<PendingCart | null>(null);
   const debouncedSearchInput = useDebouncedValue(searchInput, POS_SEARCH_DEBOUNCE_MS);
   const debouncedCodeInput = useDebouncedValue(codeInput, POS_SEARCH_DEBOUNCE_MS);
+
+  useLayoutEffect(() => {
+    if (!pos.receipt) {
+      return;
+    }
+
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const scrollPageToTop = () => {
+      if (document.scrollingElement) {
+        document.scrollingElement.scrollTop = 0;
+      }
+
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo({ behavior: "auto", left: 0, top: 0 });
+    };
+
+    let finalFrameId: number | undefined;
+    scrollPageToTop();
+
+    const layoutFrameId = window.requestAnimationFrame(() => {
+      scrollPageToTop();
+      finalFrameId = window.requestAnimationFrame(() => {
+        scrollPageToTop();
+      });
+    });
+    const settleTimeoutId = window.setTimeout(scrollPageToTop, POST_SALE_SCROLL_SETTLE_MS);
+
+    return () => {
+      window.cancelAnimationFrame(layoutFrameId);
+      window.clearTimeout(settleTimeoutId);
+
+      if (finalFrameId !== undefined) {
+        window.cancelAnimationFrame(finalFrameId);
+      }
+    };
+  }, [pos.receipt]);
 
   const isLoadingCash = cash.currentStatus === "loading";
   const isSearching = pos.searchStatus === "loading";
@@ -400,7 +441,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
   }
 
   return (
-    <section className="grid gap-5">
+    <section className="grid gap-5 [overflow-anchor:none]">
       <ContextNavigation ariaLabel="Opciones de venta" items={pointOfSaleNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
@@ -463,29 +504,33 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
       ) : null}
 
       {pos.receipt ? (
-        <SaleReceiptPanel
-          receipt={pos.receipt}
-          sale={pos.confirmedSale}
-          onDismiss={dismissReceipt}
-          onNewSale={startNewSale}
-          onOpenSaleDetail={openConfirmedSaleDetail}
-        />
+        <div>
+          <SaleReceiptPanel
+            receipt={pos.receipt}
+            sale={pos.confirmedSale}
+            onDismiss={dismissReceipt}
+            onNewSale={startNewSale}
+            onOpenSaleDetail={openConfirmedSaleDetail}
+          />
+        </div>
       ) : null}
 
-      {focus === "pending" ? (
-        <PendingCartsPanel
-          activeCartId={activePendingCart?.id ?? null}
-          carts={visiblePendingCarts}
-          hasError={isPendingRequestFailure(pending.listStatus)}
-          isDiscarding={isDiscardingPending}
-          isLoading={pending.listStatus === "loading"}
-          onDiscard={setDiscardTarget}
-          onReload={() => void pending.reload()}
-          onRetake={retakePendingCart}
-        />
-      ) : null}
+      {!pos.receipt ? (
+        <>
+          {focus === "pending" ? (
+            <PendingCartsPanel
+              activeCartId={activePendingCart?.id ?? null}
+              carts={visiblePendingCarts}
+              hasError={isPendingRequestFailure(pending.listStatus)}
+              isDiscarding={isDiscardingPending}
+              isLoading={pending.listStatus === "loading"}
+              onDiscard={setDiscardTarget}
+              onReload={() => void pending.reload()}
+              onRetake={retakePendingCart}
+            />
+          ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card>
           <CardHeader className="gap-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -535,12 +580,12 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[104px]">Código</TableHead>
-                  <TableHead className="w-[34%]">Producto</TableHead>
-                  <TableHead className="w-[116px]">Precio</TableHead>
-                  <TableHead className="w-[112px]">Stock</TableHead>
+                  <TableHead className="w-[100px]">Código</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead className="w-[100px]">Precio</TableHead>
+                  <TableHead className="w-[100px]">Stock</TableHead>
                   <TableHead className="w-[132px]">Vence</TableHead>
-                  <TableHead className="w-[92px] text-right">Acción</TableHead>
+                  <TableHead className="sticky right-0 z-20 w-[124px] border-l bg-muted text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -654,19 +699,6 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
             </CardContent>
           </Card>
 
-          {focus === "pos" ? (
-            <PendingCartsPanel
-              activeCartId={activePendingCart?.id ?? null}
-              carts={visiblePendingCarts}
-              hasError={isPendingRequestFailure(pending.listStatus)}
-              isDiscarding={isDiscardingPending}
-              isLoading={pending.listStatus === "loading"}
-              onDiscard={setDiscardTarget}
-              onReload={() => void pending.reload()}
-              onRetake={retakePendingCart}
-            />
-          ) : null}
-
           <Card>
             <CardHeader>
               <CardTitle>{hasActivePendingCart ? "Cobrar venta guardada" : "Cobro en efectivo"}</CardTitle>
@@ -709,8 +741,23 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
               </form>
             </CardContent>
           </Card>
+
+          {focus === "pos" ? (
+            <PendingCartsPanel
+              activeCartId={activePendingCart?.id ?? null}
+              carts={visiblePendingCarts}
+              hasError={isPendingRequestFailure(pending.listStatus)}
+              isDiscarding={isDiscardingPending}
+              isLoading={pending.listStatus === "loading"}
+              onDiscard={setDiscardTarget}
+              onReload={() => void pending.reload()}
+              onRetake={retakePendingCart}
+            />
+          ) : null}
         </div>
-      </div>
+          </div>
+        </>
+      ) : null}
 
       <Dialog open={isPendingSaveDialogOpen} onOpenChange={setPendingSaveDialogOpen}>
         <DialogContent>
@@ -927,7 +974,7 @@ function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
   const isNearExpiration = isNearExpirationDate(product.nextExpirationDate);
 
   return (
-    <TableRow>
+    <TableRow className="group">
       <TableCell className="min-w-0 font-mono text-xs">
         <span className="block truncate" title={product.internalCode}>
           {product.internalCode}
@@ -965,8 +1012,14 @@ function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
           ) : null}
         </div>
       </TableCell>
-      <TableCell className="text-right">
-        <Button disabled={disabled || product.saleableStock <= 0} size="sm" variant="outline" onClick={onAdd}>
+      <TableCell className="sticky right-0 z-10 border-l bg-card text-right transition-colors group-hover:bg-accent/45">
+        <Button
+          className="border-primary/60 text-primary hover:border-primary hover:bg-primary/10 hover:text-primary"
+          disabled={disabled || product.saleableStock <= 0}
+          size="sm"
+          variant="outline"
+          onClick={onAdd}
+        >
           <Plus aria-hidden="true" />
           Agregar
         </Button>
@@ -1075,7 +1128,11 @@ function SaleReceiptPanel({ onDismiss, onNewSale, onOpenSaleDetail, receipt, sal
       <CardHeader className="gap-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <Badge className="w-fit" variant="secondary">
+            <Badge
+              className="h-9 w-fit gap-2 rounded-lg border-success bg-success px-4 text-sm font-bold text-success-foreground shadow-sm shadow-success/20 [&>svg]:size-4!"
+              role="status"
+              variant="success"
+            >
               <BadgeCheck aria-hidden="true" />
               Venta confirmada
             </Badge>
