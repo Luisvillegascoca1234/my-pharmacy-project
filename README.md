@@ -105,7 +105,7 @@ pnpm dev:prepare
 Cuando necesites presentar el sistema con una farmacia que ya tiene historia operativa, ejecuta:
 
 ```powershell
-pnpm --filter @pharmacy-pos/backend seed:realistic -- --as-of=2026-08-26 --seed=20260826
+pnpm --filter @pharmacy-pos/backend seed:realistic -- --as-of=2026-08-27 --seed=20260826
 ```
 
 > **Advertencia:** este comando reconstruye primero los datos operativos. Úsalo solamente en desarrollo o sobre una base aislada de pruebas.
@@ -124,6 +124,7 @@ La carga es determinista y crea un escenario proporcional de una farmacia de una
 - productos agotados, con stock bajo y lotes próximos a vencer;
 - carritos activos, vencidos, descartados y convertidos;
 - cierres de caja conformes y diferencias menores de arqueo;
+- un cálculo inicial de planificación con pronósticos y recomendaciones para todos los productos activos;
 - evidencia de auditoría para operaciones representativas.
 
 La fecha `--as-of` permite mover todo el escenario a la fecha de la presentación. La opción `--seed` conserva exactamente la misma distribución de ventas, importes, productos y turnos entre ejecuciones.

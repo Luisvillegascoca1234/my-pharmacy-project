@@ -2,6 +2,9 @@ import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
 import "../src/config/env.js";
 import { prisma } from "../src/infrastructure/prisma/prisma.client.js";
+import { StockPlanningExecutionRepository } from "../src/modules/stock-planning/stock-planning-execution.repository.js";
+import { StockPlanningExecutionService } from "../src/modules/stock-planning/stock-planning-execution.service.js";
+import { ForecastService } from "../src/modules/stock-planning/forecasting/forecast.service.js";
 
 const PRODUCT_COUNT = 250;
 const HISTORY_DAYS = 730;
@@ -929,6 +932,8 @@ async function main() {
     await createInChunks(auditRows, (data) => tx.auditLog.createMany({ data }));
   }, { maxWait: 20_000, timeout: 180_000 });
 
+  const stockPlanningExecution = await runInitialStockPlanning(asOf);
+
   console.log("Realistic pharmacy seed completed:");
   console.log(`- Reference date: ${options.asOf}`);
   console.log(`- Deterministic seed: ${options.seed}`);
@@ -940,7 +945,20 @@ async function main() {
   console.log(`- Cash sessions: ${cashRows.length}`);
   console.log(`- Sales: ${saleRows.length}`);
   console.log(`- Prepared internal invoices: ${preparedInvoiceRows.length}`);
+  console.log(`- Stock planning: ${stockPlanningExecution.status} (${stockPlanningExecution.id})`);
   console.log("- Development credentials keep the password: admin");
+}
+
+async function runInitialStockPlanning(asOf: Date) {
+  const calculationStartedAt = atHour(asOf, 12, 0);
+  const scheduledFor = atHour(asOf, 6, 0);
+  const service = new StockPlanningExecutionService(
+    new StockPlanningExecutionRepository(),
+    () => calculationStartedAt,
+    new ForecastService()
+  );
+
+  return service.runScheduled(scheduledFor);
 }
 
 function family(

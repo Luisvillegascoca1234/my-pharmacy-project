@@ -15,6 +15,10 @@ type SchedulerTimer = {
   unref(): unknown;
 };
 
+export type StockPlanningScheduler = {
+  stop(): Promise<void>;
+};
+
 export async function startStockPlanningScheduler(
   service: StockPlanningSchedulerPort = new StockPlanningExecutionService(
     undefined,
@@ -23,16 +27,14 @@ export async function startStockPlanningScheduler(
   ),
   setTimer: (callback: () => void, intervalMs: number) => SchedulerTimer =
     (callback, intervalMs) => setInterval(callback, intervalMs),
-  reportError: (message: string, error: unknown) => void = console.error
-) {
+  reportError: (message: string, error: unknown) => void = console.error,
+  clearTimer: (timer: SchedulerTimer) => void = (timer) => clearInterval(timer as NodeJS.Timeout)
+): Promise<StockPlanningScheduler> {
   let startupRecoveryCompleted = false;
-  let tickInProgress = false;
+  let stopped = false;
+  let activeTick: Promise<void> | undefined;
 
-  const tick = async () => {
-    if (tickInProgress) {
-      return;
-    }
-    tickInProgress = true;
+  const executeTick = async () => {
     try {
       await service.reconstructPreviousSnapshotIfMissing();
       await service.captureDailySnapshot();
@@ -44,13 +46,37 @@ export async function startStockPlanningScheduler(
       }
     } catch (error) {
       reportError("Stock planning scheduler tick failed.", error);
-    } finally {
-      tickInProgress = false;
     }
   };
 
-  await tick();
-  const timer = setTimer(() => void tick(), CHECK_INTERVAL_MS);
+  const runTick = () => {
+    if (stopped) {
+      return Promise.resolve();
+    }
+
+    if (activeTick) {
+      return activeTick;
+    }
+
+    const tickPromise = executeTick();
+    activeTick = tickPromise;
+    void tickPromise.finally(() => {
+      if (activeTick === tickPromise) {
+        activeTick = undefined;
+      }
+    });
+    return tickPromise;
+  };
+
+  await runTick();
+  const timer = setTimer(() => void runTick(), CHECK_INTERVAL_MS);
   timer.unref();
-  return timer;
+
+  return {
+    async stop() {
+      stopped = true;
+      clearTimer(timer);
+      await activeTick;
+    }
+  };
 }
