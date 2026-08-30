@@ -61,6 +61,7 @@ import {
 } from "@/modules/pending-carts";
 import { type PosCartItem, type PosDataError, type PosDataErrorCode, usePos } from "@/modules/pos";
 import { SALES_CANCELLATIONS_PATH } from "@/routes/navigation";
+import { getPosProductAvailability } from "./pos-product-availability";
 
 const POS_SEARCH_DEBOUNCE_MS = 300;
 const NEAR_EXPIRATION_DAYS = 30;
@@ -583,9 +584,9 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                   <TableHead className="w-[100px]">Código</TableHead>
                   <TableHead>Producto</TableHead>
                   <TableHead className="w-[100px]">Precio</TableHead>
-                  <TableHead className="w-[100px]">Stock</TableHead>
+                  <TableHead className="w-[124px]">Disponibilidad</TableHead>
                   <TableHead className="w-[132px]">Vence</TableHead>
-                  <TableHead className="sticky right-0 z-20 w-[124px] border-l bg-muted text-right">Acción</TableHead>
+                  <TableHead className="sticky right-0 z-20 w-[152px] border-l bg-muted text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -600,12 +601,12 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                           <EmptyMedia variant="icon">
                             {isSearching ? <Spinner /> : <PackageSearch aria-hidden="true" />}
                           </EmptyMedia>
-                          <EmptyTitle>{isSearching ? "Buscando productos" : hasProductQuery ? "Sin resultados" : "Busca un producto"}</EmptyTitle>
+                          <EmptyTitle>{isSearching ? "Buscando productos" : hasProductQuery ? "Producto no encontrado en el catálogo" : "Busca un producto"}</EmptyTitle>
                           <EmptyDescription>
                             {isSearching
-                              ? "Buscando productos disponibles."
+                              ? "Buscando productos en el catálogo de la farmacia."
                               : hasProductQuery
-                                ? "No hay productos disponibles para el nombre o código ingresado."
+                                ? "La farmacia no comercializa un producto activo con el nombre o código ingresado."
                                 : "Escribe un nombre, código interno o código de barras para empezar."}
                           </EmptyDescription>
                         </EmptyHeader>
@@ -971,6 +972,7 @@ function PendingCartActiveNotice({ cart, cartItems }: PendingCartActiveNoticePro
 }
 
 function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
+  const availability = getPosProductAvailability(product);
   const isNearExpiration = isNearExpirationDate(product.nextExpirationDate);
 
   return (
@@ -993,18 +995,23 @@ function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
           <p className="truncate text-xs text-muted-foreground" title={product.genericName ?? product.baseUnit.name}>
             {product.genericName ?? product.baseUnit.name}
           </p>
+          {availability.description ? (
+            <p className="whitespace-normal text-xs leading-4 text-muted-foreground">
+              {availability.description}
+            </p>
+          ) : null}
         </div>
       </TableCell>
       <TableCell>{formatMoney(product.salePrice)}</TableCell>
       <TableCell>
-        <Badge variant={product.saleableStock > 0 ? "default" : "secondary"}>
-          {product.saleableStock} {product.baseUnit.abbreviation}
+        <Badge className="w-fit" variant={availability.isOutOfStock ? "destructive" : "default"}>
+          {availability.stockLabel}
         </Badge>
       </TableCell>
       <TableCell>
         <div className="grid gap-1">
-          <span>{product.nextExpirationDate ? formatDate(product.nextExpirationDate) : "Sin vencimiento"}</span>
-          {isNearExpiration ? (
+          <span>{availability.isOutOfStock ? "No aplica" : product.nextExpirationDate ? formatDate(product.nextExpirationDate) : "Sin vencimiento"}</span>
+          {!availability.isOutOfStock && isNearExpiration ? (
             <Badge variant="secondary">
               <CalendarClock aria-hidden="true" />
               Próximo a vencer
@@ -1014,14 +1021,14 @@ function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
       </TableCell>
       <TableCell className="sticky right-0 z-10 border-l bg-card text-right transition-colors group-hover:bg-accent/45">
         <Button
-          className="border-primary/60 text-primary hover:border-primary hover:bg-primary/10 hover:text-primary"
-          disabled={disabled || product.saleableStock <= 0}
+          className="w-full border-primary/60 text-primary hover:border-primary hover:bg-primary/10 hover:text-primary"
+          disabled={disabled || availability.isOutOfStock}
           size="sm"
           variant="outline"
           onClick={onAdd}
         >
-          <Plus aria-hidden="true" />
-          Agregar
+          {availability.isOutOfStock ? <Ban aria-hidden="true" /> : <Plus aria-hidden="true" />}
+          {availability.actionLabel}
         </Button>
       </TableCell>
     </TableRow>

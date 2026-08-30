@@ -22,7 +22,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { getVisibleNavigationGroups } from "@/routes/navigation";
 
@@ -33,7 +34,14 @@ type AppSidebarProps = {
 export function AppSidebar({ user }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
   const groups = getVisibleNavigationGroups(user.role.name);
+
+  const closeMobileNavigation = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" className="border-r border-sidebar-border">
@@ -93,7 +101,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                             tooltip={item.label}
                             className="relative h-9 rounded-lg text-[0.8125rem] font-medium data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:shadow-xs"
                           >
-                            <NavLink to={item.path}>
+                            <NavLink to={item.path} onClick={closeMobileNavigation}>
                               {isActive ? <span aria-hidden="true" className="absolute -left-2 h-5 w-0.5 rounded-full bg-sidebar-primary" /> : null}
                               <Icon aria-hidden="true" className="size-[1.0625rem]" />
                               <span>{item.label}</span>

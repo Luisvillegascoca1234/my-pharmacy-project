@@ -75,9 +75,6 @@ function buildProductWhere(filters: PosProductSearchFilters): Prisma.ProductWher
 
   return {
     status: "active",
-    inventoryBatches: {
-      some: buildSaleableBatchWhere(filters.today)
-    },
     AND: textFilters.length > 0 ? textFilters : undefined
   };
 }

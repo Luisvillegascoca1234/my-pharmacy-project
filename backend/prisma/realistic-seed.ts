@@ -190,6 +190,7 @@ async function main() {
   }));
 
   const products = Array.from({ length: PRODUCT_COUNT }, (_, index) => buildProduct(index, random));
+  assertUniqueProductCatalog(products);
   const productRows: Prisma.ProductCreateManyInput[] = products.map((product) => ({
     id: product.id,
     internalCode: product.internalCode,
@@ -971,8 +972,8 @@ function buildProduct(index: number, random: () => number) {
     id: `product-${String(index + 1).padStart(4, "0")}`,
     internalCode: `PRD-${String(index + 1).padStart(4, "0")}`,
     barcode: buildEan13(index),
-    commercialName: `${family.genericName} ${strength} ${presentation}`,
-    description: `${presentation} de ${family.genericName} ${strength}. Registro con control de lote, vencimiento y dispensación.`,
+    commercialName: `${family.genericName} ${strength} ${presentation} - ${laboratory}`,
+    description: `${presentation} de ${family.genericName} ${strength}, elaborado por ${laboratory}. Registro con control de lote, vencimiento y dispensación.`,
     family,
     laboratory,
     supplierIndex: index % suppliers.length,
@@ -982,6 +983,20 @@ function buildProduct(index: number, random: () => number) {
     coverageDays: [15, 30, 45][index % 3]!,
     criticality: family.prescription || index % 17 === 0 ? "high" as const : index % 41 === 0 ? "critical" as const : "normal" as const
   };
+}
+
+function assertUniqueProductCatalog(products: ReturnType<typeof buildProduct>[]) {
+  const uniqueFields = [
+    ["internal code", products.map((product) => product.internalCode)],
+    ["barcode", products.map((product) => product.barcode)],
+    ["commercial name", products.map((product) => product.commercialName.toLocaleLowerCase("es-BO"))]
+  ] as const;
+
+  for (const [field, values] of uniqueFields) {
+    if (new Set(values).size !== values.length) {
+      throw new Error(`Realistic seed generated a duplicate product ${field}.`);
+    }
+  }
 }
 
 function buildInvoiceCustomers(count: number): InvoiceCustomer[] {
