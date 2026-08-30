@@ -91,6 +91,23 @@ describe("PosProductsService", () => {
       saleableStock: 10
     });
   });
+
+  it("keeps an active catalog product visible when it has no saleable stock", async () => {
+    const service = new PosProductsService(
+      new FakePosProductsRepository({
+        data: [makePosProductRecord({ inventoryBatches: [] })],
+        total: 1
+      })
+    );
+
+    const result = await service.searchProducts({ page: 1, pageSize: 20, search: "paracetamol" });
+
+    expect(result.data[0]).toMatchObject({
+      commercialName: "Paracetamol 500 mg",
+      saleableStock: 0,
+      nextExpirationDate: undefined
+    });
+  });
 });
 
 class FakePosProductsRepository implements PosProductsRepositoryPort {
