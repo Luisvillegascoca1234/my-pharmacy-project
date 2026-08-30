@@ -1,6 +1,7 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { PosProduct, Sale, SaleReceipt } from "@pharmacy-pos/shared";
 import { useNavigate } from "react-router-dom";
+import { ContextNavigation, pointOfSaleNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
   Ban,
@@ -60,37 +61,43 @@ import {
 } from "@/modules/pending-carts";
 import { type PosCartItem, type PosDataError, type PosDataErrorCode, usePos } from "@/modules/pos";
 import { SALES_CANCELLATIONS_PATH } from "@/routes/navigation";
+import { getPosProductAvailability } from "./pos-product-availability";
 
 const POS_SEARCH_DEBOUNCE_MS = 300;
 const NEAR_EXPIRATION_DAYS = 30;
+const POST_SALE_SCROLL_SETTLE_MS = 100;
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const dateFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium" });
-const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/La_Paz"
+});
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 
 const errorMessages: Record<PosDataErrorCode, string> = {
   "cart-empty": "Agrega al menos un producto antes de cobrar.",
   "cash-session-closed": "Abre una caja propia para confirmar ventas de mostrador.",
-  "cash-session-invalid": "La caja abierta no corresponde a tu usuario o ya no está operativa.",
+  "cash-session-invalid": "La caja abierta no corresponde a tu usuario o ya fue cerrada.",
   "payment-insufficient": "El monto recibido debe cubrir el total de la venta.",
   "product-not-saleable": "El producto ya no está disponible para venta. Retíralo del carrito y vuelve a buscarlo.",
-  "session-invalid": "Tu sesión no permite operar ventas en este momento. Vuelve a iniciar sesión.",
-  "stock-insufficient": "La cantidad solicitada supera el stock vendible disponible.",
-  unknown: "No se pudo completar la operación POS. Intenta nuevamente."
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
+  "stock-insufficient": "La cantidad solicitada supera el stock disponible.",
+  unknown: "No se pudo completar la venta. Intenta nuevamente."
 };
 
 const pendingErrorMessages: Record<PendingCartDataErrorCode, string> = {
-  "cash-session-closed": "Abre una caja propia para cobrar este pendiente.",
-  forbidden: "Este pendiente pertenece a otro usuario y no está disponible en tu alcance propio.",
-  "pending-expired": "Este pendiente expiró y no puede cobrarse.",
-  "price-changed": "El precio cambió. Revisa el total vigente antes de cobrar.",
-  "product-not-saleable": "Un producto del pendiente ya no está disponible para venta.",
-  "session-invalid": "Tu sesión no permite operar pendientes en este momento. Vuelve a iniciar sesión.",
-  "stock-insufficient": "El stock actual no alcanza para cobrar este pendiente.",
-  validation: "Revisa el nombre, nota e ítems del pendiente.",
-  "not-found": "No se encontró el pendiente seleccionado.",
-  unknown: "No se pudo completar la operación con el pendiente. Intenta nuevamente."
+  "cash-session-closed": "Abre tu caja para cobrar esta venta guardada.",
+  forbidden: "Esta venta guardada pertenece a otro usuario.",
+  "pending-expired": "Esta venta guardada venció y ya no puede cobrarse.",
+  "price-changed": "El precio cambió. Revisa el nuevo total antes de cobrar.",
+  "product-not-saleable": "Un producto de la venta guardada ya no está disponible.",
+  "session-invalid": "Vuelve a iniciar sesión para continuar.",
+  "stock-insufficient": "El stock actual no alcanza para cobrar esta venta.",
+  validation: "Revisa el nombre, la nota y los productos.",
+  "not-found": "No se encontró la venta guardada.",
+  unknown: "No se pudo actualizar la venta guardada. Intenta nuevamente."
 };
 
 type PosPageProps = {
@@ -115,6 +122,46 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
   const debouncedSearchInput = useDebouncedValue(searchInput, POS_SEARCH_DEBOUNCE_MS);
   const debouncedCodeInput = useDebouncedValue(codeInput, POS_SEARCH_DEBOUNCE_MS);
 
+  useLayoutEffect(() => {
+    if (!pos.receipt) {
+      return;
+    }
+
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const scrollPageToTop = () => {
+      if (document.scrollingElement) {
+        document.scrollingElement.scrollTop = 0;
+      }
+
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo({ behavior: "auto", left: 0, top: 0 });
+    };
+
+    let finalFrameId: number | undefined;
+    scrollPageToTop();
+
+    const layoutFrameId = window.requestAnimationFrame(() => {
+      scrollPageToTop();
+      finalFrameId = window.requestAnimationFrame(() => {
+        scrollPageToTop();
+      });
+    });
+    const settleTimeoutId = window.setTimeout(scrollPageToTop, POST_SALE_SCROLL_SETTLE_MS);
+
+    return () => {
+      window.cancelAnimationFrame(layoutFrameId);
+      window.clearTimeout(settleTimeoutId);
+
+      if (finalFrameId !== undefined) {
+        window.cancelAnimationFrame(finalFrameId);
+      }
+    };
+  }, [pos.receipt]);
+
   const isLoadingCash = cash.currentStatus === "loading";
   const isSearching = pos.searchStatus === "loading";
   const isConfirming = pos.saleStatus === "loading";
@@ -134,6 +181,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
   const hasInvalidCartQuantity = pos.cartItems.some((item) => item.quantity <= 0 || !Number.isInteger(item.quantity));
   const receivedAmount = toNonNegativeNumber(receivedAmountInput);
   const isPaymentInsufficient = receivedAmount < pos.cartTotals.totalAmount;
+  const hasProductQuery = Boolean(searchInput.trim() || codeInput.trim());
   const canConfirmSale =
     !isCheckoutLocked &&
     pos.cartItems.length > 0 &&
@@ -157,14 +205,12 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
   const pageCopy =
     focus === "pending"
       ? {
-          badge: "Atenciones pausadas",
-          description: "Carritos propios para retomar, corregir, descartar o cobrar con caja abierta.",
-          title: "Pendientes POS"
+          description: "Retoma, modifica o descarta una venta guardada.",
+          title: "Ventas guardadas"
         }
       : {
-          badge: "Venta rápida de mostrador",
-          description: "Búsqueda de productos vendibles, carrito consolidado y cobro efectivo para consumidor final.",
-          title: "Punto de venta"
+          description: "Busca productos, agrégalos y cobra la venta.",
+          title: "Nueva venta"
         };
 
   useEffect(() => {
@@ -249,7 +295,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
     }
 
     if (hasBlockingPendingIssue) {
-      setLocalError("Corrige los productos no vendibles o sin stock antes de cobrar este pendiente.");
+      setLocalError("Retira los productos no disponibles o corrige sus cantidades antes de cobrar.");
       return;
     }
 
@@ -272,7 +318,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
         }
 
         setReceivedAmountInput("");
-        setPendingFeedback("Pendiente cobrado correctamente. La atención quedó confirmada como venta.");
+        setPendingFeedback("Venta guardada cobrada y confirmada.");
         pending.clearDraft();
         await pending.reload();
       }
@@ -307,7 +353,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
     setPendingFeedback(null);
 
     if (isActivePendingExpired) {
-      setLocalError("Este pendiente expiró. Puedes revisarlo o descartarlo, pero no actualizarlo ni cobrarlo.");
+      setLocalError("Esta venta guardada venció. Puedes revisarla o descartarla, pero ya no puedes actualizarla ni cobrarla.");
       return;
     }
 
@@ -346,13 +392,13 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
     if (pendingCartId) {
       pending.retakeCart(savedPendingCart);
       pos.replaceCartItems(mapPendingCartToPosCartItems(savedPendingCart));
-      setPendingFeedback("Pendiente actualizado con las cantidades actuales.");
+      setPendingFeedback("Venta guardada actualizada.");
       return;
     }
 
     pos.clearCart();
     pending.clearDraft();
-    setPendingFeedback("Carrito guardado como pendiente. No se reservó stock ni precio.");
+    setPendingFeedback("Venta guardada. El stock y el precio se confirmarán al cobrar.");
   }
 
   function retakePendingCart(pendingCart: PendingCart) {
@@ -391,17 +437,15 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
     }
 
     setDiscardTarget(null);
-    setPendingFeedback("Pendiente descartado. El carrito no afectó inventario ni caja.");
+    setPendingFeedback("Venta guardada descartada. No se modificaron la caja ni el inventario.");
     await pending.reload();
   }
 
   return (
-    <section className="grid gap-5">
+    <section className="grid gap-5 [overflow-anchor:none]">
+      <ContextNavigation ariaLabel="Opciones de venta" items={pointOfSaleNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            {pageCopy.badge}
-          </Badge>
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">{pageCopy.title}</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{pageCopy.description}</p>
@@ -417,8 +461,8 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
       {focus === "pending" ? (
         <OperationalScopeNotice
           canSupervise={pending.canSupervise}
-          ownRecordsDescription="El servidor limita esta bandeja a tus pendientes de mostrador; solo puedes retomarlos, cobrarlos o descartarlos según su estado efectivo."
-          supervisionDescription="En esta bandeja operas pendientes propios. Los pendientes de otros vendedores se consultan desde Supervisión POS."
+          ownRecordsDescription="Esta pantalla muestra únicamente tus ventas guardadas."
+          supervisionDescription="Para revisar ventas guardadas de otros vendedores, ve a Supervisar ventas."
         />
       ) : null}
 
@@ -426,7 +470,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
           <AlertTitle>Área no disponible</AlertTitle>
-          <AlertDescription>El rol de tu usuario no incluye la operación de ventas de mostrador.</AlertDescription>
+          <AlertDescription>No tienes permiso para registrar ventas.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -435,7 +479,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
           <WalletCards aria-hidden="true" />
           <AlertTitle>Caja requerida</AlertTitle>
           <AlertDescription>
-            {isLoadingCash ? "Verificando caja actual..." : "Puedes preparar o retomar carritos sin caja abierta; para cobrar necesitas abrir una caja propia."}
+            {isLoadingCash ? "Comprobando tu caja..." : "Puedes preparar una venta, pero debes abrir tu caja antes de cobrar."}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -443,7 +487,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
       {pendingFeedback ? (
         <Alert>
           <BadgeCheck aria-hidden="true" />
-          <AlertTitle>Flujo de pendiente actualizado</AlertTitle>
+          <AlertTitle>Venta guardada actualizada</AlertTitle>
           <AlertDescription>{pendingFeedback}</AlertDescription>
         </Alert>
       ) : null}
@@ -451,7 +495,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
       {visibleError ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo completar la operación</AlertTitle>
+          <AlertTitle>No se pudo completar la venta</AlertTitle>
           <AlertDescription>{visibleError}</AlertDescription>
         </Alert>
       ) : null}
@@ -461,49 +505,72 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
       ) : null}
 
       {pos.receipt ? (
-        <SaleReceiptPanel
-          receipt={pos.receipt}
-          sale={pos.confirmedSale}
-          onDismiss={dismissReceipt}
-          onNewSale={startNewSale}
-          onOpenSaleDetail={openConfirmedSaleDetail}
-        />
+        <div>
+          <SaleReceiptPanel
+            receipt={pos.receipt}
+            sale={pos.confirmedSale}
+            onDismiss={dismissReceipt}
+            onNewSale={startNewSale}
+            onOpenSaleDetail={openConfirmedSaleDetail}
+          />
+        </div>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      {!pos.receipt ? (
+        <>
+          {focus === "pending" ? (
+            <PendingCartsPanel
+              activeCartId={activePendingCart?.id ?? null}
+              carts={visiblePendingCarts}
+              hasError={isPendingRequestFailure(pending.listStatus)}
+              isDiscarding={isDiscardingPending}
+              isLoading={pending.listStatus === "loading"}
+              onDiscard={setDiscardTarget}
+              onReload={() => void pending.reload()}
+              onRetake={retakePendingCart}
+            />
+          ) : null}
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card>
           <CardHeader className="gap-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <CardTitle>Productos vendibles</CardTitle>
-                <CardDescription>Consulta por nombre, código interno o código de barras con stock FEFO disponible.</CardDescription>
+                <CardTitle>Productos</CardTitle>
+                <CardDescription>Busca por nombre, código interno o código de barras.</CardDescription>
               </div>
               <Button disabled={isSearchLocked || isSearching} size="sm" variant="outline" onClick={() => void pos.searchProducts()}>
                 {isSearching ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
                 Actualizar
               </Button>
             </div>
-            <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" onSubmit={submitSearch}>
-              <div className="relative">
-                <Search aria-hidden="true" className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  className="pl-8"
-                  disabled={isSearchLocked}
-                  placeholder="Nombre comercial, principio activo o texto"
-                  value={searchInput}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                />
-              </div>
-              <div className="relative">
-                <Barcode aria-hidden="true" className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  className="pl-8"
-                  disabled={isSearchLocked}
-                  placeholder="Código o barras exacto"
-                  value={codeInput}
-                  onChange={(event) => setCodeInput(event.target.value)}
-                />
-              </div>
+            <form className="grid items-end gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" onSubmit={submitSearch}>
+              <Field>
+                <FieldLabel>Buscar por nombre</FieldLabel>
+                <div className="relative">
+                  <Search aria-hidden="true" className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                  <Input
+                    className="pl-8"
+                    disabled={isSearchLocked}
+                    placeholder="Nombre comercial o principio activo"
+                    value={searchInput}
+                    onChange={(event) => setSearchInput(event.target.value)}
+                  />
+                </div>
+              </Field>
+              <Field>
+                <FieldLabel>Escanear o escribir código</FieldLabel>
+                <div className="relative">
+                  <Barcode aria-hidden="true" className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                  <Input
+                    className="pl-8"
+                    disabled={isSearchLocked}
+                    placeholder="Código interno o de barras"
+                    value={codeInput}
+                    onChange={(event) => setCodeInput(event.target.value)}
+                  />
+                </div>
+              </Field>
               <Button disabled={isSearchLocked || isSearching} type="submit">
                 {isSearching ? <Spinner /> : <PackageSearch aria-hidden="true" />}
                 Buscar
@@ -514,12 +581,12 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[104px]">Código</TableHead>
-                  <TableHead className="w-[34%]">Producto</TableHead>
-                  <TableHead className="w-[116px]">Precio</TableHead>
-                  <TableHead className="w-[112px]">Stock</TableHead>
+                  <TableHead className="w-[100px]">Código</TableHead>
+                  <TableHead>Producto</TableHead>
+                  <TableHead className="w-[100px]">Precio</TableHead>
+                  <TableHead className="w-[124px]">Disponibilidad</TableHead>
                   <TableHead className="w-[132px]">Vence</TableHead>
-                  <TableHead className="w-[92px] text-right">Acción</TableHead>
+                  <TableHead className="sticky right-0 z-20 w-[152px] border-l bg-muted text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -534,11 +601,13 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                           <EmptyMedia variant="icon">
                             {isSearching ? <Spinner /> : <PackageSearch aria-hidden="true" />}
                           </EmptyMedia>
-                          <EmptyTitle>{isSearching ? "Cargando productos vendibles" : "Sin resultados"}</EmptyTitle>
+                          <EmptyTitle>{isSearching ? "Buscando productos" : hasProductQuery ? "Producto no encontrado en el catálogo" : "Busca un producto"}</EmptyTitle>
                           <EmptyDescription>
                             {isSearching
-                              ? "Buscando existencias FEFO disponibles para mostrador."
-                              : "No hay productos vendibles para el nombre, código o barras ingresado."}
+                              ? "Buscando productos en el catálogo de la farmacia."
+                              : hasProductQuery
+                                ? "La farmacia no comercializa un producto activo con el nombre o código ingresado."
+                                : "Escribe un nombre, código interno o código de barras para empezar."}
                           </EmptyDescription>
                         </EmptyHeader>
                       </Empty>
@@ -571,19 +640,6 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
         </Card>
 
         <div className="grid h-fit gap-5">
-          {focus === "pending" ? (
-            <PendingCartsPanel
-              activeCartId={activePendingCart?.id ?? null}
-              carts={visiblePendingCarts}
-              hasError={isPendingRequestFailure(pending.listStatus)}
-              isDiscarding={isDiscardingPending}
-              isLoading={pending.listStatus === "loading"}
-              onDiscard={setDiscardTarget}
-              onReload={() => void pending.reload()}
-              onRetake={retakePendingCart}
-            />
-          ) : null}
-
           <Card>
             <CardHeader className="gap-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -591,7 +647,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                   <CardTitle>Carrito</CardTitle>
                   <CardDescription>
                     {hasActivePendingCart
-                      ? "Atención retomada desde pendientes; puedes ajustar ítems antes del cobro."
+                      ? "Puedes modificar los productos antes de cobrar."
                       : "Los productos repetidos se consolidan en una sola línea."}
                   </CardDescription>
                 </div>
@@ -603,7 +659,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                   onClick={openPendingSaveDialog}
                 >
                   {isSavingPending ? <Spinner /> : <Save aria-hidden="true" />}
-                  {hasActivePendingCart ? "Actualizar pendiente" : "Guardar pendiente"}
+                  {hasActivePendingCart ? "Actualizar venta guardada" : "Guardar venta"}
                 </Button>
               </div>
             </CardHeader>
@@ -637,33 +693,20 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                       <ShoppingCart aria-hidden="true" />
                     </EmptyMedia>
                     <EmptyTitle>Carrito vacío</EmptyTitle>
-                    <EmptyDescription>Agrega productos vendibles para iniciar una venta anónima o consumidor final.</EmptyDescription>
+                    <EmptyDescription>Agrega productos para iniciar una venta.</EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               )}
             </CardContent>
           </Card>
 
-          {focus === "pos" ? (
-            <PendingCartsPanel
-              activeCartId={activePendingCart?.id ?? null}
-              carts={visiblePendingCarts}
-              hasError={isPendingRequestFailure(pending.listStatus)}
-              isDiscarding={isDiscardingPending}
-              isLoading={pending.listStatus === "loading"}
-              onDiscard={setDiscardTarget}
-              onReload={() => void pending.reload()}
-              onRetake={retakePendingCart}
-            />
-          ) : null}
-
           <Card>
             <CardHeader>
-              <CardTitle>{hasActivePendingCart ? "Cobro de pendiente" : "Cobro efectivo"}</CardTitle>
+              <CardTitle>{hasActivePendingCart ? "Cobrar venta guardada" : "Cobro en efectivo"}</CardTitle>
               <CardDescription>
                 {hasActivePendingCart
-                  ? "Revalida el pendiente, cobra con caja abierta y lo remueve de la lista si la venta queda confirmada."
-                  : "Confirmación para consumidor final con selección FEFO resuelta por backend."}
+                  ? "Revisa los productos y cobra la venta con tu caja abierta."
+                  : "Comprueba el total y el monto recibido antes de cobrar."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -684,46 +727,61 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
                     onChange={(event) => setReceivedAmountInput(event.target.value)}
                   />
                   <FieldDescription>
-                    {isCashOpen ? "Solo pago efectivo para venta anónima o consumidor final." : "El cobro queda bloqueado hasta abrir una caja propia."}
+                    {isCashOpen ? "Solo se acepta pago en efectivo." : "Abre tu caja para cobrar."}
                   </FieldDescription>
                   <FieldError>
                     {pos.cartItems.length > 0 && isPaymentInsufficient ? "El monto recibido no cubre el total de la venta." : null}
-                    {isActivePendingExpired ? "Este pendiente está expirado y no se puede cobrar." : null}
+                    {isActivePendingExpired ? "Esta venta guardada venció y no se puede cobrar." : null}
                     {hasBlockingPendingIssue ? "Corrige los ítems bloqueados antes de cobrar." : null}
                   </FieldError>
                 </Field>
                 <Button disabled={!canConfirmSale} type="submit">
                   {isConfirming || isConvertingPending ? <Spinner /> : <Banknote aria-hidden="true" />}
-                  {hasActivePendingCart ? "Cobrar pendiente" : "Confirmar cobro"}
+                  {hasActivePendingCart ? "Cobrar venta guardada" : "Confirmar cobro"}
                 </Button>
               </form>
             </CardContent>
           </Card>
+
+          {focus === "pos" ? (
+            <PendingCartsPanel
+              activeCartId={activePendingCart?.id ?? null}
+              carts={visiblePendingCarts}
+              hasError={isPendingRequestFailure(pending.listStatus)}
+              isDiscarding={isDiscardingPending}
+              isLoading={pending.listStatus === "loading"}
+              onDiscard={setDiscardTarget}
+              onReload={() => void pending.reload()}
+              onRetake={retakePendingCart}
+            />
+          ) : null}
         </div>
-      </div>
+          </div>
+        </>
+      ) : null}
 
       <Dialog open={isPendingSaveDialogOpen} onOpenChange={setPendingSaveDialogOpen}>
         <DialogContent>
           <form className="grid gap-4" onSubmit={savePendingCart}>
             <DialogHeader>
-              <DialogTitle>{hasActivePendingCart ? "Actualizar pendiente" : "Guardar carrito pendiente"}</DialogTitle>
-              <DialogDescription>El pendiente conserva productos y cantidades, pero no reserva stock ni congela precio.</DialogDescription>
+              <DialogTitle>{hasActivePendingCart ? "Actualizar venta guardada" : "Guardar venta"}</DialogTitle>
+              <DialogDescription>Los productos se conservarán, pero el stock y el precio se confirmarán al cobrar.</DialogDescription>
             </DialogHeader>
             <Field>
-              <FieldLabel>Nombre corto</FieldLabel>
+              <FieldLabel>Nombre para identificarla</FieldLabel>
               <Input
                 maxLength={80}
-                placeholder="Ej. Cliente volverá por antibiótico"
+                placeholder="Ej. Pedido de la tarde"
                 value={pendingNameInput}
                 onChange={(event) => setPendingNameInput(event.target.value)}
               />
-              <FieldDescription>Opcional, útil para reconocer la atención en mostrador.</FieldDescription>
+              <FieldDescription>Opcional.</FieldDescription>
             </Field>
             <Field>
               <FieldLabel>Nota</FieldLabel>
               <Textarea
                 maxLength={300}
-                placeholder="Detalle operativo para retomar la atención"
+                placeholder="Información para continuar la venta"
                 value={pendingNoteInput}
                 onChange={(event) => setPendingNoteInput(event.target.value)}
               />
@@ -734,7 +792,7 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
               </Button>
               <Button disabled={isSavingPending || pos.cartItems.length === 0} type="submit">
                 {isSavingPending ? <Spinner /> : <Save aria-hidden="true" />}
-                {hasActivePendingCart ? "Guardar cambios" : "Guardar pendiente"}
+                {hasActivePendingCart ? "Guardar cambios" : "Guardar venta"}
               </Button>
             </DialogFooter>
           </form>
@@ -747,9 +805,9 @@ export function PosPage({ focus = "pos" }: PosPageProps) {
             <AlertDialogMedia>
               <Trash2 aria-hidden="true" />
             </AlertDialogMedia>
-            <AlertDialogTitle>Descartar pendiente</AlertDialogTitle>
+            <AlertDialogTitle>Descartar venta guardada</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción descarta el carrito pendiente seleccionado. No afecta inventario ni caja porque todavía no existe venta confirmada.
+              Se eliminará esta venta guardada. El stock y la caja no cambiarán.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -791,8 +849,8 @@ function PendingCartsPanel({ activeCartId, carts, hasError, isDiscarding, isLoad
       <CardHeader className="gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <CardTitle>Carritos pendientes</CardTitle>
-            <CardDescription>Pendientes propios para pausar, retomar o descartar atenciones de mostrador.</CardDescription>
+            <CardTitle>Ventas guardadas</CardTitle>
+            <CardDescription>Retoma o descarta una venta.</CardDescription>
           </div>
           <Button disabled={isLoading} size="sm" type="button" variant="outline" onClick={onReload}>
             {isLoading ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -816,9 +874,9 @@ function PendingCartsPanel({ activeCartId, carts, hasError, isDiscarding, isLoad
           <Empty className="min-h-40">
             <EmptyHeader>
               <EmptyMedia variant="icon">{isLoading ? <Spinner /> : hasError ? <AlertCircle aria-hidden="true" /> : <ClipboardList aria-hidden="true" />}</EmptyMedia>
-              <EmptyTitle>{isLoading ? "Cargando pendientes" : hasError ? "No se pudieron cargar pendientes" : "Sin pendientes propios"}</EmptyTitle>
+              <EmptyTitle>{isLoading ? "Cargando ventas" : hasError ? "No se pudieron cargar las ventas" : "No hay ventas guardadas"}</EmptyTitle>
               <EmptyDescription>
-                {hasError ? "Actualiza la lista o revisa la sesión antes de guardar una nueva atención." : "Guarda un carrito activo para retomarlo después sin reservar inventario."}
+                {hasError ? "Actualiza la lista o vuelve a iniciar sesión." : "Guarda una venta para retomarla después."}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -850,7 +908,7 @@ function PendingCartRow({ cart, isActive, isDiscarding, onDiscard, onRetake }: P
               {displayName}
             </p>
             <Badge variant={isExpired ? "destructive" : isActive ? "default" : "secondary"}>
-              {isExpired ? "Expirado" : isActive ? "En carrito" : "Activo"}
+              {isExpired ? "Vencida" : isActive ? "En edición" : "Guardada"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -859,15 +917,15 @@ function PendingCartRow({ cart, isActive, isDiscarding, onDiscard, onRetake }: P
           {issueCount > 0 ? (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <AlertCircle aria-hidden="true" className="size-3.5" />
-              {issueCount} advertencia{issueCount === 1 ? "" : "s"} de revalidación
+              {issueCount} producto{issueCount === 1 ? "" : "s"} por revisar
             </p>
           ) : null}
         </div>
         <div className="flex shrink-0 gap-1">
-          <Button aria-label="Retomar pendiente" disabled={isActive} size="icon" type="button" variant="ghost" onClick={onRetake}>
+          <Button aria-label="Retomar venta guardada" disabled={isActive} size="icon" type="button" variant="ghost" onClick={onRetake}>
             <Undo2 aria-hidden="true" />
           </Button>
-          <Button aria-label="Descartar pendiente" disabled={isDiscarding} size="icon" type="button" variant="ghost" onClick={onDiscard}>
+          <Button aria-label="Descartar venta guardada" disabled={isDiscarding} size="icon" type="button" variant="ghost" onClick={onDiscard}>
             <Trash2 aria-hidden="true" />
           </Button>
         </div>
@@ -890,13 +948,13 @@ function PendingCartActiveNotice({ cart, cartItems }: PendingCartActiveNoticePro
   return (
     <Alert variant={isExpired || hasBlockingIssue ? "destructive" : "default"}>
       {isExpired ? <Ban aria-hidden="true" /> : hasBlockingIssue ? <AlertCircle aria-hidden="true" /> : <FileClock aria-hidden="true" />}
-      <AlertTitle>{isExpired ? "Pendiente expirado" : hasBlockingIssue ? "Pendiente requiere corrección" : "Pendiente retomado"}</AlertTitle>
+      <AlertTitle>{isExpired ? "Venta guardada vencida" : hasBlockingIssue ? "Revisa la venta guardada" : "Venta guardada retomada"}</AlertTitle>
       <AlertDescription>
         <div className="grid gap-2">
           <p>
             {isExpired
               ? "Puedes revisarlo o descartarlo, pero no cobrarlo."
-              : "Revisa precio vigente, stock y estado de productos antes de cobrar con caja abierta."}
+              : "Revisa el precio y el stock antes de cobrar."}
           </p>
           {issues.length > 0 ? (
             <div className="grid gap-1">
@@ -914,10 +972,11 @@ function PendingCartActiveNotice({ cart, cartItems }: PendingCartActiveNoticePro
 }
 
 function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
+  const availability = getPosProductAvailability(product);
   const isNearExpiration = isNearExpirationDate(product.nextExpirationDate);
 
   return (
-    <TableRow>
+    <TableRow className="group">
       <TableCell className="min-w-0 font-mono text-xs">
         <span className="block truncate" title={product.internalCode}>
           {product.internalCode}
@@ -936,29 +995,40 @@ function ProductRow({ disabled, product, onAdd }: ProductRowProps) {
           <p className="truncate text-xs text-muted-foreground" title={product.genericName ?? product.baseUnit.name}>
             {product.genericName ?? product.baseUnit.name}
           </p>
+          {availability.description ? (
+            <p className="whitespace-normal text-xs leading-4 text-muted-foreground">
+              {availability.description}
+            </p>
+          ) : null}
         </div>
       </TableCell>
       <TableCell>{formatMoney(product.salePrice)}</TableCell>
       <TableCell>
-        <Badge variant={product.saleableStock > 0 ? "default" : "secondary"}>
-          {product.saleableStock} {product.baseUnit.abbreviation}
+        <Badge className="w-fit" variant={availability.isOutOfStock ? "destructive" : "default"}>
+          {availability.stockLabel}
         </Badge>
       </TableCell>
       <TableCell>
         <div className="grid gap-1">
-          <span>{product.nextExpirationDate ? formatDate(product.nextExpirationDate) : "Sin venc."}</span>
-          {isNearExpiration ? (
+          <span>{availability.isOutOfStock ? "No aplica" : product.nextExpirationDate ? formatDate(product.nextExpirationDate) : "Sin vencimiento"}</span>
+          {!availability.isOutOfStock && isNearExpiration ? (
             <Badge variant="secondary">
               <CalendarClock aria-hidden="true" />
-              Próx. venc.
+              Próximo a vencer
             </Badge>
           ) : null}
         </div>
       </TableCell>
-      <TableCell className="text-right">
-        <Button disabled={disabled || product.saleableStock <= 0} size="sm" variant="outline" onClick={onAdd}>
-          <Plus aria-hidden="true" />
-          Agregar
+      <TableCell className="sticky right-0 z-10 border-l bg-card text-right transition-colors group-hover:bg-accent/45">
+        <Button
+          className="w-full border-primary/60 text-primary hover:border-primary hover:bg-primary/10 hover:text-primary"
+          disabled={disabled || availability.isOutOfStock}
+          size="sm"
+          variant="outline"
+          onClick={onAdd}
+        >
+          {availability.isOutOfStock ? <Ban aria-hidden="true" /> : <Plus aria-hidden="true" />}
+          {availability.actionLabel}
         </Button>
       </TableCell>
     </TableRow>
@@ -1033,7 +1103,7 @@ function CartItemRow({ disabled, item, onRemove, onUpdateQuantity }: CartItemRow
       {isNearExpiration ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <CalendarClock aria-hidden="true" className="size-3.5" />
-          Próximo vencimiento: {formatDate(item.nextExpirationDate)}. Producto vendible, no bloquea el cobro.
+          Próximo vencimiento: {formatDate(item.nextExpirationDate)}. Puedes venderlo.
         </p>
       ) : null}
     </div>
@@ -1065,7 +1135,11 @@ function SaleReceiptPanel({ onDismiss, onNewSale, onOpenSaleDetail, receipt, sal
       <CardHeader className="gap-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <Badge className="w-fit" variant="secondary">
+            <Badge
+              className="h-9 w-fit gap-2 rounded-lg border-success bg-success px-4 text-sm font-bold text-success-foreground shadow-sm shadow-success/20 [&>svg]:size-4!"
+              role="status"
+              variant="success"
+            >
               <BadgeCheck aria-hidden="true" />
               Venta confirmada
             </Badge>
@@ -1106,7 +1180,7 @@ function SaleReceiptPanel({ onDismiss, onNewSale, onOpenSaleDetail, receipt, sal
             <TableHeader>
               <TableRow>
                 <TableHead>Item vendido</TableHead>
-                <TableHead className="w-[96px] text-right">Cant.</TableHead>
+                <TableHead className="w-[96px] text-right">Cantidad</TableHead>
                 <TableHead className="w-[132px] text-right">Unitario</TableHead>
                 <TableHead className="w-[132px] text-right">Subtotal</TableHead>
               </TableRow>
@@ -1128,7 +1202,7 @@ function SaleReceiptPanel({ onDismiss, onNewSale, onOpenSaleDetail, receipt, sal
           <div className="grid gap-3 rounded-md border bg-muted/30 p-3">
             <div className="flex items-center gap-2">
               <Boxes aria-hidden="true" className="size-4 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">Stock consumido por FEFO</p>
+              <p className="text-sm font-medium text-foreground">Lotes descontados</p>
             </div>
             <div className="grid gap-2">
               {stockRows.map((row) => (
@@ -1152,9 +1226,9 @@ function SaleReceiptPanel({ onDismiss, onNewSale, onOpenSaleDetail, receipt, sal
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-xl font-semibold text-foreground" title={String(value)}>
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground" title={String(value)}>
         {value}
       </p>
     </div>
@@ -1163,9 +1237,9 @@ function Metric({ label, value }: { label: string; value: number | string }) {
 
 function AmountLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between rounded-md border px-3 py-2">
+    <div className="flex items-center justify-between rounded-lg border bg-card px-3 py-2.5">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <span className="font-semibold tabular-nums text-foreground">{value}</span>
     </div>
   );
 }
@@ -1250,7 +1324,7 @@ function getPendingIssueMessage(issue: PendingCartRevalidationIssue, cart: Pendi
     return `${productName}: stock actual ${issue.saleableStock ?? item?.saleableStock ?? 0}, solicitado ${issue.requestedQuantity ?? item?.quantity ?? 0}.`;
   }
 
-  return `${productName}: producto no vendible; retíralo para poder cobrar.`;
+  return `${productName}: ya no está disponible; retíralo para poder cobrar.`;
 }
 
 function getPendingCartErrorMessage(error: PendingCartDataError | null, selectedCart: PendingCart | null, cartItems: PosCartItem[]) {

@@ -1,10 +1,12 @@
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ContextNavigation, salesNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
   Ban,
   BadgeCheck,
   Boxes,
+  ChevronDown,
   ClipboardCheck,
   Eye,
   FileSearch,
@@ -38,6 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -49,9 +52,13 @@ import { OperationalScopeNotice, SupervisionOnly } from "@/components/operationa
 import { getSaleCancellationBlockMessage, getSupervisedSellerFilter, isSaleCancellationAllowed } from "./sales-cancellation-policy";
 
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 2 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const dateFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium" });
-const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", { dateStyle: "medium", timeStyle: "short" });
+const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/La_Paz"
+});
 
 const saleStatusLabels: Record<CancelableSaleStatus, string> = {
   cancelled: "Anulada",
@@ -67,14 +74,14 @@ const paymentStatusLabels: Record<CancelablePaymentStatus, string> = {
 };
 
 const errorMessages: Record<SalesDataErrorCode, string> = {
-  "cash-session-closed": "La caja asociada ya fue cerrada. El detalle se mantiene como historial operativo.",
-  forbidden: "Esta venta pertenece a otro usuario y no está disponible en tu alcance propio.",
+  "cash-session-closed": "La caja asociada ya fue cerrada. El detalle se mantiene en el historial.",
+  forbidden: "Esta venta pertenece a otra persona y no puedes anularla.",
   "not-current-day": "La venta ya no corresponde al turno permitido.",
   "not-found": "No se encontró la venta solicitada.",
   "sale-already-cancelled": "La venta ya fue anulada previamente.",
-  "sale-not-cancelable": "Esta venta no cumple las reglas vigentes para anulación.",
-  "session-invalid": "Tu sesión no permite operar anulaciones en este momento. Vuelve a iniciar sesión.",
-  unknown: "No se pudo completar la operación. Intenta nuevamente.",
+  "sale-not-cancelable": "Esta venta ya no se puede anular.",
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
+  unknown: "No se pudo anular la venta. Intenta nuevamente.",
   validation: "Ingresa un motivo de anulación válido."
 };
 
@@ -82,6 +89,7 @@ const statusOptions: SalesStatusFilter[] = ["all", "confirmed", "cancelled", "re
 
 export function SalesCancellationPage() {
   const sales = useSales();
+  const detailPanelRef = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();
   const saleIdFromQuery = searchParams.get("saleId")?.trim() ?? "";
   const [searchInput, setSearchInput] = useState(sales.search);
@@ -155,6 +163,14 @@ export function SalesCancellationPage() {
     void openSaleDetail(saleIdFromQuery);
   }, [saleIdFromQuery, sales.canUse, sales.selectedSaleId]);
 
+  useEffect(() => {
+    if (!sales.selectedSaleId) {
+      return;
+    }
+
+    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+  }, [sales.selectedSaleId]);
+
   function requestCancellation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setCancelReasonError(null);
@@ -186,29 +202,27 @@ export function SalesCancellationPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Consultas de ventas" items={salesNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Anulación controlada
-          </Badge>
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Ventas y anulaciones</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Historial de ventas</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Consulta de ventas recientes, auditoría de cobro y reversa permitida mientras la caja asociada siga abierta.
+              Consulta ventas recientes y anúlalas mientras la caja correspondiente siga abierta.
             </p>
           </div>
         </div>
         <div className="grid gap-2 sm:grid-cols-3 xl:w-[600px]">
-          <Metric label="Listado" value={sales.pagination.total} />
-          <Metric label="Anulables" value={listSummary.cancelable} />
-          <Metric label="Importe visible" value={formatMoney(listSummary.totalAmount)} />
+          <Metric label="Ventas" value={sales.pagination.total} />
+          <Metric label="Se pueden anular" value={listSummary.cancelable} />
+          <Metric label="Total listado" value={formatMoney(listSummary.totalAmount)} />
         </div>
       </div>
 
       <OperationalScopeNotice
         canSupervise={sales.canSupervise}
-        ownRecordsDescription="El servidor limita este listado a tus ventas y evalúa cada anulación según caja, pertenencia, fecha y estado."
-        supervisionDescription="Puedes filtrar ventas de otros vendedores; cada anulación se habilita únicamente según la evaluación del servidor."
+        ownRecordsDescription="Esta pantalla muestra únicamente tus ventas."
+        supervisionDescription="Puedes consultar ventas de otros vendedores. La opción de anular aparece solo cuando corresponde."
       />
 
       {!sales.canUse ? (
@@ -224,7 +238,7 @@ export function SalesCancellationPage() {
           <BadgeCheck aria-hidden="true" />
           <AlertTitle>Venta anulada</AlertTitle>
           <AlertDescription>
-            {successSale.correlativeCode} quedó anulada. El servidor registró las reversas de caja, pago e inventario.
+            {successSale.correlativeCode} quedó anulada y se restauraron el efectivo y el stock relacionados.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -232,7 +246,7 @@ export function SalesCancellationPage() {
       {visibleError ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo completar la operación</AlertTitle>
+          <AlertTitle>No se pudo anular la venta</AlertTitle>
           <AlertDescription>{visibleError}</AlertDescription>
         </Alert>
       ) : null}
@@ -245,8 +259,8 @@ export function SalesCancellationPage() {
                 <CardTitle>Ventas recientes</CardTitle>
                 <CardDescription>
                   {sales.canSupervise
-                    ? "Supervisión de ventas de mostrador por rango, vendedor, caja y estado."
-                    : "Listado de ventas propias para revisión y anulación permitida."}
+                    ? "Busca por fecha, vendedor, caja o estado."
+                    : "Consulta tus ventas y anúlalas cuando corresponda."}
                 </CardDescription>
               </div>
               <Button disabled={!sales.canUse || isLoadingList} size="sm" variant="outline" onClick={() => void sales.reload()}>
@@ -267,13 +281,15 @@ export function SalesCancellationPage() {
                 />
               </div>
               <Input
+                aria-label="Desde"
                 disabled={!sales.canUse}
                 type="date"
                 value={sales.fromDate}
                 onChange={(event) => sales.setFromDate(event.currentTarget.value)}
               />
-              <Input disabled={!sales.canUse} type="date" value={sales.toDate} onChange={(event) => sales.setToDate(event.currentTarget.value)} />
+              <Input aria-label="Hasta" disabled={!sales.canUse} type="date" value={sales.toDate} onChange={(event) => sales.setToDate(event.currentTarget.value)} />
               <NativeSelect
+                aria-label="Estado"
                 disabled={!sales.canUse}
                 value={sales.status}
                 onChange={(event) => sales.setStatus(event.currentTarget.value as SalesStatusFilter)}
@@ -293,6 +309,7 @@ export function SalesCancellationPage() {
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               <SupervisionOnly allowed={sales.canSupervise}>
                 <Input
+                  aria-label="Vendedor"
                   disabled={!sales.canUse}
                   placeholder="ID de vendedor"
                   value={sellerInput}
@@ -300,6 +317,7 @@ export function SalesCancellationPage() {
                 />
               </SupervisionOnly>
               <Input
+                aria-label="Caja"
                 disabled={!sales.canUse}
                 placeholder="ID de caja"
                 value={cashSessionInput}
@@ -314,13 +332,13 @@ export function SalesCancellationPage() {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[128px]">Venta</TableHead>
+                  <TableHead className="w-[132px]">Venta</TableHead>
                   <TableHead>Vendedor</TableHead>
-                  <TableHead className="w-[136px]">Caja</TableHead>
-                  <TableHead className="w-[148px]">Fecha</TableHead>
-                  <TableHead className="w-[118px] text-right">Total</TableHead>
-                  <TableHead className="w-[116px]">Estado</TableHead>
-                  <TableHead className="w-[92px] text-right">Detalle</TableHead>
+                  <TableHead className="w-[128px]">Caja</TableHead>
+                  <TableHead className="w-[166px]">Fecha</TableHead>
+                  <TableHead className="w-[104px] text-right">Total</TableHead>
+                  <TableHead className="w-[104px]">Estado</TableHead>
+                  <TableHead className="sticky right-0 z-20 w-[84px] border-l bg-muted text-right">Detalle</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -333,11 +351,11 @@ export function SalesCancellationPage() {
                       <Empty>
                         <EmptyHeader>
                           <EmptyMedia variant="icon">{isLoadingList ? <Spinner /> : <FileSearch aria-hidden="true" />}</EmptyMedia>
-                          <EmptyTitle>{isLoadingList ? "Cargando ventas" : "Sin ventas visibles"}</EmptyTitle>
+                          <EmptyTitle>{isLoadingList ? "Cargando ventas" : "No hay ventas"}</EmptyTitle>
                           <EmptyDescription>
                             {isLoadingList
-                              ? "Consultando ventas de mostrador según el alcance del rol y los filtros actuales."
-                              : "Ajusta filtros o abre una venta por ID si necesitas revisar un comprobante específico."}
+                              ? "Buscando ventas con los filtros actuales."
+                              : "Ajusta los filtros para encontrar la venta que buscas."}
                           </EmptyDescription>
                         </EmptyHeader>
                       </Empty>
@@ -349,7 +367,7 @@ export function SalesCancellationPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
-                Página {sales.pagination.page} de {Math.max(sales.pagination.totalPages, 1)}. Anuladas visibles: {listSummary.cancelled}.
+                Página {sales.pagination.page} de {Math.max(sales.pagination.totalPages, 1)} · {listSummary.cancelled} anuladas
               </p>
               <div className="flex gap-2">
                 <Button
@@ -376,37 +394,44 @@ export function SalesCancellationPage() {
         </Card>
 
         <div className="grid h-fit gap-5">
-          <Card>
-            <CardHeader>
-              <CardTitle>Abrir venta por ID</CardTitle>
-              <CardDescription>Útil cuando el comprobante interno no está en la página actual.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-3" onSubmit={openDirectSale}>
-                <Input
-                  disabled={!sales.canUse || isLoadingDetail}
-                  placeholder="ID interno de venta"
-                  value={directSaleIdInput}
-                  onChange={(event) => setDirectSaleIdInput(event.currentTarget.value)}
-                />
-                <Button disabled={!sales.canUse || isLoadingDetail || !directSaleIdInput.trim()} type="submit" variant="outline">
-                  {isLoadingDetail ? <Spinner /> : <Eye aria-hidden="true" />}
-                  Abrir detalle
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <Collapsible className="group/direct-sale">
+            <Card>
+              <CardHeader>
+                <CollapsibleTrigger asChild>
+                  <Button className="h-auto w-full justify-between px-0 text-left" type="button" variant="ghost">
+                    <span>
+                      <span className="block font-semibold">Búsqueda avanzada</span>
+                      <span className="mt-1 block text-xs font-normal text-muted-foreground">Busca una venta mediante su identificador interno.</span>
+                    </span>
+                    <ChevronDown aria-hidden="true" className="transition-transform group-data-[state=open]/direct-sale:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+              </CardHeader>
+              <CollapsibleContent>
+                <CardContent>
+                  <form className="grid gap-3" onSubmit={openDirectSale}>
+                    <Input disabled={!sales.canUse || isLoadingDetail} placeholder="ID interno de venta" value={directSaleIdInput} onChange={(event) => setDirectSaleIdInput(event.currentTarget.value)} />
+                    <Button disabled={!sales.canUse || isLoadingDetail || !directSaleIdInput.trim()} type="submit" variant="outline">
+                      {isLoadingDetail ? <Spinner /> : <Eye aria-hidden="true" />} Abrir detalle
+                    </Button>
+                  </form>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
 
-          <SaleDetailPanel
-            canCancel={canCancelSelectedSale}
-            cancelReason={cancelReasonInput}
-            cancelReasonError={cancelReasonError}
-            isCancelling={isCancelling}
-            isLoading={isLoadingDetail}
-            sale={selectedSale}
-            onCancelReasonChange={setCancelReasonInput}
-            onRequestCancellation={requestCancellation}
-          />
+          <div ref={detailPanelRef} className="scroll-mt-5">
+            <SaleDetailPanel
+              canCancel={canCancelSelectedSale}
+              cancelReason={cancelReasonInput}
+              cancelReasonError={cancelReasonError}
+              isCancelling={isCancelling}
+              isLoading={isLoadingDetail}
+              sale={selectedSale}
+              onCancelReasonChange={setCancelReasonInput}
+              onRequestCancellation={requestCancellation}
+            />
+          </div>
         </div>
       </div>
 
@@ -418,7 +443,7 @@ export function SalesCancellationPage() {
             </AlertDialogMedia>
             <AlertDialogTitle>Confirmar anulación</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción marcará la venta como anulada y solicitará al backend revertir caja, pago e inventario. Motivo: {cancelReasonInput.trim()}.
+              Se anulará la venta y se restaurarán el efectivo y el stock relacionados. Motivo: {cancelReasonInput.trim()}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -442,8 +467,8 @@ type SaleRowProps = {
 
 function SaleRow({ isSelected, onOpen, sale }: SaleRowProps) {
   return (
-    <TableRow data-state={isSelected ? "selected" : undefined}>
-      <TableCell className="min-w-0">
+    <TableRow className="group" data-state={isSelected ? "selected" : undefined}>
+      <TableCell className="min-w-0 overflow-hidden">
         <p className="truncate font-medium text-foreground" title={sale.correlativeCode}>
           {sale.correlativeCode}
         </p>
@@ -451,7 +476,7 @@ function SaleRow({ isSelected, onOpen, sale }: SaleRowProps) {
           {sale.id}
         </p>
       </TableCell>
-      <TableCell className="min-w-0">
+      <TableCell className="min-w-0 overflow-hidden">
         <p className="truncate" title={sale.sellerUser.fullName}>
           {sale.sellerUser.fullName}
         </p>
@@ -459,17 +484,17 @@ function SaleRow({ isSelected, onOpen, sale }: SaleRowProps) {
           {sale.sellerUser.email}
         </p>
       </TableCell>
-      <TableCell className="min-w-0">
+      <TableCell className="min-w-0 overflow-hidden">
         <p className="truncate" title={sale.cashSessionCorrelativeCode}>
           {sale.cashSessionCorrelativeCode}
         </p>
       </TableCell>
-      <TableCell>{formatDateTime(sale.confirmedAt)}</TableCell>
-      <TableCell className="text-right font-medium">{formatMoney(sale.totalAmount)}</TableCell>
-      <TableCell>
+      <TableCell className="overflow-hidden">{formatDateTime(sale.confirmedAt)}</TableCell>
+      <TableCell className="overflow-hidden text-right font-medium">{formatMoney(sale.totalAmount)}</TableCell>
+      <TableCell className="overflow-hidden">
         <SaleStatusBadge sale={sale} />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="sticky right-0 z-10 border-l bg-card text-right transition-colors group-hover:bg-accent/45">
         <Button aria-label={`Abrir ${sale.correlativeCode}`} size="icon" type="button" variant="ghost" onClick={onOpen}>
           <Eye aria-hidden="true" />
         </Button>
@@ -520,7 +545,7 @@ function SaleDetailPanel({
                 <ClipboardCheck aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>Selecciona una venta</EmptyTitle>
-              <EmptyDescription>El detalle mostrará pago, caja, ítems y lotes consumidos cuando estén disponibles.</EmptyDescription>
+              <EmptyDescription>El detalle mostrará el pago, la caja, los productos y los lotes descontados.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         </CardContent>
@@ -544,8 +569,6 @@ function SaleDetailPanel({
       <CardContent className="grid gap-5">
         <div className="grid gap-2">
           <SaleInfo label="Vendedor" value={`${sale.sellerUser.fullName} · ${sale.sellerUser.email}`} />
-          <SaleInfo label="ID de venta" value={sale.id} />
-          <SaleInfo label="Caja" value={sale.cashSessionId} />
           <SaleInfo label="Anulación" value={canCancel ? "Permitida" : getSaleCancellationBlockMessage(sale)} />
         </div>
 
@@ -564,7 +587,7 @@ function SaleDetailPanel({
             <SaleInfo label="Método" value={sale.payment.method === "cash" ? "Efectivo" : sale.payment.method} />
             <SaleInfo label="Estado" value={paymentStatusLabels[sale.payment.status]} />
             <SaleInfo label="Pagado" value={formatDateTime(sale.payment.paidAt)} />
-            {sale.payment.reversedAt ? <SaleInfo label="Reversado" value={formatDateTime(sale.payment.reversedAt)} /> : null}
+            {sale.payment.reversedAt ? <SaleInfo label="Anulado" value={formatDateTime(sale.payment.reversedAt)} /> : null}
           </div>
         </div>
 
@@ -573,7 +596,7 @@ function SaleDetailPanel({
             <TableHeader>
               <TableRow>
                 <TableHead>Producto</TableHead>
-                <TableHead className="w-[76px] text-right">Cant.</TableHead>
+                <TableHead className="w-[76px] text-right">Cantidad</TableHead>
                 <TableHead className="w-[110px] text-right">Unitario</TableHead>
                 <TableHead className="w-[116px] text-right">Subtotal</TableHead>
               </TableRow>
@@ -602,9 +625,9 @@ function SaleDetailPanel({
 
         {sale.cancelledAt ? (
           <div className="grid gap-2 rounded-md border bg-muted/30 p-3 text-sm">
-            <p className="font-medium text-foreground">Evidencia de anulación</p>
+            <p className="font-medium text-foreground">Datos de la anulación</p>
             <SaleInfo label="Fecha" value={formatDateTime(sale.cancelledAt)} />
-            <SaleInfo label="Motivo" value={sale.cancelReason ?? "Sin motivo expuesto"} />
+            <SaleInfo label="Motivo" value={sale.cancelReason ?? "Sin motivo"} />
             {sale.cancelledByUser ? <SaleInfo label="Usuario" value={`${sale.cancelledByUser.fullName} · ${sale.cancelledByUser.email}`} /> : null}
           </div>
         ) : null}
@@ -619,12 +642,12 @@ function SaleDetailPanel({
               value={cancelReason}
               onChange={(event) => onCancelReasonChange(event.currentTarget.value)}
             />
-            <FieldDescription>{canCancel ? "Obligatorio. Queda asociado al historial de la venta." : getSaleCancellationBlockMessage(sale)}</FieldDescription>
+            <FieldDescription>{canCancel ? "Obligatorio. Quedará guardado en el historial." : getSaleCancellationBlockMessage(sale)}</FieldDescription>
             <FieldError>{cancelReasonError}</FieldError>
           </Field>
           <Button disabled={!canCancel || isCancelling} type="submit" variant="destructive">
             {isCancelling ? <Spinner /> : <Ban aria-hidden="true" />}
-            Solicitar anulación
+            Anular venta
           </Button>
         </form>
       </CardContent>
@@ -700,9 +723,9 @@ function SaleInfo({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="truncate text-xl font-semibold text-foreground" title={String(value)}>
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-xl font-semibold tabular-nums tracking-[-0.02em] text-foreground" title={String(value)}>
         {value}
       </p>
     </div>
@@ -711,9 +734,9 @@ function Metric({ label, value }: { label: string; value: number | string }) {
 
 function AmountLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between rounded-md border px-3 py-2">
+    <div className="flex items-center justify-between rounded-lg border bg-card px-3 py-2.5">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <span className="font-semibold tabular-nums text-foreground">{value}</span>
     </div>
   );
 }

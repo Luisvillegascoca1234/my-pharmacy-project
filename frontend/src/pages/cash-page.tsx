@@ -1,4 +1,5 @@
 import { type FormEvent, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { CashDataErrorCode, CashSession } from "@/modules/cash";
 import { AlertCircle, BadgeCheck, Banknote, LockKeyhole, RefreshCcw, WalletCards } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,7 +17,8 @@ import { useCashSession } from "@/modules/cash";
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
   dateStyle: "medium",
-  timeStyle: "short"
+  timeStyle: "short",
+  timeZone: "America/La_Paz"
 });
 
 const cashStatusLabels: Record<CashSession["status"], string> = {
@@ -28,13 +30,14 @@ const errorMessages: Record<CashDataErrorCode, string> = {
   "already-closed": "La caja ya fue cerrada. Actualiza el estado antes de continuar.",
   "already-open": "Ya tienes una caja abierta. Cierra la caja actual antes de abrir otra.",
   "amount-invalid": "Revisa los montos ingresados. Deben ser números mayores o iguales a cero con hasta dos decimales.",
-  forbidden: "Esta caja pertenece a otro usuario y no puede cerrarse desde la operación propia.",
-  "not-found": "No se encontró una caja abierta para completar la operación.",
-  "session-invalid": "Tu sesión no permite operar caja en este momento. Vuelve a iniciar sesión.",
-  unknown: "No se pudo completar la operación de caja. Intenta nuevamente."
+  forbidden: "Esta caja pertenece a otra persona y no puedes cerrarla.",
+  "not-found": "No se encontró una caja abierta.",
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
+  unknown: "No se pudo actualizar la caja. Intenta nuevamente."
 };
 
 export function CashPage() {
+  const navigate = useNavigate();
   const {
     canSupervise,
     canUseCash,
@@ -92,6 +95,7 @@ export function CashPage() {
     if (result) {
       setOpeningAmount("0");
       setOpeningNote("");
+      navigate("/pos", { replace: true });
     }
   }
 
@@ -126,13 +130,10 @@ export function CashPage() {
     <section className="grid gap-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Caja de turno
-          </Badge>
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Caja</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Apertura, control operativo y cierre de la caja asociada al usuario autenticado.
+              Abre tu caja al iniciar el turno y ciérrala cuando termines.
             </p>
           </div>
         </div>
@@ -144,22 +145,22 @@ export function CashPage() {
 
       <OperationalScopeNotice
         canSupervise={canSupervise}
-        ownRecordsDescription="La consulta y las operaciones de esta pantalla corresponden únicamente a tu caja de turno."
-        supervisionDescription="Esta pantalla opera tu caja de turno. Las cajas de otros vendedores se gestionan desde Supervisión POS."
+        ownRecordsDescription="Esta pantalla muestra únicamente tu caja."
+        supervisionDescription="Aquí administras tu caja. Para revisar otras cajas, ve a Supervisar ventas."
       />
 
       {!canUseCash ? (
         <Alert variant="destructive">
           <LockKeyhole aria-hidden="true" />
           <AlertTitle>Área no disponible</AlertTitle>
-          <AlertDescription>El rol de tu usuario no incluye la operación de caja.</AlertDescription>
+          <AlertDescription>No tienes permiso para usar Caja.</AlertDescription>
         </Alert>
       ) : null}
 
       {visibleError ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo completar la operación</AlertTitle>
+          <AlertTitle>No se pudo actualizar la caja</AlertTitle>
           <AlertDescription>{visibleError}</AlertDescription>
         </Alert>
       ) : null}
@@ -178,8 +179,8 @@ export function CashPage() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card>
           <CardHeader>
-            <CardTitle>Estado operativo</CardTitle>
-            <CardDescription>Importes principales para cuadrar el efectivo del turno.</CardDescription>
+            <CardTitle>Estado de caja</CardTitle>
+            <CardDescription>Importes necesarios para comprobar el efectivo del turno.</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingCurrent && !summarySession ? (
@@ -208,7 +209,6 @@ export function CashPage() {
                     value={summarySession.differenceAmount === undefined ? "Pendiente" : formatMoney(summarySession.differenceAmount)}
                     variant={summarySession.differenceAmount && summarySession.differenceAmount !== 0 ? "destructive" : "default"}
                   />
-                  <CashAmount label="Estado" value={cashStatusLabels[summarySession.status]} />
                 </dl>
 
                 <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
@@ -242,7 +242,7 @@ export function CashPage() {
           {currentCashSession ? (
             <Card>
               <CardHeader>
-                <CardTitle>Cierre propio</CardTitle>
+                <CardTitle>Cerrar caja</CardTitle>
                 <CardDescription>Ingresa el efectivo contado al finalizar el turno.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -264,11 +264,11 @@ export function CashPage() {
                     <Textarea
                       disabled={isBusy || !canUseCash}
                       maxLength={240}
-                      placeholder="Ej. diferencia por redondeo operativo"
+                      placeholder="Ej. diferencia por redondeo"
                       value={closingNote}
                       onChange={(event) => setClosingNote(event.target.value)}
                     />
-                    <FieldDescription>Opcional, queda asociada al arqueo de caja.</FieldDescription>
+                    <FieldDescription>Opcional. Úsala para explicar cualquier diferencia.</FieldDescription>
                     <FieldError>{localError}</FieldError>
                   </Field>
                   <Button disabled={isBusy || !canUseCash} type="submit">
@@ -281,7 +281,7 @@ export function CashPage() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Apertura manual</CardTitle>
+                <CardTitle>Abrir caja</CardTitle>
                 <CardDescription>El monto inicial puede ser cero o mayor.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -296,7 +296,7 @@ export function CashPage() {
                       value={openingAmount}
                       onChange={(event) => setOpeningAmount(event.target.value)}
                     />
-                    <FieldDescription>Fondo físico disponible al iniciar el turno.</FieldDescription>
+                    <FieldDescription>Efectivo disponible al iniciar el turno.</FieldDescription>
                   </Field>
                   <Field>
                     <FieldLabel>Nota de apertura</FieldLabel>
@@ -307,7 +307,7 @@ export function CashPage() {
                       value={openingNote}
                       onChange={(event) => setOpeningNote(event.target.value)}
                     />
-                    <FieldDescription>Opcional, útil para observaciones del turno.</FieldDescription>
+                    <FieldDescription>Opcional.</FieldDescription>
                     <FieldError>{localError}</FieldError>
                   </Field>
                   <Button disabled={isBusy || !canUseCash || current.isOpen} type="submit">

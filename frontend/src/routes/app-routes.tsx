@@ -21,6 +21,7 @@ import { ReportsPage } from "@/pages/reports-page";
 import { RolesPage } from "@/pages/roles-page";
 import { ReturnsPage } from "@/pages/returns-page";
 import { SalesCancellationPage } from "@/pages/sales-cancellation-page";
+import { StockPlanningPage } from "@/pages/stock-planning-page";
 import { SupplierFormPage } from "@/pages/supplier-form-page";
 import { SuppliersPage } from "@/pages/suppliers-page";
 import { UnitsPage } from "@/pages/units-page";
@@ -31,7 +32,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ADMINISTRATIVE_RETURNS_PATH,
   PREPARED_INTERNAL_DOCUMENTS_PATH,
-  SIAT_SETTINGS_PATH,
   isRouteAllowedForRole,
   navigationItems,
   type AppNavigationItem,
@@ -59,6 +59,7 @@ const routePages: Partial<Record<AppRouteKey, ComponentType>> = {
   roles: RolesPage,
   returns: ReturnsPage,
   sales: SalesCancellationPage,
+  stockPlanning: StockPlanningPage,
   supervision: AdministrativeSupervisionPage,
   suppliers: SuppliersPage,
   units: UnitsPage,
@@ -135,7 +136,7 @@ export function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
       <Alert variant="destructive">
         <ShieldAlert aria-hidden="true" />
         <AlertTitle>Acceso no autorizado</AlertTitle>
-        <AlertDescription>Tu rol actual no permite abrir esta ruta operativa.</AlertDescription>
+        <AlertDescription>No tienes permiso para entrar a esta pantalla.</AlertDescription>
       </Alert>
 
       <Card>
@@ -145,7 +146,7 @@ export function RouteAccessDeniedPage({ item }: { item: AppNavigationItem }) {
         <CardContent className="grid gap-4">
           <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
           <Button className="w-fit" type="button" variant="outline" onClick={() => navigate("/dashboard", { replace: true })}>
-            Ir al dashboard
+            Ir al inicio
           </Button>
         </CardContent>
       </Card>
@@ -159,11 +160,7 @@ export function getRouteTitle(pathname: string) {
   }
 
   if (pathname === ADMINISTRATIVE_RETURNS_PATH) {
-    return "Devoluciones administrativas";
-  }
-
-  if (pathname === SIAT_SETTINGS_PATH) {
-    return "Configuración SIAT";
+    return "Devoluciones";
   }
 
   if (pathname === "/suppliers/new") {
@@ -182,5 +179,5 @@ export function getRouteTitle(pathname: string) {
     return "Detalle de compra";
   }
 
-  return navigationItems.find((item) => item.path === pathname)?.label ?? "Dashboard";
+  return navigationItems.find((item) => item.path === pathname)?.label ?? "Inicio";
 }

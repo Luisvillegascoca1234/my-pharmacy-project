@@ -16,6 +16,7 @@ import { returnsRoutes } from "../modules/returns/returns.routes.js";
 import { rolesRoutes } from "../modules/roles/roles.routes.js";
 import { salesRoutes } from "../modules/sales/sales.routes.js";
 import { suppliersRoutes } from "../modules/suppliers/suppliers.routes.js";
+import { stockPlanningRoutes } from "../modules/stock-planning/stock-planning.routes.js";
 import { unitsRoutes } from "../modules/units/units.routes.js";
 import { usersRoutes } from "../modules/users/users.routes.js";
 
@@ -39,5 +40,6 @@ apiRoutes.use("/returns", returnsRoutes);
 apiRoutes.use("/roles", rolesRoutes);
 apiRoutes.use("/sales", salesRoutes);
 apiRoutes.use("/suppliers", suppliersRoutes);
+apiRoutes.use("/stock-planning", stockPlanningRoutes);
 apiRoutes.use("/units", unitsRoutes);
 apiRoutes.use("/users", usersRoutes);

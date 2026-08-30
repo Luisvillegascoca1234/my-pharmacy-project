@@ -259,6 +259,7 @@ function seedDevelopmentUser(input: {
 
 async function resetDatabase() {
   await prisma.$transaction([
+    prisma.$executeRaw`TRUNCATE TABLE "StockPlanningConfiguration", "InventorySnapshot" CASCADE`,
     prisma.saleReturnItem.deleteMany(),
     prisma.saleReturn.deleteMany(),
     prisma.preparedInvoiceItem.deleteMany(),
@@ -322,6 +323,13 @@ async function seedOperationalPharmacy(input: {
   const expirationDate = new Date(Date.UTC(new Date().getUTCFullYear() + 2, 11, 31));
 
   await prisma.$transaction(async (tx) => {
+    await tx.stockPlanningConfiguration.create({
+      data: {
+        version: 1,
+        createdByUserId: input.superadminUserId
+      }
+    });
+
     const category = await tx.productCategory.create({
       data: {
         name: "Analgésicos y antipiréticos",

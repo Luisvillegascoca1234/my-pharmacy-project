@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import { ContextNavigation, purchasingNavigation } from "@/components/context-navigation";
 import { Link } from "react-router-dom";
-import { AlertCircle, Building2, ChevronLeft, ChevronRight, Eye, Pencil, Plus, Search } from "lucide-react";
+import { AlertCircle, Building2, ChevronLeft, ChevronRight, Eye, Plus, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,15 +39,13 @@ export function SuppliersPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Opciones de abastecimiento" items={purchasingNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Compras y abastecimiento
-          </Badge>
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Proveedores</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Consulta proveedores por razón social, NIT o contacto para preparar compras y recepciones.
+              Busca proveedores y consulta sus datos de contacto.
             </p>
           </div>
         </div>
@@ -70,7 +69,7 @@ export function SuppliersPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <CardTitle>Lista de proveedores</CardTitle>
-              <CardDescription>Filtra el padrón comercial sin cargar datos fuera del contrato de proveedores.</CardDescription>
+              <CardDescription>Busca por razón social, NIT o contacto.</CardDescription>
             </div>
             <div className="grid gap-3 sm:grid-cols-[minmax(220px,1fr)_180px] lg:w-[560px]">
               <div className="relative">
@@ -131,17 +130,11 @@ export function SuppliersPage() {
                       <Badge variant={supplier.status === "active" ? "default" : "secondary"}>{supplierStatusLabels[supplier.status]}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end">
                         <Button asChild size="sm" variant="outline">
                           <Link to={`/suppliers/${supplier.id}`}>
                             <Eye aria-hidden="true" />
-                            Ver
-                          </Link>
-                        </Button>
-                        <Button asChild size="sm" variant="ghost">
-                          <Link to={`/suppliers/${supplier.id}`}>
-                            <Pencil aria-hidden="true" />
-                            Editar
+                            Abrir
                           </Link>
                         </Button>
                       </div>

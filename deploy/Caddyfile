@@ -1,0 +1,24 @@
+{
+	auto_https off
+	admin off
+}
+
+http://farmacia-demo.gordex.dev {
+	encode zstd gzip
+
+	@api path /api /api/*
+	handle @api {
+		reverse_proxy backend:4000
+	}
+
+	handle {
+		root * /srv/frontend
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+http://farmacia-docs.gordex.dev {
+	encode zstd gzip
+	reverse_proxy docs:3001
+}

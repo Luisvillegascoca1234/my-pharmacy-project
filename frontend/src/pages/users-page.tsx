@@ -1,14 +1,17 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { administrationNavigation, ContextNavigation } from "@/components/context-navigation";
 import type { CreateUser, UpdateUser, User, UserStatus } from "@pharmacy-pos/shared";
-import { Edit3, KeyRound, Lock, RefreshCcw, Save, Search, ShieldAlert, UserCheck, UserMinus, UserPlus, Users } from "lucide-react";
+import { Edit3, KeyRound, Lock, MoreHorizontal, RefreshCcw, Save, Search, ShieldAlert, UserCheck, UserMinus, UserPlus, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUsersAdmin } from "@/modules/users";
 import { getUserManagementErrorMessage, getUsersLoadErrorMessage } from "./users/user-management-errors";
 
@@ -51,6 +54,7 @@ const userStatusBadgeVariant: Record<UserStatus, "default" | "secondary" | "dest
 export function UsersPage() {
   const admin = useUsersAdmin();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<"form" | "list">("list");
   const [form, setForm] = useState<UserFormState>(emptyUserForm);
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
   const [passwordForm, setPasswordForm] = useState<PasswordFormState>(emptyPasswordForm);
@@ -59,14 +63,8 @@ export function UsersPage() {
   const loadError = getUsersLoadErrorMessage(admin.errorCode);
 
   const selectedUser = useMemo(() => admin.users.find((user) => user.id === selectedUserId) ?? null, [admin.users, selectedUserId]);
-  const defaultRoleId = admin.roles[0]?.id ?? "";
-
   useEffect(() => {
     if (!selectedUser) {
-      setForm((currentForm) => ({
-        ...currentForm,
-        roleId: currentForm.roleId || defaultRoleId
-      }));
       return;
     }
 
@@ -76,7 +74,7 @@ export function UsersPage() {
       password: "",
       roleId: selectedUser.roleId
     });
-  }, [defaultRoleId, selectedUser]);
+  }, [selectedUser]);
 
   const summary = useMemo(
     () => ({
@@ -112,10 +110,8 @@ export function UsersPage() {
       }
 
       setSelectedUserId(null);
-      setForm({
-        ...emptyUserForm,
-        roleId: defaultRoleId
-      });
+      setForm(emptyUserForm);
+      setActivePanel("list");
     } catch (error) {
       setSubmitError(getUserManagementErrorMessage(error, "No se pudo guardar el usuario."));
     }
@@ -151,17 +147,13 @@ export function UsersPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Opciones de administración" items={administrationNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Administración
-          </Badge>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Usuarios</h1>
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Gestión de cuentas y asignación de los tres roles institucionales de la farmacia.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Usuarios</h1>
+          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+            Crea usuarios y define qué pueden hacer en la farmacia.
+          </p>
         </div>
         <div className="grid gap-2 sm:grid-cols-3 xl:w-[520px]">
           <Metric label="Total" value={summary.total} />
@@ -177,7 +169,22 @@ export function UsersPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <Tabs value={activePanel} onValueChange={(value) => setActivePanel(value as "form" | "list")}>
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="list">Lista de usuarios</TabsTrigger>
+          <TabsTrigger
+            value="form"
+            onClick={() => {
+              if (activePanel === "list") {
+                setSelectedUserId(null);
+                setForm(emptyUserForm);
+              }
+            }}
+          >
+            {selectedUser ? "Editar usuario" : "Nuevo usuario"}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent className="mt-5" value="list">
         <Card>
           <CardHeader className="gap-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -195,7 +202,7 @@ export function UsersPage() {
                 <Search aria-hidden="true" className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
                 <Input className="pl-8" placeholder="Buscar usuario" value={admin.search} onChange={(event) => admin.setSearch(event.target.value)} />
               </div>
-              <NativeSelect className="w-full" value={admin.roleId} onChange={(event) => admin.setRoleId(event.target.value)}>
+              <NativeSelect aria-label="Filtrar por rol" className="w-full" value={admin.roleId} onChange={(event) => admin.setRoleId(event.target.value)}>
                 <NativeSelectOption value="all">Todos los roles</NativeSelectOption>
                 {admin.roles.map((role) => (
                   <NativeSelectOption key={role.id} value={role.id}>
@@ -204,6 +211,7 @@ export function UsersPage() {
                 ))}
               </NativeSelect>
               <NativeSelect
+                aria-label="Filtrar por estado"
                 className="w-full"
                 value={admin.statusFilter}
                 onChange={(event) => admin.setStatusFilter(event.target.value as UserStatus | "all")}
@@ -239,35 +247,51 @@ export function UsersPage() {
                     <TableCell>
                       <Badge variant={userStatusBadgeVariant[user.status]}>{userStatusLabels[user.status]}</Badge>
                     </TableCell>
-                    <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString("es-BO") : "Sin ingreso"}</TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setSelectedUserId(user.id)}>
+                      {user.lastLoginAt
+                        ? new Date(user.lastLoginAt).toLocaleString("es-BO", { timeZone: "America/La_Paz" })
+                        : "Sin ingreso"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedUserId(user.id);
+                            setActivePanel("form");
+                          }}
+                        >
                           <Edit3 aria-hidden="true" />
                           Editar
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setPasswordUser(user)}>
-                          <KeyRound aria-hidden="true" />
-                          Restablecer
-                        </Button>
-                        {user.status !== "active" ? (
-                          <Button size="sm" variant="outline" onClick={() => void handleStatusChange(user.id, "active")}>
-                            <UserCheck aria-hidden="true" />
-                            Activar
-                          </Button>
-                        ) : null}
-                        {user.status !== "inactive" ? (
-                          <Button size="sm" variant="outline" onClick={() => void handleStatusChange(user.id, "inactive")}>
-                            <UserMinus aria-hidden="true" />
-                            Desactivar
-                          </Button>
-                        ) : null}
-                        {user.status !== "blocked" ? (
-                          <Button size="sm" variant="outline" onClick={() => void handleStatusChange(user.id, "blocked")}>
-                            <Lock aria-hidden="true" />
-                            Bloquear
-                          </Button>
-                        ) : null}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-label={`Más acciones para ${user.fullName}`} size="icon-sm" variant="outline">
+                              <MoreHorizontal aria-hidden="true" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem onSelect={() => setPasswordUser(user)}>
+                              <KeyRound aria-hidden="true" /> Restablecer contraseña
+                            </DropdownMenuItem>
+                            {user.status !== "active" ? (
+                              <DropdownMenuItem onSelect={() => void handleStatusChange(user.id, "active")}>
+                                <UserCheck aria-hidden="true" /> Activar acceso
+                              </DropdownMenuItem>
+                            ) : null}
+                            {user.status !== "inactive" ? (
+                              <DropdownMenuItem onSelect={() => void handleStatusChange(user.id, "inactive")}>
+                                <UserMinus aria-hidden="true" /> Desactivar acceso
+                              </DropdownMenuItem>
+                            ) : null}
+                            {user.status !== "blocked" ? (
+                              <DropdownMenuItem variant="destructive" onSelect={() => void handleStatusChange(user.id, "blocked")}>
+                                <Lock aria-hidden="true" /> Bloquear acceso
+                              </DropdownMenuItem>
+                            ) : null}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -283,11 +307,12 @@ export function UsersPage() {
             </Table>
           </CardContent>
         </Card>
-
+        </TabsContent>
+        <TabsContent className="mt-5 max-w-2xl" value="form">
         <Card>
           <CardHeader>
             <CardTitle>{selectedUser ? "Editar usuario" : "Nuevo usuario"}</CardTitle>
-            <CardDescription>Asigna una responsabilidad institucional sin configurar facultades individuales.</CardDescription>
+            <CardDescription>Completa sus datos y elige el tipo de acceso que necesita.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -335,7 +360,7 @@ export function UsersPage() {
                     variant="outline"
                     onClick={() => {
                       setSelectedUserId(null);
-                      setForm({ ...emptyUserForm, roleId: defaultRoleId });
+                      setForm(emptyUserForm);
                     }}
                   >
                     Cancelar
@@ -345,7 +370,8 @@ export function UsersPage() {
             </form>
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={Boolean(passwordUser)} onOpenChange={(open) => (!open ? setPasswordUser(null) : undefined)}>
         <DialogContent>
@@ -395,12 +421,12 @@ export function UsersPage() {
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border bg-muted/30 px-3 py-2">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="rounded-lg border bg-card px-3.5 py-3 shadow-xs">
+      <div className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">
         <Users aria-hidden="true" className="size-4" />
         {label}
       </div>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 text-2xl font-semibold tabular-nums tracking-[-0.025em]">{value}</p>
     </div>
   );
 }

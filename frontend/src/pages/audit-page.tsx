@@ -1,5 +1,6 @@
 import type { AuditDataErrorCode, AuditLog, AuditRequestStatus } from "@/modules/audit";
 import type { ReactNode } from "react";
+import { administrationNavigation, ContextNavigation } from "@/components/context-navigation";
 import {
   AlertCircle,
   ChevronDown,
@@ -15,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -26,10 +27,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AUDIT_DEFAULT_PAGE_SIZE, useAudit } from "@/modules/audit";
 
 const auditErrorMessages: Record<AuditDataErrorCode, string> = {
-  forbidden: "Tu usuario no tiene permiso para consultar auditoria sensible.",
-  "session-invalid": "Tu sesion vencio o ya no permite consultar auditoria. Vuelve a iniciar sesion.",
-  unknown: "No se pudo cargar el registro de auditoria. Intenta nuevamente.",
-  validation: "Revisa los filtros. El rango de fechas o algun identificador no cumple el contrato esperado."
+  forbidden: "No tienes permiso para consultar la auditoría.",
+  "session-invalid": "Tu sesión venció. Vuelve a iniciar sesión.",
+  unknown: "No se pudo cargar la auditoría. Intenta nuevamente.",
+  validation: "Revisa las fechas y los filtros avanzados."
 };
 
 const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
@@ -39,6 +40,50 @@ const dateTimeFormatter = new Intl.DateTimeFormat("es-BO", {
 });
 
 const pageSizeOptions = [10, AUDIT_DEFAULT_PAGE_SIZE, 50];
+const auditActionOptions = [
+  ["AUTH_LOGIN_SUCCESS", "Inicio de sesión exitoso"],
+  ["AUTH_LOGIN_FAILURE", "Inicio de sesión fallido"],
+  ["AUTH_LOGOUT", "Cierre de sesión"],
+  ["CASH_SESSION_OPENED", "Caja abierta"],
+  ["CASH_SESSION_CLOSED", "Caja cerrada"],
+  ["SALE_CONFIRMED", "Venta confirmada"],
+  ["SALE_CANCELLED", "Venta anulada"],
+  ["SALE_RETURNED", "Venta devuelta"],
+  ["PENDING_CART_CREATED", "Venta guardada"],
+  ["PENDING_CART_UPDATED", "Venta guardada actualizada"],
+  ["PENDING_CART_DISCARDED", "Venta guardada descartada"],
+  ["PENDING_CART_CONVERTED", "Venta guardada cobrada"],
+  ["PURCHASE_CREATED", "Compra creada"],
+  ["PURCHASE_UPDATED", "Compra actualizada"],
+  ["PURCHASE_RECEIVED", "Compra recibida"],
+  ["PURCHASE_CANCELLED", "Compra anulada"],
+  ["SUPPLIER_CREATED", "Proveedor creado"],
+  ["SUPPLIER_UPDATED", "Proveedor actualizado"],
+  ["PREPARED_INVOICE_CREATED", "Comprobante preparado"],
+  ["PREPARED_INVOICE_CANCELLED", "Comprobante cancelado"],
+  ["CSV_EXPORT_DOWNLOADED", "Archivo CSV descargado"],
+  ["STOCK_PLANNING_FILE_GENERATED", "Archivo técnico de reposición generado"],
+  ["PRODUCT_STOCK_PLANNING_CONFIGURATION_UPDATED", "Criterio de compra actualizado"],
+  ["STOCK_PLANNING_GLOBAL_CONFIGURATION_UPDATED", "Configuración de reposición actualizada"],
+  ["STOCK_PLANNING_MANUAL_RECALCULATION_REQUESTED", "Actualización de recomendaciones solicitada"],
+  ["DEVELOPMENT_SEED_COMPLETED", "Datos de prueba cargados"]
+] as const;
+
+const auditActionLabels = Object.fromEntries(auditActionOptions) as Record<string, string>;
+
+const auditEntityLabels: Record<string, string> = {
+  auth: "Inicio de sesión",
+  cash_session: "Caja",
+  export: "Archivo descargado",
+  prepared_invoice: "Comprobante interno",
+  purchase: "Compra",
+  pending_cart: "Venta guardada",
+  sale: "Venta",
+  seed: "Datos de prueba",
+  stock_planning_execution: "Cálculo de reposición",
+  supplier: "Proveedor",
+  user: "Usuario"
+};
 
 export function AuditPage() {
   const audit = useAudit();
@@ -64,7 +109,7 @@ export function AuditPage() {
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Acceso no autorizado</AlertTitle>
-          <AlertDescription>Solo superadministracion puede consultar auditoria sensible.</AlertDescription>
+          <AlertDescription>No tienes permiso para consultar la auditoría.</AlertDescription>
         </Alert>
       </section>
     );
@@ -72,18 +117,13 @@ export function AuditPage() {
 
   return (
     <section className="grid gap-6">
+      <ContextNavigation ariaLabel="Opciones de administración" items={administrationNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Auditoria sensible
-          </Badge>
-          <div className="max-w-3xl space-y-2">
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Registro de auditoria</h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Investigacion de acciones sensibles por actor, entidad, fecha y evidencia tecnica, separada de reportes
-              operativos generales.
-            </p>
-          </div>
+        <div className="max-w-3xl space-y-2">
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Auditoría</h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Consulta quién realizó una acción, cuándo ocurrió y qué registro cambió.
+          </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button disabled={isLoading} type="button" variant="outline" onClick={clearFilters}>
@@ -100,51 +140,28 @@ export function AuditPage() {
       {visibleError ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo consultar auditoria</AlertTitle>
+          <AlertTitle>No se pudo consultar la auditoría</AlertTitle>
           <AlertDescription>{visibleError}</AlertDescription>
         </Alert>
       ) : null}
 
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de investigacion</CardTitle>
-          <CardDescription>La consulta se ordena por fecha descendente desde el servicio de auditoria.</CardDescription>
+          <CardTitle>Buscar eventos</CardTitle>
+          <CardDescription>Los eventos más recientes aparecen primero.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <AuditField description="Nombre tecnico del evento auditado." label="Accion">
-              <Input
-                disabled={isLoading}
-                placeholder="SALE_CANCELLED, CSV_EXPORT..."
-                value={audit.action}
-                onChange={(event) => audit.setAction(event.currentTarget.value)}
-              />
+          <div className="grid gap-3 md:grid-cols-3">
+            <AuditField description="Tipo de operación registrada." label="Acción">
+              <Select disabled={isLoading} value={audit.action || "all"} onValueChange={(value) => audit.setAction(value === "all" ? "" : value)}>
+                <SelectTrigger><SelectValue placeholder="Todas las acciones" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las acciones</SelectItem>
+                  {auditActionOptions.map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </AuditField>
-            <AuditField description="ID del usuario que ejecuto la accion." label="Actor">
-              <Input
-                disabled={isLoading}
-                placeholder="UUID de usuario"
-                value={audit.actorUserId}
-                onChange={(event) => audit.setActorUserId(event.currentTarget.value)}
-              />
-            </AuditField>
-            <AuditField description="Tipo de recurso afectado por la accion." label="Entidad">
-              <Input
-                disabled={isLoading}
-                placeholder="sale, invoice, export..."
-                value={audit.entityType}
-                onChange={(event) => audit.setEntityType(event.currentTarget.value)}
-              />
-            </AuditField>
-            <AuditField description="ID del recurso afectado." label="Entidad afectada">
-              <Input
-                disabled={isLoading}
-                placeholder="UUID o referencia estable"
-                value={audit.entityId}
-                onChange={(event) => audit.setEntityId(event.currentTarget.value)}
-              />
-            </AuditField>
-            <AuditField description="Fecha inicial ISO." label="Desde">
+            <AuditField description="Primer día que quieres consultar." label="Desde">
               <Input
                 disabled={isLoading}
                 type="date"
@@ -152,7 +169,7 @@ export function AuditPage() {
                 onChange={(event) => audit.setFromDate(event.currentTarget.value)}
               />
             </AuditField>
-            <AuditField description="Fecha final ISO." label="Hasta">
+            <AuditField description="Último día que quieres consultar." label="Hasta">
               <Input
                 disabled={isLoading}
                 type="date"
@@ -161,6 +178,27 @@ export function AuditPage() {
               />
             </AuditField>
           </div>
+          <Collapsible className="group/technical">
+            <CollapsibleTrigger asChild>
+              <Button className="w-fit" type="button" variant="ghost">
+                Búsqueda avanzada
+                <ChevronDown aria-hidden="true" className="transition-transform group-data-[state=open]/technical:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-3">
+              <div className="grid gap-3 rounded-lg border bg-muted/15 p-4 md:grid-cols-3">
+                <AuditField description="Identificador interno del usuario." label="ID de usuario">
+                  <Input disabled={isLoading} placeholder="UUID de usuario" value={audit.actorUserId} onChange={(event) => audit.setActorUserId(event.currentTarget.value)} />
+                </AuditField>
+                <AuditField description="Tipo interno del registro afectado." label="Tipo de registro">
+                  <Input disabled={isLoading} placeholder="sale, purchase, export..." value={audit.entityType} onChange={(event) => audit.setEntityType(event.currentTarget.value)} />
+                </AuditField>
+                <AuditField description="Identificador interno del registro afectado." label="ID de registro">
+                  <Input disabled={isLoading} placeholder="UUID o referencia" value={audit.entityId} onChange={(event) => audit.setEntityId(event.currentTarget.value)} />
+                </AuditField>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 
@@ -170,7 +208,7 @@ export function AuditPage() {
             <div>
               <CardTitle>Eventos auditados</CardTitle>
               <CardDescription>
-                {paginationStart}-{paginationEnd} de {audit.pagination.total} evento(s). Pagina {audit.pagination.page} de{" "}
+                {paginationStart}-{paginationEnd} de {audit.pagination.total} eventos. Página {audit.pagination.page} de{" "}
                 {Math.max(audit.pagination.totalPages, 1)}.
               </CardDescription>
             </div>
@@ -186,11 +224,11 @@ export function AuditPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Evento</TableHead>
-                    <TableHead>Actor</TableHead>
+                    <TableHead>Usuario</TableHead>
                     <TableHead>Fecha</TableHead>
-                    <TableHead>Entidad</TableHead>
+                    <TableHead>Registro</TableHead>
                     <TableHead>Resultado</TableHead>
-                    <TableHead className="w-28 text-right">Metadata</TableHead>
+                    <TableHead className="w-28 text-right">Detalle</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -250,7 +288,7 @@ function PageSizeSelect({
 }) {
   return (
     <div className="grid gap-1.5">
-      <span className="text-xs text-muted-foreground">Tamano de pagina</span>
+      <span className="text-xs text-muted-foreground">Eventos por página</span>
       <Select disabled={disabled} value={String(pageSize)} onValueChange={(value) => onPageSizeChange(Number(value))}>
         <SelectTrigger className="w-full sm:w-44">
           <SelectValue />
@@ -285,23 +323,14 @@ function AuditLogTableRow({
     <>
       <TableRow aria-expanded={isExpanded}>
         <TableCell className="min-w-56 whitespace-normal">
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">{formatAction(log.action)}</p>
-            <p className="text-xs text-muted-foreground">ID: {log.id}</p>
-          </div>
+          <p className="font-medium text-foreground">{formatAction(log.action)}</p>
         </TableCell>
         <TableCell className="min-w-52 whitespace-normal">
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">{actorLabel}</p>
-            <p className="text-xs text-muted-foreground">{log.actorUserId ?? "Actor no registrado"}</p>
-          </div>
+          <p className="font-medium text-foreground">{actorLabel}</p>
         </TableCell>
         <TableCell>{formatDateTime(log.createdAt)}</TableCell>
         <TableCell className="min-w-48 whitespace-normal">
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">{entityLabel}</p>
-            <p className="text-xs text-muted-foreground">{log.entityId ?? "Sin ID de entidad"}</p>
-          </div>
+          <p className="font-medium text-foreground">{entityLabel}</p>
         </TableCell>
         <TableCell>
           <Badge variant={resultLabel === "Error" ? "destructive" : "secondary"}>{resultLabel}</Badge>
@@ -320,7 +349,7 @@ function AuditLogTableRow({
               <CollapsibleContent>
                 <div className="grid gap-4 p-4">
                   <div className="grid gap-3 md:grid-cols-3">
-                    <MetadataSummary icon={<History aria-hidden="true" />} label="Accion" value={log.action} />
+                    <MetadataSummary icon={<History aria-hidden="true" />} label="Código de acción" value={log.action} />
                     <MetadataSummary icon={<UserRound aria-hidden="true" />} label="IP" value={log.ipAddress ?? "No registrada"} />
                     <MetadataSummary
                       icon={<Database aria-hidden="true" />}
@@ -330,7 +359,7 @@ function AuditLogTableRow({
                   </div>
                   <Separator />
                   <div className="grid gap-2">
-                    <p className="text-sm font-medium text-foreground">Metadata completa</p>
+                    <p className="text-sm font-medium text-foreground">Datos técnicos</p>
                     <pre className="max-h-[520px] overflow-auto rounded-md border bg-background p-3 text-xs leading-5 text-foreground whitespace-pre-wrap break-all">
                       {metadataText}
                     </pre>
@@ -362,7 +391,7 @@ function AuditState({ status }: { status: AuditRequestStatus }) {
     return (
       <div className="flex min-h-20 items-center justify-center gap-2 rounded-md border bg-muted/20 text-sm text-muted-foreground">
         <Spinner />
-        Cargando eventos de auditoria...
+        Cargando eventos de auditoría...
       </div>
     );
   }
@@ -372,7 +401,7 @@ function AuditState({ status }: { status: AuditRequestStatus }) {
       <Alert variant="destructive">
         <ShieldAlert aria-hidden="true" />
         <AlertTitle>Permiso insuficiente</AlertTitle>
-        <AlertDescription>La sesion actual no tiene autorizacion para leer auditoria sensible.</AlertDescription>
+        <AlertDescription>No tienes permiso para consultar la auditoría.</AlertDescription>
       </Alert>
     );
   }
@@ -381,7 +410,7 @@ function AuditState({ status }: { status: AuditRequestStatus }) {
     return (
       <Alert variant="destructive">
         <AlertCircle aria-hidden="true" />
-        <AlertTitle>No se pudo cargar auditoria</AlertTitle>
+        <AlertTitle>No se pudo cargar la auditoría</AlertTitle>
         <AlertDescription>Revisa los filtros y vuelve a intentar la consulta.</AlertDescription>
       </Alert>
     );
@@ -422,7 +451,7 @@ function PaginationFooter({
   return (
     <div className="flex flex-col gap-3 rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>
-        Pagina {page} de {Math.max(totalPages, 1)}. Total: {total} evento(s).
+        Página {page} de {Math.max(totalPages, 1)} · {total} eventos
       </span>
       <div className="flex gap-2">
         <Button disabled={disabled || page <= 1} size="sm" type="button" variant="outline" onClick={onPrevious}>
@@ -438,25 +467,29 @@ function PaginationFooter({
 
 function getActorLabel(log: AuditLog) {
   if (!log.actorUser) {
-    return "Sistema o actor no disponible";
+    return "Sistema";
   }
 
-  return log.actorUser.fullName ?? log.actorUser.email ?? "Actor sin nombre";
+  return log.actorUser.fullName ?? log.actorUser.email ?? "Usuario sin nombre";
 }
 
 function getEntityLabel(log: AuditLog) {
-  return log.entityType ? formatAction(log.entityType) : "Entidad no registrada";
+  if (!log.entityType) {
+    return "Registro no identificado";
+  }
+
+  return auditEntityLabels[log.entityType.toLowerCase()] ?? formatAction(log.entityType);
 }
 
 function getResultLabel(metadata: AuditLog["metadata"]) {
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
-    return "Registrado";
+    return "Completado";
   }
 
   const status = getObjectValue(metadata, "status") ?? getObjectValue(metadata, "result") ?? getObjectValue(metadata, "outcome");
 
   if (typeof status !== "string") {
-    return "Registrado";
+    return "Completado";
   }
 
   const normalizedStatus = status.toLowerCase();
@@ -478,7 +511,7 @@ function getObjectValue(value: object, key: string) {
 
 function formatMetadata(metadata: AuditLog["metadata"]) {
   if (metadata === undefined || metadata === null || metadata === "") {
-    return "Sin metadata registrada.";
+    return "Sin datos técnicos.";
   }
 
   if (typeof metadata === "object") {
@@ -489,6 +522,10 @@ function formatMetadata(metadata: AuditLog["metadata"]) {
 }
 
 function formatAction(value: string) {
+  if (auditActionLabels[value]) {
+    return auditActionLabels[value];
+  }
+
   return value
     .replace(/[_-]+/g, " ")
     .trim()

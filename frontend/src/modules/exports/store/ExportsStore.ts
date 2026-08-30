@@ -1,7 +1,12 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { exportsFacade } from "../facades/exportsFacade";
-import { createCsvExportDataError, getCsvExportStatusFromError } from "../utils/exportsErrors";
+import {
+  createCsvExportDataError,
+  createStockPlanningParquetExportError,
+  getCsvExportStatusFromError,
+  getStockPlanningParquetStatusFromError
+} from "../utils/exportsErrors";
 import type { ExportsActions } from "./ExportsActions";
 import {
   buildInventoryMovementsCsvExportQueryFromState,
@@ -31,6 +36,22 @@ export const useExportsStore = create<ExportsStore>()(
 
       clearSalesExport() {
         set({ error: null, salesExportFile: null, salesExportStatus: "idle" }, false, "clearSalesExport");
+      },
+
+      clearStockPlanningObservationsExport() {
+        set({
+          stockPlanningObservationsError: null,
+          stockPlanningObservationsFile: null,
+          stockPlanningObservationsStatus: "idle"
+        }, false, "clearStockPlanningObservationsExport");
+      },
+
+      clearStockPlanningResultsExport() {
+        set({
+          stockPlanningResultsError: null,
+          stockPlanningResultsFile: null,
+          stockPlanningResultsStatus: "idle"
+        }, false, "clearStockPlanningResultsExport");
       },
 
       async downloadInventoryMovementsCsv(signal) {
@@ -97,6 +118,56 @@ export const useExportsStore = create<ExportsStore>()(
         }
       },
 
+      async downloadStockPlanningObservationsParquet(signal) {
+        set({
+          stockPlanningObservationsError: null,
+          stockPlanningObservationsStatus: "loading"
+        }, false, "downloadStockPlanningObservationsParquet:start");
+
+        try {
+          const file = await exportsFacade.downloadStockPlanningObservationsParquet(get().stockPlanningFilters, signal);
+          set({
+            stockPlanningObservationsError: null,
+            stockPlanningObservationsFile: file,
+            stockPlanningObservationsStatus: "success"
+          }, false, "downloadStockPlanningObservationsParquet:success");
+          return file;
+        } catch (error) {
+          if (isAbortError(error)) return null;
+          const exportError = createStockPlanningParquetExportError(error);
+          set({
+            stockPlanningObservationsError: exportError,
+            stockPlanningObservationsStatus: getStockPlanningParquetStatusFromError(exportError)
+          }, false, "downloadStockPlanningObservationsParquet:error");
+          return null;
+        }
+      },
+
+      async downloadStockPlanningResultsParquet(signal) {
+        set({
+          stockPlanningResultsError: null,
+          stockPlanningResultsStatus: "loading"
+        }, false, "downloadStockPlanningResultsParquet:start");
+
+        try {
+          const file = await exportsFacade.downloadStockPlanningResultsParquet(get().stockPlanningFilters, signal);
+          set({
+            stockPlanningResultsError: null,
+            stockPlanningResultsFile: file,
+            stockPlanningResultsStatus: "success"
+          }, false, "downloadStockPlanningResultsParquet:success");
+          return file;
+        } catch (error) {
+          if (isAbortError(error)) return null;
+          const exportError = createStockPlanningParquetExportError(error);
+          set({
+            stockPlanningResultsError: exportError,
+            stockPlanningResultsStatus: getStockPlanningParquetStatusFromError(exportError)
+          }, false, "downloadStockPlanningResultsParquet:error");
+          return null;
+        }
+      },
+
       reset() {
         set(initialExportsState, false, "reset");
       },
@@ -115,6 +186,12 @@ export const useExportsStore = create<ExportsStore>()(
 
       setSalesToDate(salesToDate) {
         set({ salesToDate }, false, "setSalesToDate");
+      },
+
+      setStockPlanningFilters(filters) {
+        set((state) => ({
+          stockPlanningFilters: { ...state.stockPlanningFilters, ...filters }
+        }), false, "setStockPlanningFilters");
       }
     }),
     { name: "ExportsStore" }

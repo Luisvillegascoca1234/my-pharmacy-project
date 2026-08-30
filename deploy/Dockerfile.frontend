@@ -1,0 +1,34 @@
+FROM node:22-bookworm-slim AS build
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN corepack enable \
+    && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.json backend/package.json
+COPY docs-app/package.json docs-app/package.json
+COPY frontend/package.json frontend/package.json
+COPY packages/shared/package.json packages/shared/package.json
+
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+COPY frontend frontend
+COPY packages/shared packages/shared
+
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+
+RUN pnpm --filter @pharmacy-pos/shared build \
+    && pnpm --filter @pharmacy-pos/frontend build
+
+FROM caddy:2.10.2-alpine AS runtime
+
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/frontend/dist /srv/frontend
+
+EXPOSE 80
+

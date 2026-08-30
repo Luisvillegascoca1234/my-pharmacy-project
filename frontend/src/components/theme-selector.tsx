@@ -29,18 +29,18 @@ const SWATCH_KEYS = ["primary", "secondary", "accent", "destructive", "muted"] a
 
 const DEFAULT_THEME_SWATCH_COLORS = {
   light: {
-    primary: "oklch(0.205 0 0)",
-    secondary: "oklch(0.97 0 0)",
-    accent: "oklch(0.97 0 0)",
-    destructive: "oklch(0.577 0.245 27.325)",
-    muted: "oklch(0.97 0 0)"
+    primary: "oklch(0.47 0.082 183)",
+    secondary: "oklch(0.96 0.035 57)",
+    accent: "oklch(0.944 0.024 183)",
+    destructive: "oklch(0.577 0.215 27)",
+    muted: "oklch(0.957 0.009 220)"
   },
   dark: {
-    primary: "oklch(0.922 0 0)",
-    secondary: "oklch(0.269 0 0)",
-    accent: "oklch(0.269 0 0)",
-    destructive: "oklch(0.704 0.191 22.216)",
-    muted: "oklch(0.269 0 0)"
+    primary: "oklch(0.72 0.11 181)",
+    secondary: "oklch(0.3 0.065 50)",
+    accent: "oklch(0.285 0.045 183)",
+    destructive: "oklch(0.66 0.19 27)",
+    muted: "oklch(0.255 0.018 225)"
   }
 } satisfies Record<"light" | "dark", Record<(typeof SWATCH_KEYS)[number], string>>;
 
@@ -108,7 +108,7 @@ export function ThemeSelector() {
           }}
         >
           <Check className={cn("size-4 opacity-0", themeName === null && "opacity-100")} />
-          <span>Predeterminado</span>
+          <span>Base Clinical</span>
           <ThemeSwatches colors={DEFAULT_THEME_SWATCH_COLORS[effectiveMode]} />
         </DropdownMenuItem>
         {themePresets.map((preset) => {

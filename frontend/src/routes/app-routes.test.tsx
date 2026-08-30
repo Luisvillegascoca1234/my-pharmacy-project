@@ -24,7 +24,7 @@ describe("direct route access", () => {
     await renderRoute(role, path);
 
     expect(container?.textContent).toContain("Acceso no autorizado");
-    expect(container?.textContent).toContain("Tu rol actual no permite abrir esta ruta operativa.");
+    expect(container?.textContent).toContain("No tienes permiso para entrar a esta pantalla.");
     expect(container?.textContent).toContain(featureLabel);
   });
 

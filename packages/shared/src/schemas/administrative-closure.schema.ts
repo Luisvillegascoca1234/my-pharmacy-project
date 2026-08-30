@@ -15,7 +15,6 @@ import {
 const pureDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const isoDateTime = z.string().datetime({ offset: true });
 const quantity = z.number().finite().min(0);
-const decimal4 = z.number().finite().min(0);
 const positiveDays = z.coerce.number().int().positive().max(365);
 const administrativeReason = z.string().trim().min(5).max(500);
 const csvSeparator = z.literal(";").default(";");
@@ -244,7 +243,7 @@ export const SaleReturnItemSchema = z.object({
   batchNumber: z.string().optional(),
   expirationDate: pureDate.optional(),
   quantity: quantity,
-  unitCostBase: decimal4,
+  unitCostBase: nonNegativeMoneySchema,
   refundUnitPrice: nonNegativeMoneySchema,
   refundSubtotal: nonNegativeMoneySchema,
   createdAt: z.string(),
@@ -360,7 +359,7 @@ export const InventoryValuationLotSchema = z.object({
   batchNumber: z.string().optional(),
   expirationDate: pureDate.optional(),
   availableQuantity: quantity,
-  unitCostBase: decimal4,
+  unitCostBase: nonNegativeMoneySchema,
   totalValue: nonNegativeMoneySchema
 });
 
@@ -412,7 +411,7 @@ export const ExpiringProductSchema = z.object({
   expirationDate: pureDate,
   daysUntilExpiration: z.number().int(),
   availableQuantity: quantity,
-  unitCostBase: decimal4,
+  unitCostBase: nonNegativeMoneySchema,
   totalValue: nonNegativeMoneySchema
 });
 
@@ -468,7 +467,7 @@ export const InventoryMovementsCsvRowSchema = z.object({
   batchId: z.string(),
   batchNumber: z.string().optional(),
   quantityBase: z.number().finite(),
-  unitCostBase: decimal4,
+  unitCostBase: nonNegativeMoneySchema,
   referenceType: z.string(),
   referenceId: z.string(),
   actorUserName: z.string().optional(),

@@ -2198,7 +2198,7 @@ export const openApiDocument = {
         summary: "Get backend health status",
         responses: {
           "200": {
-            description: "Backend is available",
+            description: "Backend and database are ready",
             content: {
               "application/json": {
                 schema: {
@@ -2207,8 +2207,15 @@ export const openApiDocument = {
               }
             }
           },
-          "500": {
-            $ref: "#/components/responses/UnexpectedError"
+          "503": {
+            description: "Database is unavailable",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }

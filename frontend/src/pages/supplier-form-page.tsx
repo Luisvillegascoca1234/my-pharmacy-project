@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
@@ -39,7 +39,7 @@ const supplierStatusLabels: Record<SupplierStatus, string> = {
 
 const supplierStatusDescriptions: Record<SupplierStatus, string> = {
   active: "Disponible para nuevas compras y recepciones.",
-  inactive: "Conserva el historial, pero no queda disponible para nuevas operaciones."
+  inactive: "Conserva el historial, pero no puede usarse en nuevas compras."
 };
 
 export function SupplierFormPage({ mode }: SupplierFormPageProps) {
@@ -64,7 +64,7 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
   const title = isCreateMode ? "Nuevo proveedor" : "Detalle de proveedor";
   const description = isCreateMode
     ? "Registra los datos comerciales mínimos del proveedor. El NIT puede quedar vacío."
-    : "Edita la ficha comercial y controla el estado operativo sin borrar historial.";
+    : "Actualiza los datos del proveedor o cambia su disponibilidad.";
 
   const statusActionCopy = useMemo(() => {
     if (isCreateMode) {
@@ -171,9 +171,6 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
     <section className="grid gap-5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Proveedores
-          </Badge>
           <div>
             <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">{title}</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{description}</p>
@@ -203,7 +200,7 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
                   <ShieldAlert aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>Permiso insuficiente</EmptyTitle>
-                <EmptyDescription>Tu rol actual permite solo consulta general y no puede gestionar proveedores.</EmptyDescription>
+                <EmptyDescription>No tienes permiso para registrar o modificar proveedores.</EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button asChild variant="outline">
@@ -232,7 +229,7 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
                   <Building2 aria-hidden="true" />
                 </EmptyMedia>
                 <EmptyTitle>Proveedor no encontrado</EmptyTitle>
-                <EmptyDescription>El proveedor solicitado no existe o ya no está disponible para tu sesión.</EmptyDescription>
+                <EmptyDescription>El proveedor solicitado no existe o ya no está disponible.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           </CardContent>
@@ -270,7 +267,7 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
             <CardHeader>
               <CardTitle>Datos comerciales</CardTitle>
               <CardDescription>
-                {suppliers.isDirty ? "Hay cambios pendientes por guardar." : "La ficha está sincronizada con el servidor."}
+                {suppliers.isDirty ? "Hay cambios pendientes por guardar." : "Todos los cambios están guardados."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -285,7 +282,6 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
                     value={suppliers.draftForm.businessName}
                     onChange={(event) => setField("businessName", event.target.value)}
                   />
-                  <FieldDescription>Entre 2 y 160 caracteres.</FieldDescription>
                   <FieldError>{fieldErrors.businessName}</FieldError>
                 </Field>
 
@@ -336,7 +332,6 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
                     value={suppliers.draftForm.address}
                     onChange={(event) => setField("address", event.target.value)}
                   />
-                  <FieldDescription>Máximo 240 caracteres.</FieldDescription>
                   <FieldError>{fieldErrors.address}</FieldError>
                 </Field>
 
@@ -366,16 +361,16 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
             </CardContent>
           </Card>
 
-          <Card className="h-fit">
+          {!isCreateMode ? <Card className="h-fit">
             <CardHeader>
-              <CardTitle>Estado operativo</CardTitle>
+              <CardTitle>Disponibilidad</CardTitle>
               <CardDescription>{supplierStatusDescriptions[suppliers.draftForm.status]}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-3">
                 <div>
                   <p className="text-sm font-medium text-foreground">Estado actual</p>
-                  <p className="text-xs text-muted-foreground">No elimina compras ni historial asociado.</p>
+                  <p className="text-xs text-muted-foreground">Los datos y compras anteriores se conservarán.</p>
                 </div>
                 <Badge variant={suppliers.draftForm.status === "active" ? "default" : "secondary"}>
                   {supplierStatusLabels[suppliers.draftForm.status]}
@@ -385,9 +380,8 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
               <Button disabled={!suppliers.canManage || isSaving} type="button" variant="outline" onClick={openStatusDialog}>
                 {statusActionCopy}
               </Button>
-              {suppliers.isDirty ? <p className="text-sm text-muted-foreground">Cambios pendientes.</p> : null}
             </CardContent>
-          </Card>
+          </Card> : null}
         </div>
       )}
 
@@ -421,7 +415,7 @@ export function SupplierFormPage({ mode }: SupplierFormPageProps) {
                 ? "El proveedor se guardará con este estado cuando confirmes el formulario."
                 : suppliers.isDirty
                   ? "Se guardarán los cambios pendientes junto con el nuevo estado. El historial se conservará."
-                  : "Solo se actualizará el estado operativo. El historial se conservará."}
+                  : "Se actualizará la disponibilidad del proveedor. Sus datos anteriores se conservarán."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

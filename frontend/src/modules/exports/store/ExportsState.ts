@@ -4,7 +4,11 @@ import type {
   CsvExportFile,
   CsvExportRequestStatus,
   InventoryMovementsCsvExportQuery,
-  SalesCsvExportQuery
+  SalesCsvExportQuery,
+  StockPlanningParquetExportError,
+  StockPlanningParquetFile,
+  StockPlanningParquetFilters,
+  StockPlanningParquetExportStatus
 } from "../types/exportsTypes";
 
 export type ExportsState = {
@@ -17,6 +21,13 @@ export type ExportsState = {
   salesExportStatus: CsvExportRequestStatus;
   salesFromDate: string;
   salesToDate: string;
+  stockPlanningFilters: StockPlanningParquetFilters;
+  stockPlanningObservationsError: StockPlanningParquetExportError | null;
+  stockPlanningObservationsFile: StockPlanningParquetFile | null;
+  stockPlanningObservationsStatus: StockPlanningParquetExportStatus;
+  stockPlanningResultsError: StockPlanningParquetExportError | null;
+  stockPlanningResultsFile: StockPlanningParquetFile | null;
+  stockPlanningResultsStatus: StockPlanningParquetExportStatus;
 };
 
 export const initialExportsState: ExportsState = {
@@ -28,7 +39,21 @@ export const initialExportsState: ExportsState = {
   salesExportFile: null,
   salesExportStatus: "idle",
   salesFromDate: "",
-  salesToDate: ""
+  salesToDate: "",
+  stockPlanningFilters: {
+    categoryId: "",
+    executionId: "",
+    fromDate: "",
+    productId: "",
+    supplierId: "",
+    toDate: ""
+  },
+  stockPlanningObservationsError: null,
+  stockPlanningObservationsFile: null,
+  stockPlanningObservationsStatus: "idle",
+  stockPlanningResultsError: null,
+  stockPlanningResultsFile: null,
+  stockPlanningResultsStatus: "idle"
 };
 
 export function buildSalesCsvExportQueryFromState(state: ExportsState): SalesCsvExportQuery {

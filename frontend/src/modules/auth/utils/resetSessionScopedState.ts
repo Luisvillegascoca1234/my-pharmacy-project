@@ -9,6 +9,7 @@ import { resetPurchasesStore } from "@/modules/purchases";
 import { resetReturnsStore } from "@/modules/returns";
 import { resetSalesStore } from "@/modules/sales";
 import { resetSuppliersStore } from "@/modules/suppliers";
+import { resetStockPlanningStore } from "@/modules/stock-planning";
 import { resetUnitsCatalogStore } from "@/modules/units";
 import { resetUsersAdminStore } from "@/modules/users";
 
@@ -23,6 +24,7 @@ export function resetSessionScopedState(): void {
   resetReturnsStore();
   resetSalesStore();
   resetSuppliersStore();
+  resetStockPlanningStore();
   resetUnitsCatalogStore();
   resetHealthStatusStore();
   resetUsersAdminStore();

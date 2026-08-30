@@ -406,7 +406,7 @@ function buildDraftItem(
   const unitCost = toUnitCost(item.unitCost);
   const conversionFactor = toDecimal4(productUnit.conversionFactor);
   const baseQuantity = toDecimal4(quantity.mul(conversionFactor));
-  const baseUnitCost = toDecimal4(unitCost.div(conversionFactor));
+  const baseUnitCost = toMoney(unitCost.div(conversionFactor));
   const lineTotal = toMoney(quantity.mul(unitCost));
   const batchNumber = product.isInventoryTracked ? normalizeBatchNumber(item.batchNumber) : null;
   const expirationDate =
@@ -475,11 +475,11 @@ function toPurchase(purchase: PurchaseWithRelations): Purchase {
       unitId: item.unitId,
       unitName: item.unit.name,
       quantity: Number(item.quantity),
-      unitCost: Number(item.unitCost),
+      unitCost: Number(toMoney(item.unitCost)),
       conversionFactor: Number(item.conversionFactor),
       baseQuantity: Number(item.baseQuantity),
-      baseUnitCost: Number(item.baseUnitCost),
-      lineTotal: Number(item.lineTotal),
+      baseUnitCost: Number(toMoney(item.baseUnitCost)),
+      lineTotal: Number(toMoney(item.lineTotal)),
       isInventoryTracked: item.isInventoryTracked,
       batchNumber: item.batchNumber ?? undefined,
       expirationDate: item.expirationDate ? toDateOnly(item.expirationDate) : undefined,

@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { PageQuerySchema, createPaginatedResponseSchema } from "./pagination.schema.js";
-import { optionalTextSchema } from "./shared-schema.helpers.js";
+import { nonNegativeMoneySchema, optionalTextSchema } from "./shared-schema.helpers.js";
 
 const pureDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const decimal4 = z.coerce.number().finite().min(0);
 const signedDecimal4 = z.coerce.number().finite();
 
-export const InventoryBatchStatusSchema = z.enum(["active", "depleted", "cancelled"]);
+export const InventoryBatchStatusSchema = z.enum(["active", "depleted", "blocked", "cancelled"]);
 export type InventoryBatchStatus = z.infer<typeof InventoryBatchStatusSchema>;
 
 export const InventoryMovementTypeSchema = z.enum([
@@ -43,7 +43,7 @@ export const InventoryBatchSchema = z.object({
   supplierName: z.string().optional(),
   originalQuantity: z.number().min(0),
   availableQuantity: z.number().min(0),
-  baseUnitCost: z.number().min(0).optional(),
+  baseUnitCost: nonNegativeMoneySchema.optional(),
   batchNumber: z.string().optional(),
   expirationDate: pureDate.optional(),
   status: InventoryBatchStatusSchema,
@@ -63,8 +63,8 @@ export const InventoryStockItemSchema = z.object({
   expirationDate: pureDate.optional(),
   totalOriginalQuantity: z.number().min(0),
   totalAvailableQuantity: z.number().min(0),
-  totalValue: z.number().min(0).optional(),
-  averageUnitCost: z.number().min(0).optional(),
+  totalValue: nonNegativeMoneySchema.optional(),
+  averageUnitCost: nonNegativeMoneySchema.optional(),
   layerCount: z.number().int().min(0),
   status: InventoryStockStatusSchema,
   oldestLayerCreatedAt: z.string()
@@ -79,7 +79,7 @@ export const InventoryMovementSchema = z.object({
   product: InventoryProductSummarySchema,
   type: InventoryMovementTypeSchema,
   quantityBase: signedDecimal4,
-  unitCostBase: z.number().min(0),
+  unitCostBase: nonNegativeMoneySchema,
   referenceType: z.string(),
   referenceId: z.string(),
   referenceItemId: z.string().optional(),
@@ -149,7 +149,7 @@ export const FefoAllocationSchema = z.object({
   expirationDate: pureDate.optional(),
   availableQuantity: z.number().min(0),
   allocatedQuantity: z.number().min(0),
-  unitCostBase: z.number().min(0).optional()
+  unitCostBase: nonNegativeMoneySchema.optional()
 });
 
 export type FefoAllocation = z.infer<typeof FefoAllocationSchema>;

@@ -1,5 +1,5 @@
 import type { AuthenticatedUser } from "@pharmacy-pos/shared";
-import { ChevronDown, LogOut, PillBottle, UserCircle } from "lucide-react";
+import { ChevronDown, Cross, LogOut, PillBottle } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -22,7 +22,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { getVisibleNavigationGroups } from "@/routes/navigation";
 
@@ -33,32 +34,49 @@ type AppSidebarProps = {
 export function AppSidebar({ user }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
   const groups = getVisibleNavigationGroups(user.role.name);
 
+  const closeMobileNavigation = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
-    <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader>
+    <Sidebar collapsible="icon" variant="sidebar" className="border-r border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="h-12" size="lg" tooltip="Farmacia POS">
-              <span className="flex size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <PillBottle aria-hidden="true" className="size-4" />
+            <SidebarMenuButton className="h-12 hover:bg-transparent active:bg-transparent" size="lg" tooltip="Farmacia POS">
+              <span className="relative flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
+                <PillBottle aria-hidden="true" className="size-[1.125rem]" />
+                <Cross aria-hidden="true" className="absolute -right-1 -top-1 size-3 rounded-sm bg-card p-0.5 text-primary shadow-xs" />
               </span>
               <span className="grid flex-1 text-left leading-tight">
-                <span className="truncate font-semibold">Farmacia POS</span>
-                <span className="truncate text-xs text-sidebar-foreground/70">Sucursal única</span>
+                <span className="truncate text-[0.9375rem] font-semibold tracking-[-0.015em]">Farmacia POS</span>
+                <span className="truncate text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-sidebar-foreground/55">Ventas e inventario</span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
-        {groups.map((group) => (
-          <Collapsible key={group.label} defaultOpen className="group/collapsible">
-            <SidebarGroup>
+      <SidebarContent className="px-2 py-2">
+        {groups.map((group) => {
+          const isGroupActive = group.items.some(
+            (item) => location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+          );
+
+          return (
+          <Collapsible
+            key={`${group.label}-${isGroupActive}`}
+            defaultOpen={group.label === "Inicio" || isGroupActive}
+            className="group/collapsible"
+          >
+            <SidebarGroup className="py-1">
               <SidebarGroupLabel asChild>
-                <CollapsibleTrigger>
+                <CollapsibleTrigger className="mb-1 text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/50 hover:text-sidebar-foreground">
                   {group.label}
                   <ChevronDown
                     aria-hidden="true"
@@ -77,9 +95,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
                       return (
                         <SidebarMenuItem key={item.key}>
-                          <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-                            <NavLink to={item.path}>
-                              <Icon aria-hidden="true" />
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isActive}
+                            tooltip={item.label}
+                            className="relative h-9 rounded-lg text-[0.8125rem] font-medium data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:shadow-xs"
+                          >
+                            <NavLink to={item.path} onClick={closeMobileNavigation}>
+                              {isActive ? <span aria-hidden="true" className="absolute -left-2 h-5 w-0.5 rounded-full bg-sidebar-primary" /> : null}
+                              <Icon aria-hidden="true" className="size-[1.0625rem]" />
                               <span>{item.label}</span>
                             </NavLink>
                           </SidebarMenuButton>
@@ -91,17 +115,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
               </CollapsibleContent>
             </SidebarGroup>
           </Collapsible>
-        ))}
+          );
+        })}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="h-12" size="lg" tooltip={user.fullName}>
-                  <Avatar className="size-8 rounded-md">
-                    <AvatarFallback className="rounded-md">{getInitials(user.fullName)}</AvatarFallback>
+                <SidebarMenuButton className="h-12 rounded-xl border border-sidebar-border bg-sidebar-accent/35" size="lg" tooltip={user.fullName}>
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">{getInitials(user.fullName)}</AvatarFallback>
                   </Avatar>
                   <span className="grid flex-1 text-left leading-tight">
                     <span className="truncate font-medium">{user.fullName}</span>
@@ -115,10 +140,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   <span className="block truncate">{user.role.displayName}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <UserCircle aria-hidden="true" />
-                  Perfil
-                </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => navigate("/logout", { replace: true })} variant="destructive">
                   <LogOut aria-hidden="true" />
                   Cerrar sesión

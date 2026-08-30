@@ -5,6 +5,8 @@ import {
   AUDIT_PATH,
   EXPORTS_PATH,
   REPORTS_PATH,
+  STOCK_PLANNING_PATH,
+  getVisibleNavigationGroups,
   getVisibleNavigationItems,
   isRouteAllowedForRole,
   navigationItems
@@ -12,7 +14,16 @@ import {
 
 const analysisRoutes = [
   {
-    label: "Reportes operativos",
+    label: "Qué comprar",
+    path: STOCK_PLANNING_PATH,
+    roles: {
+      admin: true,
+      seller: false,
+      superadmin: true
+    }
+  },
+  {
+    label: "Reportes",
     path: REPORTS_PATH,
     roles: {
       admin: true,
@@ -21,7 +32,7 @@ const analysisRoutes = [
     }
   },
   {
-    label: "Exportaciones CSV",
+    label: "Exportar datos",
     path: EXPORTS_PATH,
     roles: {
       admin: true,
@@ -30,7 +41,7 @@ const analysisRoutes = [
     }
   },
   {
-    label: "Registro de auditoria",
+    label: "Auditoría",
     path: AUDIT_PATH,
     roles: {
       admin: false,
@@ -59,25 +70,26 @@ const expectedNavigationByRole = {
   superadmin: navigationItems.map((item) => item.key),
   admin: [
     "dashboard",
+    "cash",
     "pos",
     "pendingCarts",
-    "cash",
     "supervision",
     "sales",
+    "invoices",
+    "returns",
     "alerts",
     "products",
     "units",
     "batches",
     "movements",
     "adjustments",
-    "suppliers",
+    "stockPlanning",
     "purchases",
-    "invoices",
-    "returns",
+    "suppliers",
     "reports",
     "exports"
   ],
-  seller: ["dashboard", "pos", "pendingCarts", "cash", "sales", "alerts", "products", "units", "batches"]
+  seller: ["dashboard", "cash", "pos", "pendingCarts", "sales", "alerts", "products", "units", "batches"]
 } as const;
 
 describe("role-based navigation", () => {
@@ -85,11 +97,26 @@ describe("role-based navigation", () => {
     expect(getVisibleNavigationItems(role).map((item) => item.key)).toEqual(expectedNavigationByRole[role]);
   });
 
-  it("keeps Roles y facultades exclusive to superadmin", () => {
+  it("keeps Roles y permisos exclusive to superadmin", () => {
     const rolesItem = navigationItems.find((item) => item.key === "roles");
 
     expect(rolesItem).toBeDefined();
     expect(BASE_ROLES.filter((role) => isRouteAllowedForRole(rolesItem!, role))).toEqual(["superadmin"]);
+  });
+
+  it.each([
+    ["seller", ["dashboard", "cash", "pos", "sales", "alerts", "products", "batches"]],
+    ["admin", ["dashboard", "cash", "pos", "supervision", "sales", "alerts", "products", "batches", "stockPlanning", "purchases", "reports"]],
+    ["superadmin", ["dashboard", "cash", "pos", "supervision", "sales", "alerts", "products", "batches", "stockPlanning", "purchases", "reports", "users"]]
+  ] as const)("keeps the %s sidebar focused on primary tasks", (role, expectedKeys) => {
+    const primaryItems = getVisibleNavigationGroups(role).flatMap((group) => group.items);
+
+    expect(primaryItems.map((item) => item.key)).toEqual(expectedKeys);
+  });
+
+  it("hides unfinished SIAT and global settings entries", () => {
+    expect(navigationItems.some((item) => item.key === "siatSettings")).toBe(false);
+    expect(navigationItems.some((item) => item.key === "settings")).toBe(false);
   });
 
   it("derives every navigation decision from the shared feature policy", () => {

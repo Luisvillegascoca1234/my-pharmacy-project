@@ -1,4 +1,5 @@
 import type { InventoryMovementType } from "@/modules/inventory";
+import { ContextNavigation, inventoryNavigation } from "@/components/context-navigation";
 import { Activity, AlertCircle, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,7 @@ const movementTypes: Array<InventoryMovementType | "all"> = [
   "sale_cancelled",
   "sale_returned"
 ];
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 4, style: "currency" });
 
 export function MovementsPage() {
@@ -40,14 +41,12 @@ export function MovementsPage() {
 
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Opciones de inventario" items={inventoryNavigation} />
       <div className="space-y-2">
-        <Badge className="w-fit" variant="secondary">
-          Kardex operativo
-        </Badge>
         <div>
-          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Movimientos</h1>
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Historial de stock</h1>
           <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            Historial trazable de entradas, anulaciones y ajustes con cantidades en unidad base.
+            Consulta las entradas, salidas, anulaciones y correcciones de inventario.
           </p>
         </div>
       </div>
@@ -55,7 +54,7 @@ export function MovementsPage() {
       {movements.error ? (
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
-          <AlertTitle>No se pudo cargar el kardex</AlertTitle>
+          <AlertTitle>No se pudo cargar el historial</AlertTitle>
           <AlertDescription>{movements.error}</AlertDescription>
         </Alert>
       ) : null}
@@ -63,8 +62,8 @@ export function MovementsPage() {
       <Card>
         <CardHeader className="gap-4">
           <div>
-            <CardTitle>Kardex de inventario</CardTitle>
-            <CardDescription>Los ajustes negativos y anulaciones se registran como cantidades negativas.</CardDescription>
+            <CardTitle>Movimientos de inventario</CardTitle>
+            <CardDescription>Las salidas y anulaciones aparecen con cantidad negativa.</CardDescription>
           </div>
           <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_220px]">
             <div className="relative">
@@ -99,7 +98,7 @@ export function MovementsPage() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Usuario</TableHead>
                   <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Costo base</TableHead>
+                  <TableHead className="text-right">Costo unitario</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -120,7 +119,7 @@ export function MovementsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={movement.quantityBase < 0 ? "destructive" : "secondary"}>{movementTypeLabels[movement.type]}</Badge>
-                      {movement.reason ? <p className="mt-1 text-xs text-muted-foreground">{movement.reason}</p> : null}
+                      {getVisibleMovementReason(movement.reason) ? <p className="mt-1 text-xs text-muted-foreground">{getVisibleMovementReason(movement.reason)}</p> : null}
                     </TableCell>
                     <TableCell>{movement.actorUser?.fullName ?? "Sistema"}</TableCell>
                     <TableCell className="text-right font-medium">
@@ -144,7 +143,7 @@ export function MovementsPage() {
                               <Activity aria-hidden="true" />
                             </EmptyMedia>
                             <EmptyTitle>Sin movimientos</EmptyTitle>
-                            <EmptyDescription>Recibe una compra o registra un ajuste para alimentar el kardex.</EmptyDescription>
+                            <EmptyDescription>Recibe una compra o corrige el stock para generar el primer movimiento.</EmptyDescription>
                           </EmptyHeader>
                         </Empty>
                       )}
@@ -193,6 +192,19 @@ function formatDate(value?: string) {
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("es-BO", {
     dateStyle: "short",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "America/La_Paz"
   }).format(new Date(value));
+}
+
+function getVisibleMovementReason(reason?: string) {
+  if (!reason || /seed predictivo/i.test(reason)) {
+    return null;
+  }
+
+  if (/entorno de desarrollo/i.test(reason)) {
+    return "Stock inicial.";
+  }
+
+  return reason;
 }

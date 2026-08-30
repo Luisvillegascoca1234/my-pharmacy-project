@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ContextNavigation, inventoryNavigation } from "@/components/context-navigation";
 import type { InventoryStockStatus } from "@/modules/inventory";
 import { AlertCircle, Boxes, ChevronLeft, ChevronRight, PackageSearch, Search } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -31,11 +33,12 @@ const stockStatusOptions: Array<InventoryStockStatus | "all"> = [
   "expired"
 ];
 
-const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 4 });
+const quantityFormatter = new Intl.NumberFormat("es-BO", { maximumFractionDigits: 0 });
 const moneyFormatter = new Intl.NumberFormat("es-BO", { currency: "BOB", maximumFractionDigits: 2, style: "currency" });
 
 export function BatchesPage() {
   const stock = useInventoryStock();
+  const [searchParams] = useSearchParams();
   const [selectedProductId, setSelectedProductId] = useState("");
   const [previewQuantity, setPreviewQuantity] = useState<number | undefined>();
   const fefo = useFefoPreview(selectedProductId || null, previewQuantity);
@@ -56,17 +59,23 @@ export function BatchesPage() {
   }, [stock.items]);
   const isLoading = stock.status === "loading";
 
+  useEffect(() => {
+    const requestedSearch = searchParams.get("search")?.trim() ?? "";
+
+    if (requestedSearch && requestedSearch !== stock.search) {
+      stock.setSearch(requestedSearch);
+    }
+  }, [searchParams, stock.search, stock.setSearch]);
+
   return (
     <section className="grid gap-5">
+      <ContextNavigation ariaLabel="Opciones de inventario" items={inventoryNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Inventario por lote
-          </Badge>
           <div>
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Lotes y stock</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Existencias</h1>
             <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Stock agrupado por producto, lote y vencimiento, conservando internamente cada capa de compra.
+              Consulta la cantidad disponible de cada producto, lote y vencimiento.
             </p>
           </div>
         </div>
@@ -84,8 +93,8 @@ export function BatchesPage() {
         <Card>
           <CardHeader className="gap-4">
             <div>
-              <CardTitle>Stock actual</CardTitle>
-              <CardDescription>Las cantidades están normalizadas a la unidad base del producto.</CardDescription>
+              <CardTitle>Stock por lote</CardTitle>
+              <CardDescription>Las cantidades se muestran en la unidad mínima de cada producto.</CardDescription>
             </div>
             <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_220px]">
               <div className="relative">
@@ -123,7 +132,6 @@ export function BatchesPage() {
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Disponible</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="text-right">Capas</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -146,12 +154,11 @@ export function BatchesPage() {
                       <TableCell className="text-right">
                         {item.totalValue === undefined ? "Restringido" : moneyFormatter.format(item.totalValue)}
                       </TableCell>
-                      <TableCell className="text-right">{item.layerCount}</TableCell>
                     </TableRow>
                   ))}
                   {stock.items.length === 0 ? (
                     <TableRow>
-                      <TableCell className="h-56" colSpan={7}>
+                      <TableCell className="h-56" colSpan={6}>
                         {isLoading ? (
                           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                             <Spinner />
@@ -163,7 +170,7 @@ export function BatchesPage() {
                               <EmptyMedia variant="icon">
                                 <Boxes aria-hidden="true" />
                               </EmptyMedia>
-                              <EmptyTitle>Sin stock visible</EmptyTitle>
+                              <EmptyTitle>Sin existencias</EmptyTitle>
                               <EmptyDescription>Recibe una compra para generar lotes disponibles.</EmptyDescription>
                             </EmptyHeader>
                           </Empty>
@@ -179,7 +186,7 @@ export function BatchesPage() {
               <span>
                 {stock.pagination.total === 0
                   ? "Sin resultados"
-                  : `Mostrando ${stock.items.length} de ${stock.pagination.total} agrupaciones`}
+                  : `Mostrando ${stock.items.length} de ${stock.pagination.total} lotes`}
               </span>
               <div className="flex items-center gap-2">
                 <Button disabled={stock.pagination.page <= 1 || isLoading} size="sm" variant="outline" onClick={() => stock.setPage(stock.pagination.page - 1)}>
@@ -200,8 +207,8 @@ export function BatchesPage() {
 
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle>FEFO visible</CardTitle>
-            <CardDescription>Simula el orden de salida recomendado sin modificar inventario.</CardDescription>
+            <CardTitle>Orden de salida</CardTitle>
+            <CardDescription>Consulta qué lote debe venderse primero. El inventario no se modificará.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <Field>
@@ -216,7 +223,7 @@ export function BatchesPage() {
               </NativeSelect>
             </Field>
             <Field>
-              <FieldLabel>Cantidad a simular</FieldLabel>
+              <FieldLabel>Cantidad que quieres vender</FieldLabel>
               <Input
                 min="0.0001"
                 step="0.0001"
@@ -228,7 +235,7 @@ export function BatchesPage() {
             {fefo.error ? (
               <Alert variant="destructive">
                 <AlertCircle aria-hidden="true" />
-                <AlertTitle>No se pudo calcular FEFO</AlertTitle>
+                <AlertTitle>No se pudo calcular el orden de salida</AlertTitle>
                 <AlertDescription>{fefo.error}</AlertDescription>
               </Alert>
             ) : null}
@@ -239,7 +246,7 @@ export function BatchesPage() {
                     <PackageSearch aria-hidden="true" />
                   </EmptyMedia>
                   <EmptyTitle>Selecciona un producto</EmptyTitle>
-                  <EmptyDescription>El orden FEFO omite lotes vencidos o sin saldo.</EmptyDescription>
+                  <EmptyDescription>Se priorizarán los lotes disponibles que vencen primero.</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : (
@@ -247,7 +254,7 @@ export function BatchesPage() {
                 {fefo.status === "loading" ? (
                   <p className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Spinner />
-                    Calculando FEFO...
+                    Calculando el orden de salida...
                   </p>
                 ) : null}
                 {fefoData ? (
@@ -261,7 +268,7 @@ export function BatchesPage() {
                           ? fefoData.canFulfill
                             ? "La cantidad solicitada puede cubrirse."
                             : "La cantidad solicitada supera el stock disponible."
-                          : "Vista ordenada por vencimiento."}
+                          : "Lotes ordenados por vencimiento."}
                       </p>
                     </div>
                     {fefoData.allocations.map((allocation) => (

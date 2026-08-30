@@ -1,4 +1,5 @@
 import type { PurchaseStatus } from "@pharmacy-pos/shared";
+import { getOperationalDate } from "@/lib/operational-date";
 
 export type PurchaseStatusFilter = PurchaseStatus | "all";
 
@@ -32,6 +33,6 @@ export const createEmptyPurchaseDraftItemForm = (): PurchaseDraftItemForm => ({
 export const createEmptyPurchaseDraftForm = (): PurchaseDraftForm => ({
   items: [createEmptyPurchaseDraftItemForm()],
   notes: "",
-  purchaseDate: new Date().toISOString().slice(0, 10),
+  purchaseDate: getOperationalDate(),
   supplierId: ""
 });

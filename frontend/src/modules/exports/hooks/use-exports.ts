@@ -36,6 +36,28 @@ export function useExports() {
     [canDownloadExports, exportsActions, token]
   );
 
+  const downloadStockPlanningObservationsParquet = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!token || !canDownloadExports) {
+        exportsActions.reset();
+        return null;
+      }
+      return exportsActions.downloadStockPlanningObservationsParquet(signal);
+    },
+    [canDownloadExports, exportsActions, token]
+  );
+
+  const downloadStockPlanningResultsParquet = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!token || !canDownloadExports) {
+        exportsActions.reset();
+        return null;
+      }
+      return exportsActions.downloadStockPlanningResultsParquet(signal);
+    },
+    [canDownloadExports, exportsActions, token]
+  );
+
   useEffect(() => {
     if (!token || !canDownloadExports) {
       exportsActions.reset();
@@ -50,12 +72,25 @@ export function useExports() {
       clearSalesExport: exportsActions.clearSalesExport,
       downloadInventoryMovementsCsv,
       downloadSalesCsv,
+      downloadStockPlanningObservationsParquet,
+      downloadStockPlanningResultsParquet,
       reset: exportsActions.reset,
       setInventoryMovementsFromDate: exportsActions.setInventoryMovementsFromDate,
       setInventoryMovementsToDate: exportsActions.setInventoryMovementsToDate,
       setSalesFromDate: exportsActions.setSalesFromDate,
-      setSalesToDate: exportsActions.setSalesToDate
+      setSalesToDate: exportsActions.setSalesToDate,
+      setStockPlanningFilters: exportsActions.setStockPlanningFilters,
+      clearStockPlanningObservationsExport: exportsActions.clearStockPlanningObservationsExport,
+      clearStockPlanningResultsExport: exportsActions.clearStockPlanningResultsExport
     }),
-    [canDownloadExports, downloadInventoryMovementsCsv, downloadSalesCsv, exportsActions, exportsState]
+    [
+      canDownloadExports,
+      downloadInventoryMovementsCsv,
+      downloadSalesCsv,
+      downloadStockPlanningObservationsParquet,
+      downloadStockPlanningResultsParquet,
+      exportsActions,
+      exportsState
+    ]
   );
 }

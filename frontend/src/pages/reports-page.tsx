@@ -6,6 +6,7 @@ import type {
   ReportsRequestStatus
 } from "@/modules/reports";
 import type { ReactNode } from "react";
+import { ContextNavigation, reportsNavigation } from "@/components/context-navigation";
 import type { LucideIcon } from "lucide-react";
 import { AlertCircle, CalendarDays, ChevronDown, Clock3, PackageSearch, RefreshCcw, ShieldAlert, TrendingUp } from "lucide-react";
 import { useEffect } from "react";
@@ -20,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { REPORTS_DEFAULT_EXPIRING_DAYS, useReports } from "@/modules/reports";
 
 const boliviaDateFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -50,7 +52,7 @@ const moneyFormatter = new Intl.NumberFormat("es-BO", {
 });
 
 const quantityFormatter = new Intl.NumberFormat("es-BO", {
-  maximumFractionDigits: 4
+  maximumFractionDigits: 0
 });
 
 export function ReportsPage() {
@@ -97,7 +99,7 @@ export function ReportsPage() {
         <Alert variant="destructive">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Acceso no autorizado</AlertTitle>
-          <AlertDescription>Tu rol actual no permite consultar reportes operativos administrativos.</AlertDescription>
+          <AlertDescription>No tienes permiso para consultar reportes.</AlertDescription>
         </Alert>
       </section>
     );
@@ -105,18 +107,13 @@ export function ReportsPage() {
 
   return (
     <section className="grid gap-6">
+      <ContextNavigation ariaLabel="Opciones de análisis" items={reportsNavigation} />
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div className="space-y-2">
-          <Badge className="w-fit" variant="secondary">
-            Análisis operativo
-          </Badge>
-          <div className="max-w-3xl space-y-2">
-            <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Reportes operativos</h1>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Lectura administrativa de ventas diarias, valuación del inventario disponible y lotes próximos a vencer con corte
-              horario de Bolivia.
-            </p>
-          </div>
+        <div className="max-w-3xl space-y-2">
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground sm:text-3xl">Reportes</h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Consulta ventas, valor del inventario y próximos vencimientos.
+          </p>
         </div>
         <Button disabled={isAnyReportLoading} variant="outline" onClick={() => void reloadAllReports(reports)}>
           {isAnyReportLoading ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -125,47 +122,58 @@ export function ReportsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={TrendingUp} label="Neto vendido" value={moneyFormatter.format(dailyTotals.netSalesAmount)} />
+        <MetricCard icon={TrendingUp} label="Total vendido" value={moneyFormatter.format(dailyTotals.netSalesAmount)} />
         <MetricCard icon={CalendarDays} label="Ventas registradas" value={quantityFormatter.format(dailyTotals.saleCount)} />
         <MetricCard
           icon={PackageSearch}
-          label="Valuación disponible"
+          label="Valor del inventario"
           value={moneyFormatter.format(reports.inventoryValuationReport?.totalValue ?? 0)}
         />
         <MetricCard icon={Clock3} label="Lotes por vencer" value={quantityFormatter.format(expiringRows.length)} />
       </div>
 
-      <DailySalesSection
-        fromDate={reports.dailySalesFromDate}
-        rows={dailyRows}
-        status={reports.dailySalesStatus}
-        toDate={reports.dailySalesToDate}
-        totals={dailyTotals}
-        onFromDateChange={reports.setDailySalesFromDate}
-        onReload={reports.loadDailySalesReport}
-        onToDateChange={reports.setDailySalesToDate}
-      />
-
-      <InventoryValuationSection
-        generatedAt={reports.inventoryValuationReport?.generatedAt}
-        rows={valuationRows}
-        search={reports.inventoryValuationSearch}
-        status={reports.inventoryValuationStatus}
-        totalValue={reports.inventoryValuationReport?.totalValue ?? 0}
-        onReload={reports.loadInventoryValuationReport}
-        onSearchChange={reports.setInventoryValuationSearch}
-      />
-
-      <ExpiringProductsSection
-        days={reports.expiringDays}
-        generatedAt={reports.expiringProductsReport?.generatedAt}
-        rows={expiringRows}
-        search={reports.expiringSearch}
-        status={reports.expiringProductsStatus}
-        onDaysChange={reports.setExpiringDays}
-        onReload={reports.loadExpiringProductsReport}
-        onSearchChange={reports.setExpiringSearch}
-      />
+      <Tabs defaultValue="sales">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsTrigger value="sales">Ventas</TabsTrigger>
+          <TabsTrigger value="inventory">Inventario</TabsTrigger>
+          <TabsTrigger value="expiring">Vencimientos</TabsTrigger>
+        </TabsList>
+        <TabsContent className="mt-5" value="sales">
+          <DailySalesSection
+            fromDate={reports.dailySalesFromDate}
+            rows={dailyRows}
+            status={reports.dailySalesStatus}
+            toDate={reports.dailySalesToDate}
+            totals={dailyTotals}
+            onFromDateChange={reports.setDailySalesFromDate}
+            onReload={reports.loadDailySalesReport}
+            onToDateChange={reports.setDailySalesToDate}
+          />
+        </TabsContent>
+        <TabsContent className="mt-5" value="inventory">
+          <InventoryValuationSection
+            generatedAt={reports.inventoryValuationReport?.generatedAt}
+            rows={valuationRows}
+            search={reports.inventoryValuationSearch}
+            status={reports.inventoryValuationStatus}
+            totalValue={reports.inventoryValuationReport?.totalValue ?? 0}
+            onReload={reports.loadInventoryValuationReport}
+            onSearchChange={reports.setInventoryValuationSearch}
+          />
+        </TabsContent>
+        <TabsContent className="mt-5" value="expiring">
+          <ExpiringProductsSection
+            days={reports.expiringDays}
+            generatedAt={reports.expiringProductsReport?.generatedAt}
+            rows={expiringRows}
+            search={reports.expiringSearch}
+            status={reports.expiringProductsStatus}
+            onDaysChange={reports.setExpiringDays}
+            onReload={reports.loadExpiringProductsReport}
+            onSearchChange={reports.setExpiringSearch}
+          />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
@@ -238,7 +246,7 @@ function DailySalesSection({
           <div>
             <CardTitle>Ventas diarias</CardTitle>
             <CardDescription>
-              Bruto, anulaciones POS, devoluciones administrativas y neto por fecha operativa en Bolivia.
+              Compara ventas, anulaciones, devoluciones y total neto por día.
             </CardDescription>
           </div>
           <Button disabled={status === "loading"} type="button" variant="outline" onClick={() => void onReload()}>
@@ -250,14 +258,19 @@ function DailySalesSection({
           <DateField label="Desde" value={fromDate} onChange={onFromDateChange} />
           <DateField label="Hasta" value={toDate} onChange={onToDateChange} />
         </div>
+        <div className="flex flex-wrap gap-2" aria-label="Rangos rápidos">
+          <Button size="sm" type="button" variant="outline" onClick={() => applyDatePreset(0, onFromDateChange, onToDateChange)}>Hoy</Button>
+          <Button size="sm" type="button" variant="outline" onClick={() => applyDatePreset(6, onFromDateChange, onToDateChange)}>Últimos 7 días</Button>
+          <Button size="sm" type="button" variant="outline" onClick={() => applyDatePreset(29, onFromDateChange, onToDateChange)}>Últimos 30 días</Button>
+        </div>
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid gap-3 md:grid-cols-5">
-          <CompactMetric label="Bruto" value={moneyFormatter.format(totals.grossSalesAmount)} />
-          <CompactMetric label="Anulaciones POS" value={moneyFormatter.format(totals.cancelledAmount)} />
-          <CompactMetric label="Devoluciones adm." value={moneyFormatter.format(totals.returnedAmount)} />
-          <CompactMetric label="Neto" value={moneyFormatter.format(totals.netSalesAmount)} />
-          <CompactMetric label="Conteos" value={`${totals.saleCount} ventas`} />
+          <CompactMetric label="Ventas confirmadas" value={moneyFormatter.format(totals.grossSalesAmount)} />
+          <CompactMetric label="Ventas anuladas" value={moneyFormatter.format(totals.cancelledAmount)} />
+          <CompactMetric label="Devoluciones" value={moneyFormatter.format(totals.returnedAmount)} />
+          <CompactMetric label="Total final" value={moneyFormatter.format(totals.netSalesAmount)} />
+          <CompactMetric label="Cantidad" value={`${totals.saleCount} ventas`} />
         </div>
 
         <ReportState status={status} emptyTitle="Sin ventas en el rango" loadingText="Calculando ventas diarias..." />
@@ -268,10 +281,10 @@ function DailySalesSection({
               <TableHeader>
                 <TableRow>
                   <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Bruto</TableHead>
-                  <TableHead className="text-right">Anulaciones POS</TableHead>
-                  <TableHead className="text-right">Devoluciones adm.</TableHead>
-                  <TableHead className="text-right">Neto</TableHead>
+                  <TableHead className="text-right">Ventas confirmadas</TableHead>
+                  <TableHead className="text-right">Ventas anuladas</TableHead>
+                  <TableHead className="text-right">Devoluciones</TableHead>
+                  <TableHead className="text-right">Total final</TableHead>
                   <TableHead className="text-right">Ventas</TableHead>
                 </TableRow>
               </TableHeader>
@@ -284,7 +297,7 @@ function DailySalesSection({
                     <TableCell className="text-right">{moneyFormatter.format(row.returnedAmount)}</TableCell>
                     <TableCell className="text-right font-medium">{moneyFormatter.format(row.netSalesAmount)}</TableCell>
                     <TableCell className="text-right">
-                      {row.saleCount} total · {row.cancelledCount} anul. · {row.returnedCount} dev.
+                      {row.saleCount} ventas · {row.cancelledCount} anuladas · {row.returnedCount} devueltas
                     </TableCell>
                   </TableRow>
                 ))}
@@ -319,8 +332,8 @@ function InventoryValuationSection({
       <CardHeader className="gap-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <CardTitle>Valuación de inventario disponible</CardTitle>
-            <CardDescription>Total por producto con detalle expandible de lotes, vencimiento y costo real.</CardDescription>
+            <CardTitle>Valor del inventario</CardTitle>
+            <CardDescription>Consulta el valor disponible por producto y por lote.</CardDescription>
           </div>
           <Button disabled={status === "loading"} type="button" variant="outline" onClick={() => void onReload()}>
             {status === "loading" ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -382,7 +395,7 @@ function ProductValuationRow({
             </div>
             <div className="text-sm md:text-right">
               <p className="font-medium">{moneyFormatter.format(product.totalValue)}</p>
-              <p className="text-xs text-muted-foreground">{product.lots.length} lote(s)</p>
+              <p className="text-xs text-muted-foreground">{product.lots.length} {product.lots.length === 1 ? "lote" : "lotes"}</p>
             </div>
             <ChevronDown aria-hidden="true" className="hidden size-4 text-muted-foreground md:block" />
           </button>
@@ -410,7 +423,7 @@ function LotsTable({
             <TableHead>Lote</TableHead>
             <TableHead>Vencimiento</TableHead>
             <TableHead className="text-right">Disponible</TableHead>
-            <TableHead className="text-right">Costo base</TableHead>
+            <TableHead className="text-right">Costo por unidad</TableHead>
             <TableHead className="text-right">Valor</TableHead>
           </TableRow>
         </TableHeader>
@@ -457,7 +470,7 @@ function ExpiringProductsSection({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <CardTitle>Próximos vencimientos</CardTitle>
-            <CardDescription>Lotes disponibles dentro del horizonte operativo elegido.</CardDescription>
+            <CardDescription>Productos con lotes que vencerán en el período elegido.</CardDescription>
           </div>
           <Button disabled={status === "loading"} type="button" variant="outline" onClick={() => void onReload()}>
             {status === "loading" ? <Spinner /> : <RefreshCcw aria-hidden="true" />}
@@ -465,7 +478,7 @@ function ExpiringProductsSection({
           </Button>
         </div>
         <div className="grid gap-3 md:grid-cols-[220px_minmax(220px,360px)_1fr] md:items-end">
-          <FieldGroup label="Horizonte en días">
+          <FieldGroup label="Próximos días">
             <Input
               min={1}
               placeholder={String(REPORTS_DEFAULT_EXPIRING_DAYS)}
@@ -609,7 +622,7 @@ function ReportState({
       <Alert variant="destructive">
         <ShieldAlert aria-hidden="true" />
         <AlertTitle>Permiso insuficiente</AlertTitle>
-        <AlertDescription>La sesión actual no tiene autorización para leer este reporte.</AlertDescription>
+        <AlertDescription>No tienes permiso para consultar este reporte.</AlertDescription>
       </Alert>
     );
   }
@@ -676,6 +689,18 @@ function parsePositiveDays(value: string) {
 
 function getTodayInBolivia() {
   return boliviaDateFormatter.format(new Date());
+}
+
+function applyDatePreset(
+  daysBack: number,
+  onFromDateChange: (value: string) => void,
+  onToDateChange: (value: string) => void
+) {
+  const today = getTodayInBolivia();
+  const fromDate = new Date(`${today}T12:00:00-04:00`);
+  fromDate.setDate(fromDate.getDate() - daysBack);
+  onFromDateChange(boliviaDateFormatter.format(fromDate));
+  onToDateChange(today);
 }
 
 function formatDate(value: string) {

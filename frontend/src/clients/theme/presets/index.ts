@@ -3,6 +3,7 @@ import type { ThemePreset } from "../types";
 import theme2077 from "./2077.json";
 import astrovista from "./astrovista.json";
 import catppuccin from "./catppuccin.json";
+import clinicalEnterprise from "./clinical-enterprise.json";
 import claude from "./claude.json";
 import claymorphism from "./claymorphism.json";
 import cyberpunk from "./cyberpunk.json";
@@ -25,6 +26,7 @@ import sageGreen from "./sage-green.json";
 import zen from "./zen.json";
 
 export const themePresets: ThemePreset[] = [
+  clinicalEnterprise,
   astrovista,
   catppuccin,
   claude,
